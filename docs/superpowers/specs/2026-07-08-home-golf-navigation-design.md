@@ -12,7 +12,7 @@ The app's home screen becomes an interactive rendering of the 16th hole at TPC S
 
 - **Golf hole fully replaces the tab bar.** No bottom tabs anywhere.
 - **Drag reveals a preview card; a tap on the card enters the section.** Release does not auto-navigate.
-- **Semi-realistic textured art**, built procedurally in Skia (no image assets).
+- **Photorealistic art**: a high-resolution aerial photograph of the real hole, bundled as a static image asset (revised 2026-07-08 from an earlier semi-realistic procedural approach — the user wants it "basically real").
 - **TPC Sawgrass hole 16** (par 5: tee → layup zone → fairway bunkers → water's edge → peninsula green, lake down the right side).
 - **Ball position persists** — it starts at the last stop visited, stored in AsyncStorage.
 - **Return path from a section:** back chevron in the header, plus swipe-down-to-dismiss (modal-style presentation), plus platform back gesture/button.
@@ -24,24 +24,22 @@ All included in Expo Go (install with `npx expo install`):
 
 - `react-native-gesture-handler` — pan/tap gestures
 - `react-native-reanimated` — UI-thread animation (shared values, springs, worklets)
-- `@shopify/react-native-skia` — the scene rendering (gradients, fractal-noise texture shaders, shadows, animated water)
+- `@shopify/react-native-skia` — the scene rendering (aerial image, ball shadow, dark-mode dusk tint, overlay effects)
 - `expo-haptics` — soft tick when the ball nears a stop
 
 `react-native-gesture-handler` requires `GestureHandlerRootView` at the app root and `react-native-reanimated` requires its Babel plugin in `babel.config.js`.
 
 ## The scene
 
-Top-down, slightly-angled rendering of Sawgrass #16, roughly **2.5 screens tall** — the whole hole is never visible at once; dragging the ball travels down it. Layers, all Skia:
+Top-down aerial photograph of the real Sawgrass #16, roughly **2.5 screens tall** — the whole hole is never visible at once; dragging the ball travels down it.
 
-1. **Rough / out-of-bounds** — base green gradient + fractal-noise shader for grass texture.
-2. **Fairway** — lighter green, subtle alternating mow-line banding, soft inner shadow at the edges.
-3. **Lake** — right side, full length: blue-green gradient with a slow animated ripple (disabled under Reduce Motion).
-4. **Bunkers** — sand-colored shapes with grain noise and soft drop shadow.
-5. **Green + fringe** — finest texture, hole + pin at the top.
-6. **Tree clusters** — left side, simple shadowed canopies for depth.
-7. **Flags** — one marker per stop, pinned to the art.
+- **Source imagery:** high-zoom aerial/satellite tiles of the actual hole (Esri World Imagery, which permits use with attribution; a small attribution line appears in the app's settings screen). Tiles are stitched and cropped **at build time** into a single bundled asset (WebP or PNG, sized so the width matches ~2× a typical device width for retina sharpness; target ≤ 2–3 MB). This is a one-time preprocessing step checked into `assets/`; the app never fetches map tiles at runtime.
+- **Rendering:** a Skia `Image` drawn on the canvas; the camera transform pans/zooms it. Skia also renders the ball's contact shadow and any overlay effects.
+- **Dark mode:** the photo cannot re-tint, so dark mode applies a translucent **dusk tint** overlay (dark blue-grey color filter) — the hole at twilight. UI chrome (cards, flags, hint) still uses `constants/theme.ts` tokens.
+- **Optional flourish (build last, cut if it looks off):** a subtle animated specular shimmer masked to the lake area, disabled under Reduce Motion.
+- **Flags** — one marker per stop, pinned in image coordinates.
 
-Colors derive from `constants/theme.ts` tokens where sensible so the scene shifts with light/dark mode.
+The fairway path and stop positions are defined in the image's coordinate space, so swapping the asset later means re-tracing the path in `constants/hole.ts` only.
 
 ## Stops
 
@@ -97,7 +95,8 @@ The current `app/(tabs)/index.tsx` content (greeting, brief lines, habit checkli
 
 - Stored stop index invalid/out of range → tee.
 - Query errors on preview stats → tagline fallback, no error UI on the hole itself.
-- Reduce Motion → static water, no camera easing; drag and tap-to-travel still work.
+- Reduce Motion → no lake shimmer, no camera easing; drag and tap-to-travel still work.
+- Image asset fails to decode (corrupt/missing) → plain fairway-green background so navigation still works.
 
 ## Testing
 

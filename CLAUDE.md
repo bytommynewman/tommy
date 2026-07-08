@@ -1,0 +1,52 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+@AGENTS.md
+
+## What this is
+
+"Tommy" — a personal life OS built with Expo Router: planner, calendar, habit & recovery tracker, journal, goals, fitness, content pipeline, relationships, an AI therapist-mode chat, and an investing/portfolio section. Supabase (Postgres + Auth + Edge Functions) is the only backend; there is no separate server.
+
+The project is built in milestones (M1, M2, M9, M11, M12, ... referenced in migration/code comments); large parts of the tab structure under `app/(tabs)/` are currently placeholder screens (`components/ui/PlaceholderScreen.tsx`) waiting on later milestones. Only auth (M... profiles) and habits/recovery (M2) have real data layers as of now.
+
+## Commands
+
+```
+npm install
+npx expo start          # or: npm run start
+npx expo start --ios    # npm run ios
+npx expo start --android
+npx expo start --web
+```
+
+There is no lint or test script configured in `package.json` yet — don't assume `npm test` / `npm run lint` exist.
+
+Type-check with `npx tsc --noEmit` (strict mode is on via `tsconfig.json`).
+
+Database changes are plain SQL files under `supabase/migrations/`, applied manually by pasting into the Supabase Studio SQL Editor (or `supabase db push` if the CLI is linked) — there is no migration runner invoked from this repo.
+
+## Environment
+
+Copy `.env.example` to `.env`: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` (Supabase Project Settings → API). Any secret used server-side (Anthropic key for the therapist chat, Finnhub key for market data, SnapTrade keys for brokerage sync) is set as a **Supabase Edge Function secret**, never as an `EXPO_PUBLIC_*` var or in the app bundle.
+
+## Architecture
+
+**Routing** — `app/` is Expo Router file-based routing with `typedRoutes` enabled. `app/_layout.tsx` is the root: it wraps everything in `SafeAreaProvider` → `QueryClientProvider` → `ThemeProvider` → `AuthProvider`, then a `RootNavigator` that uses `Stack.Protected` guards on `session` to switch between the `(auth)` group (login/signup) and the `(tabs)` group. `modal/settings` and `modal/profile` are presented as modals over the authenticated stack. Each tab (`plan`, `recovery`, `reflect`, `life`, `invest`) is its own route group with a nested `_layout.tsx`.
+
+**Auth** — `lib/auth.tsx` wraps Supabase auth state in a context (`session`, `isLoading`); it's the single source of truth for whether the user is logged in. `lib/supabase.ts` creates the Supabase client with `expo-secure-store` (iOS Keychain) as the session storage adapter instead of AsyncStorage — this is deliberate, since the session token guards sensitive data (recovery logs, mood, therapist chat); don't swap it for a plain/unencrypted storage adapter.
+
+**Theming** — `constants/theme.ts` defines the raw `palette` (light/dark), `spacing`, `radii`, `typography` tokens. `lib/theme.tsx` exposes them via `useTheme()`, picking light/dark from `useColorScheme()`. Screens never hardcode colors — they pull `colors`/`spacing`/`typography` from `useTheme()` and inline them into `style` props. `components/ui/` (`Screen`, `Card`, `Button`, `TextField`, `SegmentedControl`, `PlaceholderScreen`) are the shared primitives every screen is built from; `Screen` handles safe-area background + optional scroll/padding.
+
+**Data layer** — Supabase access is layered, not called directly from components:
+- `lib/api/*.ts` — raw Supabase queries/mutations per domain (e.g. `lib/api/habits.ts`), typed against `types/database.types.ts`.
+- `lib/hooks/use*.ts` — TanStack Query wrappers around the API functions (e.g. `lib/hooks/useHabits.ts`), handling query keys and cache invalidation on mutation.
+- Screens call the hooks, never `supabase` or the `api/*` functions directly.
+
+New domains (journal, goals, fitness, etc.) should follow this same `api/` → `hooks/` → screen pattern as they get built out.
+
+**Types** — `types/database.types.ts` is currently hand-written to mirror the SQL migrations (a comment at the top notes it should eventually be regenerated with `npx supabase gen types typescript`). When a migration changes the schema, update this file in the same change so types and schema don't drift.
+
+**Database/RLS** — every table has `user_id` and row-level security scoped to `auth.uid() = user_id`; `habits`/`habit_logs`/`relapse_incidents` default `user_id` server-side via `default auth.uid()`. `updated_at` columns are maintained by a shared `set_updated_at()` trigger rather than app code. New tables should follow this same RLS + trigger convention. `profiles` rows are auto-created via a trigger (`handle_new_user`) on `auth.users` insert, so app code should never need to handle a "missing profile" case for a valid session.
+
+**Business logic helpers** — pure functions like `lib/streaks.ts` (`buildStreak`, `daysClean`) take already-fetched data (habits/logs/relapses) and compute derived values; keep this kind of logic out of components and out of the query hooks so it stays testable in isolation.
