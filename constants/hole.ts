@@ -47,7 +47,7 @@ export const STOPS: HoleStop[] = [
 
 export const BALL_RADIUS = 14; // scene px
 export const STOP_NEAR_THRESHOLD = 90; // scene px along the path
-export const CAMERA_ZOOM = 1.15; // scene fills 115% of screen width
+export const CAMERA_ZOOM = 2.0; // scene fills 200% of screen width — the camera travels down the hole (tune on device)
 export const DRAG_ZOOM_BOOST = 1.06; // extra zoom while a drag is active
 
 // Scene rendering colors (the sanctioned exception to theme tokens — these

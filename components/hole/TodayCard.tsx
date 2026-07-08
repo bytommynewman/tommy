@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
 import { useHabits, useRecentLogs, useRelapses, useUpsertLog } from '../../lib/hooks/useHabits';
@@ -64,29 +65,49 @@ export function TodayCard() {
         elevation: 6,
       }}
     >
-      <Pressable
-        onPress={() => setExpanded((e) => !e)}
-        accessibilityRole="button"
-        accessibilityLabel={expanded ? 'Collapse today summary' : 'Expand today summary'}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: spacing.md,
-          gap: spacing.sm,
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={[typography.heading, { color: colors.text }]}>
-            {greeting()}, {firstName}
-          </Text>
-          <Text style={[typography.caption, { color: colors.textMuted }]}>{summary}</Text>
-        </View>
-        <Ionicons
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={18}
-          color={colors.textFaint}
-        />
-      </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Pressable
+          onPress={() => setExpanded((e) => !e)}
+          accessibilityRole="button"
+          accessibilityLabel={expanded ? 'Collapse today summary' : 'Expand today summary'}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: spacing.md,
+            gap: spacing.sm,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[typography.heading, { color: colors.text }]}>
+              {greeting()}, {firstName}
+            </Text>
+            <Text style={[typography.caption, { color: colors.textMuted }]}>{summary}</Text>
+          </View>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color={colors.textFaint}
+          />
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/modal/settings')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: colors.surfaceMuted,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: spacing.md,
+          }}
+        >
+          <Ionicons name="person-outline" size={16} color={colors.textMuted} />
+        </Pressable>
+      </View>
 
       {expanded ? (
         <View style={{ paddingHorizontal: spacing.md, paddingBottom: spacing.md }}>

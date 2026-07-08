@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
@@ -20,15 +20,19 @@ export default function HoleScreen() {
   const { scheme } = useTheme();
   const [hintVisible, setHintVisible] = useState(false);
   useEffect(() => {
-    AsyncStorage.getItem(HINT_DISMISSED_KEY).then((v) => {
-      if (v == null) setHintVisible(true);
-    });
+    AsyncStorage.getItem(HINT_DISMISSED_KEY)
+      .then((v) => {
+        if (v == null) setHintVisible(true);
+      })
+      .catch(() => {});
   }, []);
+  const hintWritten = useRef(false);
   const dismissHint = useCallback(() => {
-    setHintVisible((visible) => {
-      if (visible) AsyncStorage.setItem(HINT_DISMISSED_KEY, '1');
-      return false;
-    });
+    if (!hintWritten.current) {
+      hintWritten.current = true;
+      AsyncStorage.setItem(HINT_DISMISSED_KEY, '1').catch(() => {});
+    }
+    setHintVisible(false);
   }, []);
 
   const { path, stopDists, ballPos, tx, ty, scale, gesture, activeStop, goToStop, setBallInstant } =
@@ -36,10 +40,12 @@ export default function HoleScreen() {
 
   // Restore the ball to the last-visited stop (invalid/missing → stays at tee).
   useEffect(() => {
-    AsyncStorage.getItem(LAST_STOP_KEY).then((v) => {
-      const i = v == null ? NaN : Number(v);
-      if (Number.isInteger(i) && i >= 0 && i < STOPS.length) setBallInstant(i);
-    });
+    AsyncStorage.getItem(LAST_STOP_KEY)
+      .then((v) => {
+        const i = v == null ? NaN : Number(v);
+        if (Number.isInteger(i) && i >= 0 && i < STOPS.length) setBallInstant(i);
+      })
+      .catch(() => {});
   }, [setBallInstant]);
 
   // Live stat per stop; null falls back to the stop's tagline (also covers
@@ -57,7 +63,7 @@ export default function HoleScreen() {
   }, [habits, relapses]);
 
   const enterStop = (index: number) => {
-    AsyncStorage.setItem(LAST_STOP_KEY, String(index));
+    AsyncStorage.setItem(LAST_STOP_KEY, String(index)).catch(() => {});
     router.push(STOPS[index].route);
   };
 
@@ -92,6 +98,7 @@ export default function HoleScreen() {
           scale={scale}
           active={activeStop === i}
           onPress={() => goToStop(i)}
+          anchor={i === STOPS.length - 1 ? 'below' : 'above'}
         />
       ))}
       {activeStop != null ? (

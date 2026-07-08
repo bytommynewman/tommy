@@ -16,16 +16,22 @@ type FlagProps = {
   scale: DerivedValue<number>;
   active: boolean;
   onPress: () => void;
+  anchor?: 'above' | 'below';
 };
 
-export function Flag({ stop, scenePos, tx, ty, scale, active, onPress }: FlagProps) {
+export function Flag({ stop, scenePos, tx, ty, scale, active, onPress, anchor = 'above' }: FlagProps) {
   const { colors } = useTheme();
 
   const style = useAnimatedStyle(() => ({
     transform: [
       { translateX: scenePos.x * scale.value + tx.value - FLAG_SIZE / 2 },
-      // Anchor the chip just above the spot on the course it marks.
-      { translateY: scenePos.y * scale.value + ty.value - FLAG_SIZE - 6 },
+      // Anchor the chip just above (or below, for the green) the spot it marks.
+      {
+        translateY:
+          anchor === 'below'
+            ? scenePos.y * scale.value + ty.value + 6
+            : scenePos.y * scale.value + ty.value - FLAG_SIZE - 6,
+      },
       { scale: withSpring(active ? 1.2 : 1) },
     ],
   }));
