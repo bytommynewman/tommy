@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
@@ -7,17 +7,32 @@ import { HoleScene } from '../../components/hole/HoleScene';
 import { useHoleDrag } from '../../components/hole/useHoleDrag';
 import { Flag } from '../../components/hole/Flag';
 import { StopPreviewCard } from '../../components/hole/StopPreviewCard';
+import { TodayCard } from '../../components/hole/TodayCard';
+import { HintOverlay } from '../../components/hole/HintOverlay';
 import { useTheme } from '../../lib/theme';
 import { pointAtDistance } from '../../lib/holePath';
-import { LAST_STOP_KEY, STOPS } from '../../constants/hole';
+import { LAST_STOP_KEY, STOPS, HINT_DISMISSED_KEY } from '../../constants/hole';
 import { useHabits, useRelapses } from '../../lib/hooks/useHabits';
 import { daysClean } from '../../lib/streaks';
 
 export default function HoleScreen() {
   const { width, height } = useWindowDimensions();
   const { scheme } = useTheme();
+  const [hintVisible, setHintVisible] = useState(false);
+  useEffect(() => {
+    AsyncStorage.getItem(HINT_DISMISSED_KEY).then((v) => {
+      if (v == null) setHintVisible(true);
+    });
+  }, []);
+  const dismissHint = useCallback(() => {
+    setHintVisible((visible) => {
+      if (visible) AsyncStorage.setItem(HINT_DISMISSED_KEY, '1');
+      return false;
+    });
+  }, []);
+
   const { path, stopDists, ballPos, tx, ty, scale, gesture, activeStop, goToStop, setBallInstant } =
-    useHoleDrag(width, height);
+    useHoleDrag(width, height, { onDragEnd: dismissHint });
 
   // Restore the ball to the last-visited stop (invalid/missing → stays at tee).
   useEffect(() => {
@@ -86,6 +101,8 @@ export default function HoleScreen() {
           onEnter={() => enterStop(activeStop)}
         />
       ) : null}
+      <HintOverlay visible={hintVisible} />
+      <TodayCard />
     </View>
   );
 }
