@@ -3,6 +3,8 @@ import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ToggleBar, TOGGLE_BAR_CLEARANCE } from '../../components/ui/ToggleBar';
 import { ScratchMascot } from '../../components/scratch/ScratchMascot';
+import { DailyReadCard } from '../../components/scratch/DailyReadCard';
+import { SectionOverviewGrid } from '../../components/scratch/SectionOverviewGrid';
 import { useTheme } from '../../lib/theme';
 import { useProfile } from '../../lib/hooks/useProfile';
 
@@ -33,7 +35,8 @@ export default function ScratchScreen() {
             </Text>
           </View>
         </View>
-        {/* Daily read + overview grid land here in Task 5; chat bar in Task 6 */}
+        <DailyReadCard />
+        <SectionOverviewGrid />
       </ScrollView>
       <ToggleBar active="scratch" />
     </View>
