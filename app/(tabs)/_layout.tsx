@@ -16,6 +16,7 @@ export default function HomeShellLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="course" />
       <Stack.Screen name="recovery" options={section} />
       <Stack.Screen name="reflect" options={section} />
       <Stack.Screen name="plan" options={section} />
