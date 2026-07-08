@@ -14,12 +14,13 @@ export const HOLE_IMAGE = require('../assets/hole16.webp');
 // the red line hugs the fairway in the actual photo.
 const NORM_WAYPOINTS: Vec[] = [
   { x: 0.353, y: 0.819 }, // tee boxes (OSM-verified centroid)
-  { x: 0.33, y: 0.735 },
-  { x: 0.3, y: 0.65 },
-  { x: 0.27, y: 0.565 },
-  { x: 0.25, y: 0.479 }, // dogleg elbow around the tree stand
-  { x: 0.262, y: 0.353 },
-  { x: 0.295, y: 0.227 },
+  { x: 0.467, y: 0.775 },
+  { x: 0.583, y: 0.688 },
+  { x: 0.617, y: 0.61 }, // dogleg elbow, right of the tree stand (fairway landing area)
+  { x: 0.583, y: 0.501 },
+  { x: 0.467, y: 0.37 },
+  { x: 0.375, y: 0.24 },
+  { x: 0.333, y: 0.139 },
   { x: 0.347, y: 0.101 }, // green (OSM-verified centroid)
 ];
 
