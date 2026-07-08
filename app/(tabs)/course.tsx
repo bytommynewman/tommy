@@ -4,22 +4,24 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HoleScene } from '../../components/hole/HoleScene';
-import { useHoleDrag } from '../../components/hole/useHoleDrag';
+import { useCourseNav } from '../../components/hole/useCourseNav';
 import { Flag } from '../../components/hole/Flag';
 import { StopPreviewCard } from '../../components/hole/StopPreviewCard';
 import { TodayCard } from '../../components/hole/TodayCard';
 import { HintOverlay } from '../../components/hole/HintOverlay';
+import { ToggleBar } from '../../components/ui/ToggleBar';
 import { useTheme } from '../../lib/theme';
 import { pointAtDistance } from '../../lib/holePath';
-import { LAST_STOP_KEY, STOPS, HINT_DISMISSED_KEY } from '../../constants/hole';
+import { HINT_DISMISSED_KEY, LAST_STOP_KEY, STOPS } from '../../constants/hole';
 import { useHabits, useRelapses } from '../../lib/hooks/useHabits';
 import { daysClean } from '../../lib/streaks';
-import { ToggleBar } from '../../components/ui/ToggleBar';
 
 export default function CourseScreen() {
   const { width, height } = useWindowDimensions();
   const { scheme } = useTheme();
+
   const [hintVisible, setHintVisible] = useState(false);
+  const hintWritten = useRef(false);
   useEffect(() => {
     AsyncStorage.getItem(HINT_DISMISSED_KEY)
       .then((v) => {
@@ -27,7 +29,6 @@ export default function CourseScreen() {
       })
       .catch(() => {});
   }, []);
-  const hintWritten = useRef(false);
   const dismissHint = useCallback(() => {
     if (!hintWritten.current) {
       hintWritten.current = true;
@@ -36,10 +37,9 @@ export default function CourseScreen() {
     setHintVisible(false);
   }, []);
 
-  const { path, stopDists, ballPos, tx, ty, scale, gesture, activeStop, goToStop, setBallInstant } =
-    useHoleDrag(width, height, { onDragEnd: dismissHint });
+  const { path, stopDists, ballPos, tx, ty, scale, gesture, activeStop, isOverview, goToStop, exitOverview, setBallInstant } =
+    useCourseNav(width, height, { onSwipe: dismissHint });
 
-  // Restore the ball to the last-visited stop (invalid/missing → stays at tee).
   useEffect(() => {
     AsyncStorage.getItem(LAST_STOP_KEY)
       .then((v) => {
@@ -49,15 +49,11 @@ export default function CourseScreen() {
       .catch(() => {});
   }, [setBallInstant]);
 
-  // Live stat per stop; null falls back to the stop's tagline (also covers
-  // loading/error — a stat never blocks navigation).
   const { data: habits = [] } = useHabits();
   const { data: relapses = [] } = useRelapses();
   const stats = useMemo<(string | null)[]>(() => {
     const recovery = habits.filter((h) => h.kind === 'recovery');
-    const best = recovery
-      .map((h) => daysClean(h, relapses))
-      .sort((a, b) => b - a)[0];
+    const best = recovery.map((h) => daysClean(h, relapses)).sort((a, b) => b - a)[0];
     return STOPS.map((s) =>
       s.label === 'Recovery' && best !== undefined && best > 0 ? `${best} days clean` : null
     );
@@ -68,10 +64,17 @@ export default function CourseScreen() {
     router.push(STOPS[index].route);
   };
 
-  const stopScenePos = useMemo(
-    () => stopDists.map((d) => pointAtDistance(path, d)),
-    [path, stopDists]
-  );
+  // Overview mode: tapping a flag goes straight into the section.
+  const onFlagPress = (index: number) => {
+    if (isOverview) {
+      setBallInstant(index);
+      enterStop(index);
+    } else {
+      goToStop(index);
+    }
+  };
+
+  const stopScenePos = useMemo(() => stopDists.map((d) => pointAtDistance(path, d)), [path, stopDists]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -97,20 +100,16 @@ export default function CourseScreen() {
           tx={tx}
           ty={ty}
           scale={scale}
-          active={activeStop === i}
-          onPress={() => goToStop(i)}
+          active={activeStop === i || isOverview}
           anchor={i === STOPS.length - 1 ? 'below' : 'above'}
+          onPress={() => onFlagPress(i)}
         />
       ))}
-      {activeStop != null ? (
-        <StopPreviewCard
-          stop={STOPS[activeStop]}
-          stat={stats[activeStop]}
-          onEnter={() => enterStop(activeStop)}
-        />
+      {activeStop != null && !isOverview ? (
+        <StopPreviewCard stop={STOPS[activeStop]} stat={stats[activeStop]} onEnter={() => enterStop(activeStop)} />
       ) : null}
-      <HintOverlay visible={hintVisible} />
-      <TodayCard />
+      <HintOverlay visible={hintVisible && !isOverview} />
+      {!isOverview ? <TodayCard /> : null}
       <ToggleBar active="course" />
     </View>
   );

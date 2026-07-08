@@ -21,7 +21,7 @@ import {
 } from '../../constants/hole';
 
 // DerivedValue<T> is Readonly<SharedValue<T>> — accepts both plain shared
-// values (Task 5's static camera) and derived ones (useHoleDrag's camera).
+// values (Task 5's static camera) and derived ones (useCourseNav's camera).
 type HoleSceneProps = {
   width: number; // screen px
   height: number;

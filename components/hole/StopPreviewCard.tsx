@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { HoleStop } from '../../constants/hole';
 import { useTheme } from '../../lib/theme';
+import { TOGGLE_BAR_CLEARANCE } from '../ui/ToggleBar';
 
 type StopPreviewCardProps = {
   stop: HoleStop;
@@ -24,7 +25,7 @@ export function StopPreviewCard({ stop, stat, onEnter }: StopPreviewCardProps) {
         position: 'absolute',
         left: spacing.lg,
         right: spacing.lg,
-        bottom: insets.bottom + spacing.lg,
+        bottom: insets.bottom + TOGGLE_BAR_CLEARANCE + spacing.md,
       }}
     >
       <Pressable

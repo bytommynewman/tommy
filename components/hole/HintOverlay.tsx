@@ -34,9 +34,9 @@ export function HintOverlay({ visible }: { visible: boolean }) {
           paddingHorizontal: spacing.md,
         }}
       >
-        <Ionicons name="arrow-up" size={16} color={colors.primary} />
+        <Ionicons name="chevron-up-outline" size={16} color={colors.primary} />
         <Text style={[typography.caption, { color: colors.text }]}>
-          Drag the ball down the fairway
+          Swipe up to play the hole — pinch out to see it all
         </Text>
       </View>
     </Animated.View>
