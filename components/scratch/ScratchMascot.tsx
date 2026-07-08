@@ -11,6 +11,7 @@ export function ScratchMascot({ size = 140 }: { size?: number }) {
   const green = colors.primary;
   const gold = colors.accent;
   const ink = scheme === 'dark' ? '#10130F' : '#1B1D18';
+  const shaft = scheme === 'dark' ? '#8B8E85' : ink;
 
   return (
     <Svg width={size} height={size} viewBox="0 0 200 200">
@@ -20,9 +21,9 @@ export function ScratchMascot({ size = 140 }: { size?: number }) {
       <Path d="M54 152 l26 0 l-6 40 l-14 0 z" fill={cream} stroke={ink} strokeWidth="4" />
       <Line x1="58" y1="166" x2="76" y2="166" stroke={gold} strokeWidth="4" />
       {/* club — leaning on it: grip up top, driver head resting on the ground */}
-      <Line x1="160" y1="70" x2="160" y2="184" stroke={ink} strokeWidth="7" strokeLinecap="round" />
+      <Line x1="160" y1="70" x2="160" y2="184" stroke={shaft} strokeWidth="7" strokeLinecap="round" />
       <Line x1="160" y1="58" x2="160" y2="84" stroke={gold} strokeWidth="11" strokeLinecap="round" />
-      <Path d="M160 182 q2 12 -16 12 q-14 0 -12 -10 q2 -8 14 -8 q10 0 14 6 z" fill={gold} stroke={ink} strokeWidth="4" />
+      <Path d="M160 182 q2 12 -16 12 q-14 0 -12 -10 q2 -8 14 -8 q10 0 14 6 z" fill={gold} stroke={shaft} strokeWidth="4" />
       {/* arm + hands gripping the club */}
       <Line x1="122" y1="160" x2="154" y2="112" stroke={green} strokeWidth="14" strokeLinecap="round" />
       <Circle cx="158" cy="104" r="9" fill={cream} stroke={ink} strokeWidth="4" />

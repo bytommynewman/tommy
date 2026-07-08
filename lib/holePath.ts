@@ -71,22 +71,6 @@ export function pointAtDistance(path: HolePath, d: number): Vec {
   return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
 }
 
-export function projectToPath(path: HolePath, p: Vec): number {
-  'worklet';
-  let best = 0;
-  let bestSq = Infinity;
-  for (let i = 0; i < path.pts.length; i++) {
-    const dx = path.pts[i].x - p.x;
-    const dy = path.pts[i].y - p.y;
-    const sq = dx * dx + dy * dy;
-    if (sq < bestSq) {
-      bestSq = sq;
-      best = i;
-    }
-  }
-  return path.cum[best];
-}
-
 export function nearestStop(stopDists: number[], d: number): { index: number; gap: number } {
   'worklet';
   let index = 0;

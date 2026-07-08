@@ -92,6 +92,7 @@ export function useCourseNav(screenW: number, screenH: number, opts?: { onSwipe?
     const pinch = Gesture.Pinch()
       .onStart(() => {
         pinchStart.value = scale.value;
+        runOnJS(notifySwipe)();
       })
       .onUpdate((e) => {
         scale.value = clamp(pinchStart.value * e.scale, fitScale, travelScale);

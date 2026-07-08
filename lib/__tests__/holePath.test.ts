@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildHolePath, pointAtDistance, projectToPath, nearestStop, clamp } from '../holePath';
+import { buildHolePath, pointAtDistance, nearestStop, clamp } from '../holePath';
 
 // A straight horizontal line from (0,0) to (100,0).
 const line = buildHolePath([{ x: 0, y: 0 }, { x: 100, y: 0 }]);
@@ -34,19 +34,6 @@ describe('pointAtDistance', () => {
   it('clamps beyond the end to the end', () => {
     const p = pointAtDistance(line, line.total + 50);
     expect(p.x).toBeCloseTo(100, 0);
-  });
-});
-
-describe('projectToPath', () => {
-  it('projects a point beside the line onto the nearest spot', () => {
-    const d = projectToPath(line, { x: 30, y: 25 });
-    expect(d).toBeGreaterThan(25);
-    expect(d).toBeLessThan(35);
-  });
-
-  it('projects a point past the end onto the end', () => {
-    const d = projectToPath(line, { x: 500, y: 0 });
-    expect(d).toBeCloseTo(line.total, 0);
   });
 });
 
