@@ -40,3 +40,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+.superpowers/
+
+# stitch-hole16 inspection output
+scripts/hole16-rotated.png
