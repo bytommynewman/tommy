@@ -39,6 +39,9 @@ export function useHoleDrag(
   const baseScale = (screenW / SCENE.width) * CAMERA_ZOOM;
   const ballDist = useSharedValue(0);
   const scale = useSharedValue(baseScale);
+  // Haptics stay silent until the user actually interacts — the reaction
+  // below also fires on mount and on position restore.
+  const hapticsArmed = useSharedValue(false);
 
   const ballPos = useDerivedValue(() => pointAtDistance(path, ballDist.value));
   // Camera keeps the ball horizontally centered and slightly below the
@@ -52,9 +55,9 @@ export function useHoleDrag(
 
   const [activeStop, setActiveStop] = useState<number | null>(0);
 
-  const onStopChange = useCallback((index: number) => {
+  const onStopChange = useCallback((index: number, buzz: boolean) => {
     setActiveStop(index >= 0 ? index : null);
-    if (index >= 0) Haptics.selectionAsync();
+    if (index >= 0 && buzz) Haptics.selectionAsync();
   }, []);
 
   const nearIndex = useDerivedValue(() => {
@@ -64,7 +67,7 @@ export function useHoleDrag(
   useAnimatedReaction(
     () => nearIndex.value,
     (curr, prev) => {
-      if (curr !== prev) runOnJS(onStopChange)(curr);
+      if (curr !== prev) runOnJS(onStopChange)(curr, hapticsArmed.value);
     }
   );
 
@@ -77,6 +80,7 @@ export function useHoleDrag(
     () =>
       Gesture.Pan()
         .onBegin(() => {
+          hapticsArmed.value = true;
           if (!reduceMotion) {
             scale.value = withTiming(baseScale * DRAG_ZOOM_BOOST, { duration: 250 });
           }
@@ -106,6 +110,7 @@ export function useHoleDrag(
 
   const goToStop = useCallback(
     (index: number) => {
+      hapticsArmed.value = true;
       ballDist.value = reduceMotion
         ? stopDists[index]
         : withTiming(stopDists[index], { duration: 700, easing: Easing.inOut(Easing.cubic) });
