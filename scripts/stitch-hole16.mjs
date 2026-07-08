@@ -38,19 +38,19 @@ const CONFIG = {
   latMax: 30.2005,
   lonMin: -81.3965,
   lonMax: -81.3860,
-  // Degrees clockwise. Adjust until the tee is at the bottom and the green
-  // at the top of scripts/hole16-rotated.png.
-  rotateDeg: 153,
-  // After rotation looks right, set a portrait crop (aspect between 1:2.2
-  // and 1:2.7) tightly framing the hole, e.g. { left: 600, top: 200, width: 1400, height: 3400 }.
-  // Framed on hole 16's green (water + bunkers, confirmed via OSM ref=16 tag
-  // and shape-matched against the official TPC yardage-guide diagram) with
-  // the par-5 fairway corridor threading down through trees below it. The
-  // tee complex itself sits further down/right along a wide dogleg that
-  // can't fit this portrait aspect together with the green, so the frame
-  // favors the green (hero feature) with the fairway visibly continuing
-  // downward (tee direction) rather than including the literal tee boxes.
-  crop: { left: 1830, top: 2350, width: 1000, height: 2300 },
+  // Degrees clockwise (sharp .rotate(deg) semantics: clockwise-positive,
+  // expands canvas). Derived analytically from the tee->green vector in
+  // pre-rotation pixel space and verified empirically (see task-3-report.md
+  // "Rotation fix" section): with this value the tee->green chord is
+  // vertical post-rotation (horizontal offset ~1px), green above tee.
+  rotateDeg: 206.5603251765414,
+  // Portrait crop (aspect 1:1.913, within the 1:1.8-1:2.7 range) framing
+  // the full hole: tee near the bottom (small rough margin below), green
+  // near the top (small margin beyond), full fairway/dogleg corridor, and
+  // a comfortable strip of the 16/17 lake on the right. Derived from the
+  // authoritative OSM tee/green centroids transformed through the same
+  // rotation sharp applies (see task-3-report.md "Rotation fix" section).
+  crop: { left: 2250, top: 2079, width: 1300, height: 2487 },
   outWidth: 1200,
 };
 
