@@ -1,0 +1,65 @@
+import type { Href } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import type { Vec } from '../lib/holePath';
+
+// The aerial photo's pixel dimensions — MUST match assets/hole16.webp
+// (printed by scripts/stitch-hole16.mjs). All scene math is in image px.
+export const SCENE = { width: 1200, height: 2296 };
+
+export const HOLE_IMAGE = require('../assets/hole16.webp');
+
+// Fairway centerline traced over the photo, tee (bottom) → green (top),
+// normalized 0–1. Seeded from OSM-verified tee/green/dogleg positions
+// measured in the final image. Tune with SHOW_PATH_DEBUG=true until
+// the red line hugs the fairway in the actual photo.
+const NORM_WAYPOINTS: Vec[] = [
+  { x: 0.353, y: 0.819 }, // tee boxes (OSM-verified centroid)
+  { x: 0.33, y: 0.735 },
+  { x: 0.3, y: 0.65 },
+  { x: 0.27, y: 0.565 },
+  { x: 0.25, y: 0.479 }, // dogleg elbow around the tree stand
+  { x: 0.262, y: 0.353 },
+  { x: 0.295, y: 0.227 },
+  { x: 0.347, y: 0.101 }, // green (OSM-verified centroid)
+];
+
+export const WAYPOINTS: Vec[] = NORM_WAYPOINTS.map((p) => ({
+  x: p.x * SCENE.width,
+  y: p.y * SCENE.height,
+}));
+
+export type HoleStop = {
+  frac: number; // position along the path as a fraction of total length
+  route: Href;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  tagline: string;
+};
+
+export const STOPS: HoleStop[] = [
+  { frac: 0.0, route: '/recovery', label: 'Recovery', icon: 'shield-checkmark-outline', tagline: 'Habits, streaks, staying on track' },
+  { frac: 0.27, route: '/reflect', label: 'Reflect', icon: 'book-outline', tagline: 'Journal and therapist chat' },
+  { frac: 0.52, route: '/plan', label: 'Plan', icon: 'calendar-outline', tagline: 'Calendar, goals, and content' },
+  { frac: 0.78, route: '/life', label: 'Life', icon: 'body-outline', tagline: 'Fitness and people' },
+  { frac: 1.0, route: '/invest', label: 'Invest', icon: 'trending-up-outline', tagline: 'Portfolio, watchlist, markets' },
+];
+
+export const BALL_RADIUS = 14; // scene px
+export const STOP_NEAR_THRESHOLD = 90; // scene px along the path
+export const CAMERA_ZOOM = 1.15; // scene fills 115% of screen width
+export const DRAG_ZOOM_BOOST = 1.06; // extra zoom while a drag is active
+
+// Scene rendering colors (the sanctioned exception to theme tokens — these
+// sit over a photo, not over themed UI).
+export const SCENE_COLORS = {
+  fallback: '#3E7355', // fairway green shown if the photo fails to load/decode
+  duskTint: 'rgba(10, 14, 34, 0.38)', // dark-mode twilight overlay
+  ball: '#FFFFFF',
+  ballShadow: 'rgba(0,0,0,0.45)',
+};
+
+export const LAST_STOP_KEY = 'hole.lastStop';
+export const HINT_DISMISSED_KEY = 'hole.hintDismissed';
+
+// Dev aid: draws the centerline + waypoints in red over the photo.
+export const SHOW_PATH_DEBUG = false;
