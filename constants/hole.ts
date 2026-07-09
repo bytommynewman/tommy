@@ -4,7 +4,7 @@ import type { Vec } from '../lib/holePath';
 
 // The aerial photo's pixel dimensions — MUST match assets/hole16.webp
 // (printed by scripts/stitch-hole16.mjs). All scene math is in image px.
-export const SCENE = { width: 1200, height: 2296 };
+export const SCENE = { width: 2400, height: 4591 };
 
 export const HOLE_IMAGE = require('../assets/hole16.webp');
 
@@ -45,20 +45,24 @@ export const STOPS: HoleStop[] = [
   { frac: 1.0, route: '/invest', label: 'Invest', icon: 'trending-up-outline', tagline: 'Portfolio, watchlist, markets' },
 ];
 
-export const BALL_RADIUS = 14; // scene px
 export const STOP_NEAR_THRESHOLD = 90; // scene px along the path
 export const CAMERA_ZOOM = 2.0; // scene fills 200% of screen width — the camera travels down the hole (tune on device)
 
+// Walking view (travel mode): the photo plane pitches away like a PGA-game
+// fairway camera. Tilt flattens to 0 as the pinch approaches overview fit.
+export const WALK_TILT = 0.92; // radians (~53°) at full travel zoom
+export const WALK_PERSPECTIVE = 1000; // screen px; smaller = more dramatic
+export const WALK_PIVOT_Y = 0.72; // camera standpoint as a fraction of screen height
+
 // Scene rendering colors (the sanctioned exception to theme tokens — these
-// sit over a photo, not over themed UI).
+// sit over a photo, not over themed UI). Satellite tint matches HUD_COLORS.bg.
 export const SCENE_COLORS = {
   fallback: '#3E7355', // fairway green shown if the photo fails to load/decode
-  duskTint: 'rgba(10, 14, 34, 0.38)', // dark-mode twilight overlay
-  ball: '#FFFFFF',
-  ballShadow: 'rgba(0,0,0,0.45)',
+  satelliteTint: 'rgba(7, 20, 16, 0.30)', // always-on dark feed tint (kept light so the turf reads real)
+  pathLine: '#5DCAA5', // dashed fairway line (HUD mint)
 };
 
-export const LAST_STOP_KEY = 'hole.lastStop';
+export const LAST_DIST_KEY = 'hole.lastDist'; // camera position as a 0..1 fraction
 export const HINT_DISMISSED_KEY = 'hole.hintDismissed';
 
 // Dev aid: draws the centerline + waypoints in red over the photo.

@@ -27,7 +27,8 @@ function fetchTile(url) {
 }
 
 const CONFIG = {
-  zoom: 19,
+  zoom: 20, // z20 doubles ground resolution vs z19 — needed for the tilted walking view
+
   // Bbox around TPC Sawgrass hole 16 (par 5), verified against OpenStreetMap
   // golf-course tagging (way ref=16, golf=tee/fairway/green) rather than
   // guesswork: tee centroid (30.1981,-81.39184), green bounds
@@ -50,8 +51,10 @@ const CONFIG = {
   // a comfortable strip of the 16/17 lake on the right. Derived from the
   // authoritative OSM tee/green centroids transformed through the same
   // rotation sharp applies (see task-3-report.md "Rotation fix" section).
-  crop: { left: 2250, top: 2079, width: 1300, height: 2487 },
-  outWidth: 1200,
+  // Crop coords are in post-rotation pixels and scale linearly with zoom:
+  // these are the z19 values (2250, 2079, 1300, 2487) doubled for z20.
+  crop: { left: 4500, top: 4158, width: 2600, height: 4974 },
+  outWidth: 2400,
 };
 
 const TILE = 256;

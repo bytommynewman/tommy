@@ -136,6 +136,18 @@ Replaces: gesture model, ball, stop preview card presentation.
 - **PR A:** field kit + home page. **PR B:** course page. Both branch off main
   (after PR #2 merges).
 
+## Addendum (2026-07-09, approved): walking view
+
+Tommy wants the travel mode to feel like standing on the course, "like a PGA
+video game", not a top-down map. Approved approach: a perspective tilt of the
+same photo scene (fake-3D). In travel mode the camera pitches down the hole —
+near ground large at the bottom, fairway receding toward a horizon. Pinching
+out continuously flattens the tilt to 0 as the scale approaches the overview
+fit, so the tactical overview stays a flat map. Target markers project through
+the same perspective math (shared pure helpers, unit-tested) so they stay
+pinned to their spots and shrink with distance. Constants: max tilt ~0.92 rad,
+perspective depth 1000 screen px, camera standpoint pinned at 72% screen height.
+
 ## Out of scope (future passes)
 
 - Content Creation section (separate brainstorm/spec — next project).
