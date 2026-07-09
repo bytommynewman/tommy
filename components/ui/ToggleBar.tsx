@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../lib/theme';
+import { HUD_COLORS, HUD_FONT } from '../../constants/hud';
 
 export const TOGGLE_BAR_CLEARANCE = 76; // bar height (60) + gap (16)
 
@@ -15,12 +15,11 @@ const BAR_PADDING = 5;
 type ToggleBarProps = { active: 'scratch' | 'course' };
 
 const items = [
-  { key: 'scratch' as const, label: 'SCRATCH', icon: 'sparkles' as const, route: '/' as const },
-  { key: 'course' as const, label: 'SECTIONS', icon: 'golf' as const, route: '/course' as const },
+  { key: 'scratch' as const, label: 'hq', icon: 'sparkles' as const, route: '/' as const },
+  { key: 'course' as const, label: 'course', icon: 'golf' as const, route: '/course' as const },
 ];
 
 export function ToggleBar({ active }: ToggleBarProps) {
-  const { colors, typography } = useTheme();
   const insets = useSafeAreaInsets();
   const activeIndex = active === 'scratch' ? 0 : 1;
 
@@ -38,9 +37,9 @@ export function ToggleBar({ active }: ToggleBarProps) {
           flexDirection: 'row',
           padding: BAR_PADDING,
           borderRadius: 999,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
+          backgroundColor: HUD_COLORS.panel,
+          borderWidth: 0.75,
+          borderColor: HUD_COLORS.line,
           shadowColor: '#000',
           shadowOpacity: 0.25,
           shadowRadius: 12,
@@ -57,7 +56,9 @@ export function ToggleBar({ active }: ToggleBarProps) {
               width: SEGMENT_WIDTH,
               height: 50,
               borderRadius: 999,
-              backgroundColor: colors.primary,
+              backgroundColor: HUD_COLORS.panelDeep,
+              borderWidth: 0.75,
+              borderColor: HUD_COLORS.lineBright,
             },
             indicatorStyle,
           ]}
@@ -85,8 +86,14 @@ export function ToggleBar({ active }: ToggleBarProps) {
                 gap: 8,
               }}
             >
-              <Ionicons name={item.icon} size={16} color={isActive ? colors.onPrimary : colors.textMuted} />
-              <Text style={[typography.label, { color: isActive ? colors.onPrimary : colors.textMuted }]}>
+              <Ionicons name={item.icon} size={16} color={isActive ? HUD_COLORS.mint : HUD_COLORS.mintSoft} />
+              <Text
+                style={{
+                  fontFamily: HUD_FONT,
+                  fontSize: 12,
+                  color: isActive ? HUD_COLORS.mint : HUD_COLORS.mintSoft,
+                }}
+              >
                 {item.label}
               </Text>
             </Pressable>

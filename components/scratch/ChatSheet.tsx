@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../lib/theme';
+import { HUD_COLORS, HUD_FONT, HUD_RADIUS } from '../../constants/hud';
 import { ScratchMascot } from './ScratchMascot';
 import { useScratchMessages, useSendToScratch } from '../../lib/hooks/useScratch';
 
@@ -31,7 +31,6 @@ const HELLO: ChatMessage = {
 };
 
 export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const { colors, spacing, radii, typography } = useTheme();
   const insets = useSafeAreaInsets();
   const { data: history = [] } = useScratchMessages();
   const send = useSendToScratch();
@@ -73,7 +72,7 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
         out.push({
           id: 'pending-typing',
           role: 'scratch',
-          text: 'Scratch is reading the green…',
+          text: 'scratch is reading the green…',
           variant: 'typing',
           created_at: '',
         });
@@ -134,27 +133,33 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View
             style={{
-              backgroundColor: colors.background,
-              borderTopLeftRadius: radii.lg,
-              borderTopRightRadius: radii.lg,
+              backgroundColor: HUD_COLORS.bg,
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
+              borderTopWidth: 0.75,
+              borderLeftWidth: 0.75,
+              borderRightWidth: 0.75,
+              borderColor: HUD_COLORS.lineBright,
               maxHeight: 560,
-              paddingBottom: insets.bottom + spacing.sm,
+              paddingBottom: insets.bottom + 8,
             }}
           >
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: spacing.sm,
-                padding: spacing.md,
-                borderBottomWidth: 1,
-                borderBottomColor: colors.border,
+                gap: 8,
+                padding: 12,
+                borderBottomWidth: 0.75,
+                borderBottomColor: HUD_COLORS.line,
               }}
             >
               <ScratchMascot size={40} />
-              <Text style={[typography.heading, { color: colors.text, flex: 1 }]}>Scratch</Text>
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 14, color: HUD_COLORS.text, flex: 1 }}>
+                agent scratch
+              </Text>
               <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
-                <Ionicons name="close" size={22} color={colors.textMuted} />
+                <Ionicons name="close" size={22} color={HUD_COLORS.mintSoft} />
               </Pressable>
             </View>
             <FlatList
@@ -163,7 +168,7 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
               keyExtractor={(m) => m.id}
               onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
               style={{ maxHeight: 380 }}
-              contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
+              contentContainerStyle={{ padding: 12, gap: 8 }}
               renderItem={({ item, index }) => {
                 const isNewestScratchBubble =
                   item.role === 'scratch' && !item.variant && index === messages.length - 1;
@@ -178,21 +183,22 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                         item.created_at > chipAnchor.baseline
                       ? chipAnchor.actions
                       : null;
+                const isUser = item.role === 'user';
                 return (
                   <View>
                     <View
                       style={{
-                        alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
+                        alignSelf: isUser ? 'flex-end' : 'flex-start',
                         maxWidth: '82%',
-                        backgroundColor: item.role === 'user' ? colors.primary : colors.surface,
-                        borderRadius: radii.md,
-                        borderWidth: item.role === 'user' ? 0 : 1,
-                        borderColor: colors.border,
-                        paddingVertical: spacing.sm,
-                        paddingHorizontal: spacing.md,
+                        backgroundColor: isUser ? HUD_COLORS.panelDeep : 'transparent',
+                        borderRadius: HUD_RADIUS + 2,
+                        borderWidth: 0.75,
+                        borderColor: isUser ? HUD_COLORS.lineBright : HUD_COLORS.line,
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
                       }}
                     >
-                      <Text style={[typography.body, { color: item.role === 'user' ? colors.onPrimary : colors.text }]}>
+                      <Text style={{ fontFamily: HUD_FONT, fontSize: 13, lineHeight: 20, color: HUD_COLORS.text }}>
                         {item.text}
                       </Text>
                     </View>
@@ -201,8 +207,8 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                         style={{
                           flexDirection: 'row',
                           flexWrap: 'wrap',
-                          gap: spacing.xs,
-                          marginTop: spacing.xs,
+                          gap: 4,
+                          marginTop: 4,
                           alignSelf: 'flex-start',
                         }}
                       >
@@ -210,13 +216,17 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                           <View
                             key={action}
                             style={{
-                              backgroundColor: colors.primaryMuted,
-                              borderRadius: radii.pill,
-                              paddingVertical: spacing.xs,
-                              paddingHorizontal: spacing.sm,
+                              backgroundColor: HUD_COLORS.panel,
+                              borderWidth: 0.75,
+                              borderColor: HUD_COLORS.line,
+                              borderRadius: HUD_RADIUS,
+                              paddingVertical: 4,
+                              paddingHorizontal: 8,
                             }}
                           >
-                            <Text style={[typography.caption, { color: colors.primary }]}>{`✓ ${action}`}</Text>
+                            <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint }}>
+                              {`✓ ${action}`}
+                            </Text>
                           </View>
                         ))}
                       </View>
@@ -225,27 +235,26 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                 );
               }}
             />
-            <View style={{ flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.sm }}>
+            <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingTop: 8 }}>
               <TextInput
                 value={draft}
                 onChangeText={setDraft}
                 onSubmitEditing={onSend}
-                placeholder="Ask Scratch anything…"
-                placeholderTextColor={colors.textFaint}
+                placeholder="transmit to scratch…"
+                placeholderTextColor={HUD_COLORS.mintSoft}
                 returnKeyType="send"
-                style={[
-                  typography.body,
-                  {
-                    flex: 1,
-                    color: colors.text,
-                    backgroundColor: colors.surface,
-                    borderRadius: radii.pill,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    paddingHorizontal: spacing.md,
-                    paddingVertical: spacing.sm,
-                  },
-                ]}
+                style={{
+                  flex: 1,
+                  fontFamily: HUD_FONT,
+                  fontSize: 13,
+                  color: HUD_COLORS.text,
+                  backgroundColor: HUD_COLORS.panel,
+                  borderRadius: HUD_RADIUS + 2,
+                  borderWidth: 0.75,
+                  borderColor: HUD_COLORS.line,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                }}
               />
               <Pressable
                 onPress={onSend}
@@ -254,13 +263,15 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                 style={{
                   width: 44,
                   height: 44,
-                  borderRadius: 22,
-                  backgroundColor: colors.primary,
+                  borderRadius: HUD_RADIUS + 2,
+                  backgroundColor: HUD_COLORS.panelDeep,
+                  borderWidth: 0.75,
+                  borderColor: HUD_COLORS.lineBright,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="arrow-up" size={20} color={colors.onPrimary} />
+                <Ionicons name="arrow-up" size={20} color={HUD_COLORS.mint} />
               </Pressable>
             </View>
           </View>
