@@ -231,8 +231,9 @@ git commit -m "feat: scratch-agent pure logic (context block, streaks, persona) 
 **Interfaces:**
 - Consumes: Task 2's `logic.ts`; tables `profiles`, `habits`, `habit_logs`, `relapse_incidents`, `scratch_messages`.
 - Produces (the wire contract Task 4 codes against):
-  - Request `{ mode: 'chat', text: string }` → `{ reply: string, actions: string[] }`
-  - Request `{ mode: 'brief' }` → `{ reply: string }`
+  - Both modes accept optional `today?: string` (device-local YYYY-MM-DD) and `tz_offset_minutes?: number` (the device's `Date.getTimezoneOffset()`) — used so streaks and "today" match what the app shows; missing/invalid values fall back to UTC.
+  - Request `{ mode: 'chat', text: string, today?, tz_offset_minutes? }` → `{ reply: string, actions: string[] }`
+  - Request `{ mode: 'brief', today?, tz_offset_minutes? }` → `{ reply: string }`
   - Not configured → HTTP 200 `{ error: 'not_configured' }`
   - Auth failure → HTTP 401 `{ error: 'unauthorized' }`; other failures → HTTP 500 `{ error: 'agent_failed' }`
   - Side effect in chat mode: persists the user message and assistant reply to `scratch_messages`.
@@ -291,7 +292,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const context = await loadContext(supabase);
+    const tzOffsetMinutes = Number.isFinite(Number(body.tz_offset_minutes)) ? Number(body.tz_offset_minutes) : 0;
+    const clientToday =
+      typeof body.today === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.today) ? body.today : undefined;
+    const context = await loadContext(supabase, clientToday, tzOffsetMinutes);
     const system = `${SCRATCH_SYSTEM}\n\n<user_context>\n${buildContextBlock(context)}\n</user_context>`;
 
     if (body.mode === 'brief') {
@@ -348,8 +352,8 @@ function textOf(response: Anthropic.Message): string {
 }
 
 // deno-lint-ignore no-explicit-any
-async function loadContext(supabase: any): Promise<ScratchContext> {
-  const today = new Date().toISOString().slice(0, 10);
+async function loadContext(supabase: any, todayOverride?: string, tzOffsetMinutes = 0): Promise<ScratchContext> {
+  const today = todayOverride ?? new Date().toISOString().slice(0, 10);
   const [{ data: profile }, { data: habits }, { data: logs }, { data: relapses }] = await Promise.all([
     supabase.from('profiles').select('display_name').maybeSingle(),
     supabase.from('habits').select('id, name, kind, created_at'),
@@ -371,7 +375,8 @@ async function loadContext(supabase: any): Promise<ScratchContext> {
               h.created_at,
               (relapses ?? [])
                 .filter((r: { habit_id: string }) => r.habit_id === h.id)
-                .map((r: { occurred_at: string }) => r.occurred_at)
+                .map((r: { occurred_at: string }) => r.occurred_at),
+              tzOffsetMinutes
             )
           : null,
     })
@@ -573,6 +578,7 @@ git commit -m "feat: scratch-agent edge function — Claude tool loop over user 
 
 ```ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { format } from 'date-fns';
 import { supabase } from '../supabase';
 import type { ScratchMessage } from '../../types/database.types';
 
@@ -589,9 +595,19 @@ export async function fetchScratchMessages(): Promise<ScratchMessage[]> {
   return (data ?? []).reverse();
 }
 
+// Streaks and "today" are device-local concepts — send the device's date and
+// timezone offset so the agent's numbers match what the app displays.
+function localizedBody(extra: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...extra,
+    today: format(new Date(), 'yyyy-MM-dd'),
+    tz_offset_minutes: new Date().getTimezoneOffset(),
+  };
+}
+
 export async function sendToScratch(text: string): Promise<ScratchReply | ScratchFailure> {
   const { data, error } = await supabase.functions.invoke('scratch-agent', {
-    body: { mode: 'chat', text },
+    body: localizedBody({ mode: 'chat', text }),
   });
   if (error) return { error: 'agent_failed' };
   return data as ScratchReply | ScratchFailure;
@@ -610,7 +626,7 @@ export async function fetchDailyRead(): Promise<{ reply: string } | null> {
   } catch {
     // fall through to a fresh fetch
   }
-  const { data, error } = await supabase.functions.invoke('scratch-agent', { body: { mode: 'brief' } });
+  const { data, error } = await supabase.functions.invoke('scratch-agent', { body: localizedBody({ mode: 'brief' }) });
   if (error || !data || typeof data.reply !== 'string') return null;
   AsyncStorage.setItem(DAILY_READ_KEY, JSON.stringify({ day: today, reply: data.reply })).catch(() => {});
   return { reply: data.reply };
