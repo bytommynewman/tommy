@@ -26,6 +26,8 @@ Type-check with `npx tsc --noEmit` (strict mode is on via `tsconfig.json`).
 
 Database changes are plain SQL files under `supabase/migrations/`, applied manually by pasting into the Supabase Studio SQL Editor (or `supabase db push` if the CLI is linked) — there is no migration runner invoked from this repo.
 
+Edge functions live in supabase/functions/ (Deno; deployed with supabase functions deploy <name> — see DEPLOY-SCRATCH.md). Their index.ts files are excluded from the app tsconfig; pure logic files (e.g. scratch-agent/logic.ts) are plain TS and covered by vitest.
+
 ## Environment
 
 Copy `.env.example` to `.env`: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` (Supabase Project Settings → API). Any secret used server-side (Anthropic key for the therapist chat, Finnhub key for market data, SnapTrade keys for brokerage sync) is set as a **Supabase Edge Function secret**, never as an `EXPO_PUBLIC_*` var or in the app bundle.
@@ -48,5 +50,7 @@ New domains (journal, goals, fitness, etc.) should follow this same `api/` → `
 **Types** — `types/database.types.ts` is currently hand-written to mirror the SQL migrations (a comment at the top notes it should eventually be regenerated with `npx supabase gen types typescript`). When a migration changes the schema, update this file in the same change so types and schema don't drift.
 
 **Database/RLS** — every table has `user_id` and row-level security scoped to `auth.uid() = user_id`; `habits`/`habit_logs`/`relapse_incidents` default `user_id` server-side via `default auth.uid()`. `updated_at` columns are maintained by a shared `set_updated_at()` trigger rather than app code. New tables should follow this same RLS + trigger convention. `profiles` rows are auto-created via a trigger (`handle_new_user`) on `auth.users` insert, so app code should never need to handle a "missing profile" case for a valid session.
+
+**Scratch agent** — supabase/functions/scratch-agent is a Claude tool-use loop (model constant claude-opus-4-8) over the caller's own data: the client is constructed with the caller's JWT so every read/write is RLS-scoped. Tools: upsert_habit_log, create_habit, log_relapse, list_recent_logs. Chat history persists in scratch_messages (migration 0003). The app calls it only through lib/api/scratch.ts → lib/hooks/useScratch.ts; ANTHROPIC_API_KEY exists only as an edge-function secret, and every Scratch surface degrades gracefully when it's unset.
 
 **Business logic helpers** — pure functions like `lib/streaks.ts` (`buildStreak`, `daysClean`) take already-fetched data (habits/logs/relapses) and compute derived values; keep this kind of logic out of components and out of the query hooks so it stays testable in isolation.
