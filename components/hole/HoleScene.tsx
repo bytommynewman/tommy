@@ -1,16 +1,14 @@
 import React, { useEffect, useMemo } from 'react';
 import {
   Canvas,
+  ColorMatrix,
   DashPathEffect,
   Fill,
   Group,
   Image as SkiaImage,
-  LinearGradient,
   Path as SkiaPath,
-  Rect,
   Skia,
   useImage,
-  vec,
 } from '@shopify/react-native-skia';
 import {
   cancelAnimation,
@@ -29,7 +27,6 @@ import {
   SCENE_COLORS,
   SHOW_PATH_DEBUG,
   WALK_PERSPECTIVE,
-  WALK_TILT,
 } from '../../constants/hole';
 
 type HoleSceneProps = {
@@ -43,8 +40,19 @@ type HoleSceneProps = {
   path: HolePath;
 };
 
-const DASH_ON = 16;
-const DASH_OFF = 12;
+// Dash pattern is in scene px; the z20 photo doubled scene resolution, so
+// these are 2x the old values to keep the same on-screen rhythm.
+const DASH_ON = 32;
+const DASH_OFF = 24;
+
+// Mild saturation boost (~1.25x) so the treated turf still reads vivid
+// through the satellite tint. Standard luminance-preserving saturation matrix.
+const TURF_SATURATION = [
+  1.19675, -0.17875, -0.018, 0, 0,
+  -0.05325, 1.07125, -0.018, 0, 0,
+  -0.05325, -0.17875, 1.232, 0, 0,
+  0, 0, 0, 1, 0,
+];
 
 export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: HoleSceneProps) {
   const image = useImage(HOLE_IMAGE);
@@ -62,9 +70,6 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
     { perspective: WALK_PERSPECTIVE },
     { rotateX: tilt.value },
   ]);
-  // Distance haze: fades the far ground into the dark like real atmosphere.
-  // Screen-space, tied to the tilt so the flat overview stays haze-free.
-  const hazeOpacity = useDerivedValue(() => tilt.value / WALK_TILT);
 
   const skPath = useMemo(() => {
     const p = Skia.Path.Make();
@@ -89,18 +94,20 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
       {image ? (
         <Group transform={perspectiveTransform} origin={{ x: width / 2, y: pivotY }}>
           <Group transform={transform}>
-            <SkiaImage image={image} x={0} y={0} width={SCENE.width} height={SCENE.height} fit="fill" />
+            <SkiaImage image={image} x={0} y={0} width={SCENE.width} height={SCENE.height} fit="fill">
+              <ColorMatrix matrix={TURF_SATURATION} />
+            </SkiaImage>
             <SkiaPath
               path={skPath}
               color={SCENE_COLORS.pathLine}
               style="stroke"
-              strokeWidth={4}
+              strokeWidth={8}
               opacity={0.85}
             >
               <DashPathEffect intervals={[DASH_ON, DASH_OFF]} phase={dashPhase} />
             </SkiaPath>
             {SHOW_PATH_DEBUG ? (
-              <SkiaPath path={skPath} color="red" style="stroke" strokeWidth={2} />
+              <SkiaPath path={skPath} color="red" style="stroke" strokeWidth={4} />
             ) : null}
           </Group>
         </Group>
@@ -110,16 +117,6 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
         <Fill color={SCENE_COLORS.fallback} />
       )}
       <Fill color={SCENE_COLORS.satelliteTint} />
-      <Group opacity={hazeOpacity}>
-        <Rect x={0} y={0} width={width} height={height * 0.4}>
-          <LinearGradient
-            start={vec(0, 0)}
-            end={vec(0, height * 0.4)}
-            colors={['rgba(7, 20, 16, 0.96)', 'rgba(10, 26, 20, 0.55)', 'rgba(10, 26, 20, 0)']}
-            positions={[0, 0.35, 1]}
-          />
-        </Rect>
-      </Group>
     </Canvas>
   );
 }

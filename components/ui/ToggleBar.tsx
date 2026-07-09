@@ -15,8 +15,8 @@ const BAR_PADDING = 5;
 type ToggleBarProps = { active: 'scratch' | 'course' };
 
 const items = [
-  { key: 'scratch' as const, label: 'hq', icon: 'sparkles' as const, route: '/' as const },
-  { key: 'course' as const, label: 'course', icon: 'golf' as const, route: '/course' as const },
+  { key: 'scratch' as const, label: 'Scratch AI', icon: 'sparkles' as const, route: '/' as const },
+  { key: 'course' as const, label: 'Sections', icon: 'golf' as const, route: '/course' as const },
 ];
 
 export function ToggleBar({ active }: ToggleBarProps) {

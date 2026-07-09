@@ -52,8 +52,11 @@ const CONFIG = {
   // authoritative OSM tee/green centroids transformed through the same
   // rotation sharp applies (see task-3-report.md "Rotation fix" section).
   // Crop coords are in post-rotation pixels and scale linearly with zoom:
-  // these are the z19 values (2250, 2079, 1300, 2487) doubled for z20.
-  crop: { left: 4500, top: 4158, width: 2600, height: 4974 },
+  // left/width are the z19 values (2250, 1300) doubled for z20. The top was
+  // raised 4158 -> 3000 to keep ~450m of grounds beyond the green in frame —
+  // the walking view's tilted camera looks past the green, and this imagery
+  // is what fills that distance instead of black.
+  crop: { left: 4500, top: 3000, width: 2600, height: 6132 },
   outWidth: 2400,
 };
 
