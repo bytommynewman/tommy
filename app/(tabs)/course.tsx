@@ -99,7 +99,7 @@ export default function CourseScreen() {
           toggleOverview();
         }}
       />
-      {subOpen ? <SubPanel onSelect={openContent} /> : null}
+      {subOpen ? <SubPanel onSelect={openContent} onClose={closeSub} /> : null}
       <HintOverlay visible={hintVisible && !isOverview} />
       <ToggleBar active="course" />
     </View>
