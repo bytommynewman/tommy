@@ -81,7 +81,7 @@ export function TargetMarker({
             shadowOffset: { width: 0, height: 0 },
           }}
         >
-          <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: color }} />
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 13, color }}>{index + 1}</Text>
         </View>
         <View
           style={{

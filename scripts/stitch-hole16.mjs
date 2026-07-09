@@ -56,7 +56,10 @@ const CONFIG = {
   // raised 4158 -> 3000 to keep ~450m of grounds beyond the green in frame —
   // the walking view's tilted camera looks past the green, and this imagery
   // is what fills that distance instead of black.
-  crop: { left: 4500, top: 3000, width: 2600, height: 6132 },
+  // ...and the bottom extended (height 6132 -> 7000) for grounds BEHIND the
+  // tee, so the walking camera can frame hole 1 mid-screen on open without
+  // running off the photo's bottom edge.
+  crop: { left: 4500, top: 3000, width: 2600, height: 7000 },
   outWidth: 2400,
 };
 

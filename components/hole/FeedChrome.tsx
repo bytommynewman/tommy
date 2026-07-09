@@ -92,17 +92,65 @@ export function FeedChrome({
         </View>
       </View>
       {isOverview ? (
-        <View style={[plate, { position: 'absolute', left: 16, bottom: insets.bottom + 110, paddingVertical: 6 }]}>
+        <View
+          style={[
+            plate,
+            {
+              position: 'absolute',
+              left: 16,
+              bottom: insets.bottom + 110,
+              paddingVertical: 0,
+              paddingHorizontal: 0,
+              borderColor: HUD_COLORS.lineBright,
+              overflow: 'hidden',
+              minWidth: 150,
+            },
+          ]}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              paddingHorizontal: 10,
+              paddingVertical: 6,
+              borderBottomWidth: 0.75,
+              borderBottomColor: HUD_COLORS.line,
+            }}
+          >
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.text }}>scorecard</Text>
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft }}>front 5</Text>
+          </View>
           {STOPS.map((stop, i) => (
             <Pressable
               key={stop.label}
               onPress={() => onLegendPress(i)}
               accessibilityRole="button"
               accessibilityLabel={`Enter ${stop.label}`}
-              style={{ paddingVertical: 3 }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderBottomWidth: i < STOPS.length - 1 ? 0.75 : 0,
+                borderBottomColor: HUD_COLORS.line,
+              }}
             >
-              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft }}>
-                {`${i + 1} ${stop.label.toLowerCase()}`}
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderWidth: 0.75,
+                  borderColor: HUD_COLORS.mint,
+                  borderRadius: 2,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mint }}>{i + 1}</Text>
+              </View>
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.text }}>
+                {stop.label.toLowerCase()}
               </Text>
             </Pressable>
           ))}

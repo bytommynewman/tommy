@@ -63,24 +63,35 @@ export function useSatelliteNav(
   const tilt = useDerivedValue(() => tiltFor(scale.value, travelScale, fitScale, WALK_TILT));
   const pivotY = screenH * WALK_PIVOT_Y;
 
-  const tx = useDerivedValue(() =>
-    overviewNow.value
-      ? centerOffset(screenW, bounds.x, bounds.w, scale.value)
-      : cameraOffset(screenW, SCENE.width * scale.value, screenW / 2 - camPos.value.x * scale.value)
-  );
+  // 0 at full travel zoom, 1 at the overview fit. Framing BLENDS between the
+  // walk (camera at the pivot) and the whole-hole frame along this progress,
+  // so zooming out is one continuous glide — no mid-zoom view jump.
+  const overviewProgress = useDerivedValue(() => {
+    const span = travelScale - fitScale;
+    if (Math.abs(span) < 1e-9) return 0;
+    return clamp((travelScale - scale.value) / span, 0, 1);
+  });
+
+  const tx = useDerivedValue(() => {
+    const walk = cameraOffset(screenW, SCENE.width * scale.value, screenW / 2 - camPos.value.x * scale.value);
+    const whole = centerOffset(screenW, bounds.x, bounds.w, scale.value);
+    const p = overviewProgress.value;
+    return walk * (1 - p) + whole * p;
+  });
   // In travel mode the camera "stands" at the walking pivot; the tilt pitches
   // the plane about that same line so your position stays under your feet.
   // The extra Math.min keeps the tilted view from ever looking past the
-  // photo's top edge: near the green the world stops scrolling and the last
-  // markers ride up the screen instead — real imagery on every pixel.
+  // photo's top edge — real imagery on every pixel.
   const ty = useDerivedValue(() => {
-    if (overviewNow.value) return centerOffset(screenH, bounds.y, bounds.h, scale.value);
     const flat = cameraOffset(
       screenH,
       SCENE.height * scale.value,
       pivotY - camPos.value.y * scale.value
     );
-    return Math.min(flat, pivotY - visibleAboveFlat(pivotY, tilt.value, WALK_PERSPECTIVE));
+    const walk = Math.min(flat, pivotY - visibleAboveFlat(pivotY, tilt.value, WALK_PERSPECTIVE));
+    const whole = centerOffset(screenH, bounds.y, bounds.h, scale.value);
+    const p = overviewProgress.value;
+    return walk * (1 - p) + whole * p;
   });
 
   const [activeStop, setActiveStop] = useState<number | null>(0);
