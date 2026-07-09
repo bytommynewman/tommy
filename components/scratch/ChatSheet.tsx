@@ -20,12 +20,14 @@ type ChatMessage = {
   role: 'user' | 'scratch';
   text: string;
   variant?: 'setup' | 'error' | 'typing';
+  created_at: string;
 };
 
 const HELLO: ChatMessage = {
   id: 'hello',
   role: 'scratch',
   text: "What's the play? Ask me anything — habits, streaks, the whole card.",
+  created_at: '',
 };
 
 export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
@@ -33,19 +35,22 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
   const insets = useSafeAreaInsets();
   const { data: history = [] } = useScratchMessages();
   const send = useSendToScratch();
-  const [exchange, setExchange] = useState<{ text: string; reply?: string; actions?: string[] } | null>(null);
+  const [exchange, setExchange] = useState<
+    { text: string; reply?: string; actions?: string[]; baseline: string } | null
+  >(null);
+  const [chipAnchor, setChipAnchor] = useState<{ reply: string; actions: string[]; baseline: string } | null>(null);
   const [lastError, setLastError] = useState<'not_configured' | 'failed' | null>(null);
   const [draft, setDraft] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  const lastActions =
-    send.data && 'actions' in send.data && send.data.actions.length > 0 ? send.data.actions : null;
-
-  // Once the history refetch lands with the reply we already showed optimistically,
+  // Once the history refetch lands with the reply we already showed optimistically
+  // (and it's a fresh row, not some older row that happens to repeat the same text),
   // drop the in-flight exchange so the server-backed rows take over.
   useEffect(() => {
     if (!exchange?.reply) return;
-    const covered = history.some((row) => row.role !== 'user' && row.content === exchange.reply);
+    const covered = history.some(
+      (row) => row.role !== 'user' && row.content === exchange.reply && row.created_at > exchange.baseline
+    );
     if (covered) setExchange(null);
   }, [history, exchange]);
 
@@ -56,15 +61,22 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
             id: row.id,
             role: row.role === 'user' ? 'user' : 'scratch',
             text: row.content,
+            created_at: row.created_at,
           }))
         : [HELLO];
     const out = [...base];
     if (exchange) {
-      out.push({ id: 'pending-user', role: 'user', text: exchange.text });
+      out.push({ id: 'pending-user', role: 'user', text: exchange.text, created_at: '' });
       if (exchange.reply) {
-        out.push({ id: 'pending-reply', role: 'scratch', text: exchange.reply });
+        out.push({ id: 'pending-reply', role: 'scratch', text: exchange.reply, created_at: '' });
       } else {
-        out.push({ id: 'pending-typing', role: 'scratch', text: 'Scratch is reading the green…', variant: 'typing' });
+        out.push({
+          id: 'pending-typing',
+          role: 'scratch',
+          text: 'Scratch is reading the green…',
+          variant: 'typing',
+          created_at: '',
+        });
       }
     } else if (lastError === 'not_configured') {
       out.push({
@@ -73,6 +85,7 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
         text:
           "My brain isn't hooked up yet. Add your Anthropic API key to Supabase (see DEPLOY-SCRATCH.md in the project) and I'm ready to caddie.",
         variant: 'setup',
+        created_at: '',
       });
     } else if (lastError === 'failed') {
       out.push({
@@ -80,6 +93,7 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
         role: 'scratch',
         text: 'Shanked that one — give it another swing.',
         variant: 'error',
+        created_at: '',
       });
     }
     return out;
@@ -90,7 +104,9 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
     if (!text || send.isPending) return;
     setDraft('');
     setLastError(null);
-    setExchange({ text });
+    setChipAnchor(null);
+    const baseline = history[history.length - 1]?.created_at ?? '';
+    setExchange({ text, baseline });
     send.mutate(text, {
       onSuccess: (result) => {
         if ('error' in result) {
@@ -98,10 +114,14 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
           setLastError(result.error === 'not_configured' ? 'not_configured' : 'failed');
         } else {
           setExchange((prev) => (prev ? { ...prev, reply: result.reply, actions: result.actions } : prev));
+          if (result.actions.length > 0) {
+            setChipAnchor({ reply: result.reply, actions: result.actions, baseline });
+          }
         }
       },
       onError: () => {
         setExchange(null);
+        setChipAnchor(null);
         setLastError('failed');
       },
     });
@@ -152,8 +172,11 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                     ? exchange?.actions && exchange.actions.length > 0
                       ? exchange.actions
                       : null
-                    : isNewestScratchBubble && lastActions && send.data && 'reply' in send.data && item.text === send.data.reply
-                      ? lastActions
+                    : isNewestScratchBubble &&
+                        chipAnchor &&
+                        item.text === chipAnchor.reply &&
+                        item.created_at > chipAnchor.baseline
+                      ? chipAnchor.actions
                       : null;
                 return (
                   <View>
