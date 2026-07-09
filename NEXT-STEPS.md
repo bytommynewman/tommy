@@ -94,9 +94,21 @@ The Ideas tab needs its database table and its brain deployed:
 
 Then in the app: course → hole 6 (content) → ideas → "radio scratch for ideas".
 
+## 6. Turn on the live market feed (1 step)
+
+Invest → Market pulls the five majors live. Deploy its function in Terminal:
+```
+cd ~/Desktop/coding-projects/my-first-project
+supabase functions deploy market-data
+```
+
+## 7. Connect Wealthsimple (when you're ready)
+
+Follow `CONNECT-WEALTHSIMPLE.md` — a ~10 minute SnapTrade signup on your
+side, then Claude builds the portfolio sync.
+
 ## After that
 
-- Content slice 2: the AI edit director (editor tab goes live).
 - Content slice 3: Instagram stats — you'll get CONNECT-INSTAGRAM.md, a
   click-by-click guide for the Meta/Instagram developer setup.
 - Then: individual section design passes (Recovery, Reflect, Plan, Life,
