@@ -4,13 +4,21 @@ import { daysCleanFrom, buildContextBlock, SCRATCH_SYSTEM } from '../../supabase
 describe('daysCleanFrom', () => {
   const now = new Date('2026-07-08T15:00:00Z');
   it('counts days since creation when there are no relapses', () => {
-    expect(daysCleanFrom('2026-07-01T10:00:00Z', [], now)).toBe(7);
+    expect(daysCleanFrom('2026-07-01T10:00:00Z', [], 0, now)).toBe(7);
   });
   it('counts from the most recent relapse', () => {
-    expect(daysCleanFrom('2026-06-01T10:00:00Z', ['2026-07-05T23:00:00Z', '2026-06-20T08:00:00Z'], now)).toBe(3);
+    expect(daysCleanFrom('2026-06-01T10:00:00Z', ['2026-07-05T23:00:00Z', '2026-06-20T08:00:00Z'], 0, now)).toBe(3);
   });
   it('returns 0 for a same-day relapse', () => {
-    expect(daysCleanFrom('2026-06-01T10:00:00Z', ['2026-07-08T09:00:00Z'], now)).toBe(0);
+    expect(daysCleanFrom('2026-06-01T10:00:00Z', ['2026-07-08T09:00:00Z'], 0, now)).toBe(0);
+  });
+  it('matches the device local-day boundary, not the UTC boundary', () => {
+    // Created 23:00Z July 8, asked 01:00Z July 9. In New York (offset 300 min
+    // behind UTC in winter terms) both instants are still July 8 locally → 0.
+    const lateNow = new Date('2026-07-09T01:00:00Z');
+    expect(daysCleanFrom('2026-07-08T23:00:00Z', [], 300, lateNow)).toBe(0);
+    // At UTC (offset 0) the boundary WAS crossed → 1.
+    expect(daysCleanFrom('2026-07-08T23:00:00Z', [], 0, lateNow)).toBe(1);
   });
 });
 

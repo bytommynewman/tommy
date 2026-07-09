@@ -9,24 +9,28 @@ export type ScratchContext = {
   remainingToday: string[];
 };
 
-// Mirrors lib/streaks.ts daysClean semantics: calendar days since the later of
-// habit creation and the most recent relapse, using UTC-day boundaries.
-export function daysCleanFrom(createdAt: string, relapseTimes: string[], now: Date = new Date()): number {
-  let since = new Date(createdAt);
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Mirrors lib/streaks.ts daysClean semantics (local calendar days on the
+// user's device): tzOffsetMinutes is the device's Date.getTimezoneOffset()
+// (minutes behind UTC, positive in the Americas). Days are counted as
+// local-calendar-day boundaries crossed since the later of habit creation
+// and the most recent relapse. A fixed offset ignores DST transitions inside
+// the window — off by at most an hour's boundary shift, acceptable here.
+export function daysCleanFrom(
+  createdAt: string,
+  relapseTimes: string[],
+  tzOffsetMinutes = 0,
+  now: Date = new Date()
+): number {
+  let since = new Date(createdAt).getTime();
   for (const t of relapseTimes) {
-    const ms = new Date(t);
+    const ms = new Date(t).getTime();
     if (ms > since) since = ms;
   }
-
-  // Count calendar day boundaries (UTC): difference in calendar days.
-  // Extract year, month, day in UTC for each date.
-  const sinceUTC = new Date(since.toISOString());
-  const nowUTC = new Date(now.toISOString());
-
-  const sinceDays = Math.floor(sinceUTC.getTime() / (24 * 60 * 60 * 1000));
-  const nowDays = Math.floor(nowUTC.getTime() / (24 * 60 * 60 * 1000));
-
-  return Math.max(0, nowDays - sinceDays);
+  const localDayIndex = (ms: number) => Math.floor((ms - tzOffsetMinutes * 60_000) / DAY_MS);
+  const days = localDayIndex(now.getTime()) - localDayIndex(since);
+  return days < 0 ? 0 : days;
 }
 
 export function buildContextBlock(ctx: ScratchContext): string {
