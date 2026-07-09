@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { buildContextBlock, daysCleanFrom, SCRATCH_SYSTEM, type ScratchContext } from './logic.ts';
 
-const MODEL = 'claude-opus-4-8'; // the one sanctioned cost/quality knob
+const MODEL = 'claude-sonnet-5'; // the one sanctioned cost/quality knob
 const MAX_TOOL_ITERATIONS = 6;
 const HISTORY_LIMIT = 30;
 

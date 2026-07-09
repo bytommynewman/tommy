@@ -44,3 +44,6 @@ yarn-error.*
 
 # stitch-hole16 inspection output
 scripts/hole16-rotated.png
+
+# supabase CLI local state
+supabase/.temp/
