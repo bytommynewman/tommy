@@ -179,14 +179,15 @@ export function useSatelliteNav(
   );
 
   // One-tap alternative to pinching: glide between the walk and the full-hole
-  // overview. The tilt lays down/stands up automatically via tiltFor(scale).
+  // overview. Reads the live scale (not React state, which can lag a frame)
+  // so rapid taps always toggle from where the camera actually is.
   const toggleOverview = useCallback(() => {
-    const target = isOverview ? travelScale : fitScale;
+    const target = isOverviewZoom(scale.value, travelScale, fitScale) ? travelScale : fitScale;
     scale.value = reduceMotion
       ? target
       : withTiming(target, { duration: 450, easing: Easing.inOut(Easing.cubic) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOverview, travelScale, fitScale, reduceMotion]);
+  }, [travelScale, fitScale, reduceMotion]);
 
   // Glide the camera along the fairway to a section (scorecard-row taps).
   // From the overview it also zooms back into the walk, arriving on the

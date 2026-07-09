@@ -60,7 +60,9 @@ const CONFIG = {
   // tee, so the walking camera can frame hole 1 mid-screen on open without
   // running off the photo's bottom edge.
   crop: { left: 4500, top: 3000, width: 2600, height: 7000 },
-  outWidth: 2400,
+  // 1600 balances sharpness against decoded-texture memory: 2400 made the
+  // Skia walking view stutter on-device (~60MB RGBA).
+  outWidth: 1600,
 };
 
 const TILE = 256;

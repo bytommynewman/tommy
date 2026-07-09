@@ -48,7 +48,9 @@ export function TargetMarker({
       transform: [
         { translateX: screenW / 2 + p.x - WIDTH / 2 },
         { translateY: pivotY + p.y - RING / 2 },
-        { scale: withSpring(depth * (active ? 1.12 : 1), { damping: 20, stiffness: 120 }) },
+        // Direct scale, no spring: respringing every camera frame churned the
+        // animator and read as jitter during drags and zooms.
+        { scale: depth * (active ? 1.12 : 1) },
       ],
     };
   });

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Canvas,
   ColorMatrix,
@@ -12,16 +12,7 @@ import {
   Skia,
   useImage,
 } from '@shopify/react-native-skia';
-import {
-  cancelAnimation,
-  Easing,
-  useDerivedValue,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  type DerivedValue,
-} from 'react-native-reanimated';
+import { useDerivedValue, type DerivedValue } from 'react-native-reanimated';
 import type { HolePath } from '../../lib/holePath';
 import {
   HOLE_IMAGE,
@@ -42,10 +33,9 @@ type HoleSceneProps = {
   path: HolePath;
 };
 
-// Dash pattern is in scene px; the z20 photo doubled scene resolution, so
-// these are 2x the old values to keep the same on-screen rhythm.
-const DASH_ON = 32;
-const DASH_OFF = 24;
+// Dash pattern in scene px, tuned for the 1600px-wide scene.
+const DASH_ON = 22;
+const DASH_OFF = 16;
 
 // Mild saturation boost (~1.25x) so the treated turf still reads vivid
 // through the satellite tint. Standard luminance-preserving saturation matrix.
@@ -58,7 +48,6 @@ const TURF_SATURATION = [
 
 export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: HoleSceneProps) {
   const image = useImage(HOLE_IMAGE);
-  const reduceMotion = useReducedMotion();
 
   const transform = useDerivedValue(() => [
     { translateX: tx.value },
@@ -80,16 +69,8 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
     return p;
   }, [path]);
 
-  // Slow dash crawl so the feed reads "live"; static under reduced motion.
-  const dashPhase = useSharedValue(0);
-  useEffect(() => {
-    if (reduceMotion) return;
-    dashPhase.value = withRepeat(
-      withTiming(-(DASH_ON + DASH_OFF), { duration: 1200, easing: Easing.linear }),
-      -1
-    );
-    return () => cancelAnimation(dashPhase);
-  }, [reduceMotion, dashPhase]);
+  // Dashes are static: the crawl animation forced a full-canvas redraw every
+  // frame even when idle, costing real GPU on-device for a subtle effect.
 
   return (
     <Canvas style={{ width, height }}>
@@ -114,7 +95,7 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
               strokeWidth={8}
               opacity={0.85}
             >
-              <DashPathEffect intervals={[DASH_ON, DASH_OFF]} phase={dashPhase} />
+              <DashPathEffect intervals={[DASH_ON, DASH_OFF]} phase={0} />
             </SkiaPath>
             {SHOW_PATH_DEBUG ? (
               <SkiaPath path={skPath} color="red" style="stroke" strokeWidth={4} />

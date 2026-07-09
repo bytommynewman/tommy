@@ -4,7 +4,10 @@ import type { Vec } from '../lib/holePath';
 
 // The aerial photo's pixel dimensions — MUST match assets/hole16.webp
 // (printed by scripts/stitch-hole16.mjs). All scene math is in image px.
-export const SCENE = { width: 2400, height: 6462 };
+// 1600px wide: the sweet spot — still ~1.8x the original detail, but the
+// decoded texture is ~2.4x lighter than the 2400px version that made the
+// walking view stutter on-device. Set by outWidth in scripts/stitch-hole16.mjs.
+export const SCENE = { width: 1600, height: 4308 };
 
 export const HOLE_IMAGE = require('../assets/hole16.webp');
 
