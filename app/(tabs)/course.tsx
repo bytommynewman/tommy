@@ -36,19 +36,37 @@ export default function CourseScreen() {
 
   // Content (hole 6) fans open a sub-panel instead of navigating directly.
   const [subOpen, setSubOpen] = useState(false);
+  const subOpenedAt = useRef(0);
   const closeSub = useCallback(() => setSubOpen(false), []);
+
+  // While the camera flies to a tapped section, keep THAT section selected
+  // instead of flickering through every hole it passes.
+  const [pendingStop, setPendingStop] = useState<number | null>(null);
+
   const onInteract = useCallback(() => {
     dismissHint();
-    setSubOpen(false);
+    setPendingStop(null);
+    // The tap that opens the panel also twitches the pan gesture — ignore
+    // gesture noise for a beat after opening so the panel doesn't flicker.
+    if (Date.now() - subOpenedAt.current > 400) setSubOpen(false);
   }, [dismissHint]);
 
   // Every visit starts at hole 1 — the tee — and you walk up from there.
   const { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant, toggleOverview, goToStop } =
     useSatelliteNav(width, height, { onInteract });
 
+  // Once the flight arrives, hand the highlight back to the live camera.
+  useEffect(() => {
+    if (pendingStop != null && activeStop === pendingStop) setPendingStop(null);
+  }, [activeStop, pendingStop]);
+  const focusStop = pendingStop ?? activeStop;
+
   const enterStop = (index: number) => {
     if (STOPS[index].route === '/content') {
-      setSubOpen((open) => !open);
+      setSubOpen((open) => {
+        if (!open) subOpenedAt.current = Date.now();
+        return !open;
+      });
       return;
     }
     setSubOpen(false);
@@ -83,15 +101,16 @@ export default function CourseScreen() {
           tilt={tilt}
           pivotY={pivotY}
           screenW={width}
-          active={activeStop === i || isOverview}
+          active={focusStop === i || isOverview}
           onPress={() => enterStop(i)}
         />
       ))}
       <FeedChrome
         isOverview={isOverview}
-        activeStop={activeStop}
+        activeStop={focusStop}
         onLegendPress={(i) => {
           closeSub();
+          setPendingStop(i);
           goToStop(i);
         }}
         onToggleOverview={() => {

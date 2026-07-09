@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS } from '../../constants/hud';
 
@@ -30,7 +30,7 @@ export function SubPanel({
         accessibilityLabel="Close content panel"
         style={{ flex: 1, backgroundColor: 'rgba(2, 8, 6, 0.7)', alignItems: 'center', justifyContent: 'center' }}
       >
-        <Animated.View entering={ZoomIn.duration(180).springify().damping(18)}>
+        <View>
           {/* Stop presses inside the card from bubbling to the scrim. */}
           <Pressable onPress={() => {}} style={{ width: 300 }}>
             <View
@@ -109,7 +109,7 @@ export function SubPanel({
               ))}
             </View>
           </Pressable>
-        </Animated.View>
+        </View>
       </Pressable>
     </Animated.View>
   );
