@@ -5,6 +5,7 @@
 export type HabitKind = 'build' | 'recovery';
 export type HabitTargetType = 'boolean' | 'count' | 'duration' | 'abstinence';
 export type HabitLogStatus = 'done' | 'skipped' | 'partial';
+export type ScratchRole = 'user' | 'assistant';
 
 export type Habit = {
   id: string;
@@ -48,6 +49,19 @@ export type RelapseIncident = {
   updated_at: string;
 };
 
+export type ScratchMessage = {
+  id: string;
+  user_id: string;
+  role: ScratchRole;
+  content: string;
+  created_at: string;
+};
+
+export type ScratchMessageInsert = {
+  role: ScratchRole;
+  content: string;
+};
+
 export type Profile = {
   user_id: string;
   display_name: string | null;
@@ -57,4 +71,39 @@ export type Profile = {
   crisis_resources_ack: boolean;
   created_at: string;
   updated_at: string;
+};
+
+// Documentation-only: the supabase client is currently untyped (see lib/supabase.ts).
+// Wiring `createClient<Database>` would require revisiting the Insert shapes below
+// that currently rely on DB defaults (e.g. server-side `default auth.uid()`).
+export type Database = {
+  public: {
+    Tables: {
+      habits: {
+        Row: Habit;
+        Insert: Omit<Habit, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Habit, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      habit_logs: {
+        Row: HabitLog;
+        Insert: Omit<HabitLog, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<HabitLog, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      relapse_incidents: {
+        Row: RelapseIncident;
+        Insert: Omit<RelapseIncident, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<RelapseIncident, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      scratch_messages: {
+        Row: ScratchMessage;
+        Insert: ScratchMessageInsert;
+        Update: Partial<ScratchMessageInsert>;
+      };
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Profile, 'created_at' | 'updated_at'>>;
+      };
+    };
+  };
 };

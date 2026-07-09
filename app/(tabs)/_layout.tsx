@@ -1,49 +1,27 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Stack } from 'expo-router';
 import { useTheme } from '../../lib/theme';
 
-export default function TabsLayout() {
+// The "(tabs)" group name is historical — it's now a stack shell over the
+// golf-hole home screen; keeping the folder name avoids churning every route.
+export default function HomeShellLayout() {
   const { colors } = useTheme();
 
+  const section = {
+    headerShown: false,
+    presentation: 'modal' as const, // iOS: swipe-down to dismiss; Android: back gesture/button
+    contentStyle: { backgroundColor: colors.background },
+  };
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textFaint,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 0.5,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Today', tabBarIcon: ({ color, size }) => <Ionicons name="today-outline" size={size} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="recovery"
-        options={{ title: 'Recovery', tabBarIcon: ({ color, size }) => <Ionicons name="shield-checkmark-outline" size={size} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="reflect"
-        options={{ title: 'Reflect', tabBarIcon: ({ color, size }) => <Ionicons name="book-outline" size={size} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="plan"
-        options={{ title: 'Plan', tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="life"
-        options={{ title: 'Life', tabBarIcon: ({ color, size }) => <Ionicons name="body-outline" size={size} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="invest"
-        options={{ title: 'Invest', tabBarIcon: ({ color, size }) => <Ionicons name="trending-up-outline" size={size} color={color} /> }}
-      />
-    </Tabs>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="course" />
+      <Stack.Screen name="recovery" options={section} />
+      <Stack.Screen name="reflect" options={section} />
+      <Stack.Screen name="plan" options={section} />
+      <Stack.Screen name="life" options={section} />
+      <Stack.Screen name="invest" options={section} />
+    </Stack>
   );
 }

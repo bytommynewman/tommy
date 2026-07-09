@@ -19,6 +19,9 @@ export default function SettingsScreen() {
           Reminder settings, PIN lock, and notification preferences arrive in M10.
         </Text>
         <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />
+        <Text style={[typography.caption, { color: colors.textFaint }]}>
+          Hole imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community
+        </Text>
       </View>
     </Screen>
   );
