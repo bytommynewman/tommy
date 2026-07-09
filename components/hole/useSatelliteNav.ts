@@ -188,5 +188,22 @@ export function useSatelliteNav(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOverview, travelScale, fitScale, reduceMotion]);
 
-  return { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant, toggleOverview };
+  // Glide the camera along the fairway to a section (scorecard-row taps).
+  // From the overview it also zooms back into the walk, arriving on the
+  // section. Never navigates — the target marker is the only "enter" button.
+  const goToStop = useCallback(
+    (index: number) => {
+      hapticsArmed.value = true;
+      const d = stopDists[index];
+      const ease = { duration: 700, easing: Easing.inOut(Easing.cubic) };
+      cameraDist.value = reduceMotion ? d : withTiming(d, ease);
+      if (scale.value < (travelScale + fitScale) / 2) {
+        scale.value = reduceMotion ? travelScale : withTiming(travelScale, ease);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stopDists, travelScale, fitScale, reduceMotion]
+  );
+
+  return { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant, toggleOverview, goToStop };
 }

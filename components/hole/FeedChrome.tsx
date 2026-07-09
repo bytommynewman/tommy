@@ -29,10 +29,12 @@ function Bracket({ corner }: { corner: 'tl' | 'tr' | 'bl' | 'br' }) {
 // and the 1-5 legend panel in overview.
 export function FeedChrome({
   isOverview,
+  activeStop,
   onLegendPress,
   onToggleOverview,
 }: {
   isOverview: boolean;
+  activeStop: number | null;
   onLegendPress: (index: number) => void;
   onToggleOverview: () => void;
 }) {
@@ -91,41 +93,42 @@ export function FeedChrome({
           </Text>
         </View>
       </View>
-      {isOverview ? (
+      <View
+        style={[
+          plate,
+          {
+            position: 'absolute',
+            left: 16,
+            bottom: insets.bottom + 110,
+            paddingVertical: 0,
+            paddingHorizontal: 0,
+            borderColor: HUD_COLORS.lineBright,
+            overflow: 'hidden',
+            minWidth: 150,
+          },
+        ]}
+      >
         <View
-          style={[
-            plate,
-            {
-              position: 'absolute',
-              left: 16,
-              bottom: insets.bottom + 110,
-              paddingVertical: 0,
-              paddingHorizontal: 0,
-              borderColor: HUD_COLORS.lineBright,
-              overflow: 'hidden',
-              minWidth: 150,
-            },
-          ]}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderBottomWidth: 0.75,
+            borderBottomColor: HUD_COLORS.line,
+          }}
         >
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              paddingHorizontal: 10,
-              paddingVertical: 6,
-              borderBottomWidth: 0.75,
-              borderBottomColor: HUD_COLORS.line,
-            }}
-          >
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.text }}>scorecard</Text>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft }}>front 5</Text>
-          </View>
-          {STOPS.map((stop, i) => (
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.text }}>scorecard</Text>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft }}>front 5</Text>
+        </View>
+        {STOPS.map((stop, i) => {
+          const here = activeStop === i && !isOverview;
+          return (
             <Pressable
               key={stop.label}
               onPress={() => onLegendPress(i)}
               accessibilityRole="button"
-              accessibilityLabel={`Enter ${stop.label}`}
+              accessibilityLabel={`Go to ${stop.label} on the course`}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -134,6 +137,7 @@ export function FeedChrome({
                 paddingVertical: 6,
                 borderBottomWidth: i < STOPS.length - 1 ? 0.75 : 0,
                 borderBottomColor: HUD_COLORS.line,
+                backgroundColor: here ? 'rgba(29, 158, 117, 0.25)' : 'transparent',
               }}
             >
               <View
@@ -141,7 +145,7 @@ export function FeedChrome({
                   width: 18,
                   height: 18,
                   borderWidth: 0.75,
-                  borderColor: HUD_COLORS.mint,
+                  borderColor: here ? HUD_COLORS.mint : HUD_COLORS.line,
                   borderRadius: 2,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -153,9 +157,9 @@ export function FeedChrome({
                 {stop.label.toLowerCase()}
               </Text>
             </Pressable>
-          ))}
-        </View>
-      ) : null}
+          );
+        })}
+      </View>
       <Pressable
         onPress={onToggleOverview}
         accessibilityRole="button"
