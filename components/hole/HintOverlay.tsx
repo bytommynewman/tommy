@@ -16,7 +16,9 @@ export function HintOverlay({ visible }: { visible: boolean }) {
         position: 'absolute',
         left: 0,
         right: 0,
-        top: '58%',
+        // Low on the screen, clear of the current-section marker (which sits
+        // at the walking pivot ~64%) and above the toggle bar.
+        bottom: '16%',
         alignItems: 'center',
       }}
     >

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -29,9 +30,11 @@ function Bracket({ corner }: { corner: 'tl' | 'tr' | 'bl' | 'br' }) {
 export function FeedChrome({
   isOverview,
   onLegendPress,
+  onToggleOverview,
 }: {
   isOverview: boolean;
   onLegendPress: (index: number) => void;
+  onToggleOverview: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
@@ -105,6 +108,30 @@ export function FeedChrome({
           ))}
         </View>
       ) : null}
+      <Pressable
+        onPress={onToggleOverview}
+        accessibilityRole="button"
+        accessibilityLabel={isOverview ? 'Back to walking view' : 'See the whole hole'}
+        style={[
+          plate,
+          {
+            position: 'absolute',
+            right: 16,
+            bottom: insets.bottom + 110,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingVertical: 8,
+            paddingHorizontal: 10,
+            borderColor: HUD_COLORS.lineBright,
+          },
+        ]}
+      >
+        <Ionicons name={isOverview ? 'contract-outline' : 'expand-outline'} size={15} color={HUD_COLORS.mint} />
+        <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mint }}>
+          {isOverview ? 'walk' : 'whole hole'}
+        </Text>
+      </Pressable>
     </View>
   );
 }

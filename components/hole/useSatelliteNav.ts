@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import {
+  Easing,
   runOnJS,
   useAnimatedReaction,
   useDerivedValue,
@@ -55,6 +56,7 @@ export function useSatelliteNav(
   const cameraDist = useSharedValue(0);
   const scale = useSharedValue(travelScale);
   const hapticsArmed = useSharedValue(false);
+  const pinchActive = useSharedValue(false);
 
   const camPos = useDerivedValue(() => pointAtDistance(path, cameraDist.value));
   const overviewNow = useDerivedValue(() => isOverviewZoom(scale.value, travelScale, fitScale));
@@ -117,11 +119,12 @@ export function useSatelliteNav(
         runOnJS(notifyInteract)();
       })
       .onChange((e) => {
-        if (overviewNow.value) return; // overview is a fixed full-hole frame
+        // A pinch in progress owns the screen — never walk mid-zoom.
+        if (overviewNow.value || pinchActive.value) return;
         cameraDist.value = clamp(cameraDist.value + dragDelta(e.changeY, scale.value), 0, path.total);
       })
       .onEnd((e) => {
-        if (overviewNow.value) return;
+        if (overviewNow.value || pinchActive.value) return;
         cameraDist.value = withDecay({
           velocity: dragDelta(e.velocityY, scale.value),
           deceleration: GLIDE_DECELERATION,
@@ -132,6 +135,7 @@ export function useSatelliteNav(
     const pinchStart = { value: 1 };
     const pinch = Gesture.Pinch()
       .onStart(() => {
+        pinchActive.value = true;
         pinchStart.value = scale.value;
         runOnJS(notifyInteract)();
       })
@@ -143,14 +147,15 @@ export function useSatelliteNav(
         );
       })
       .onEnd(() => {
+        pinchActive.value = false;
         const target = isOverviewZoom(scale.value, travelScale, fitScale) ? fitScale : travelScale;
         scale.value = reduceMotion ? target : withTiming(target, { duration: ZOOM_MS });
       });
 
-    // Race, not Simultaneous: a two-finger pinch must own the gesture alone.
-    // When both ran at once, the pan half of a pinch dragged the camera and
-    // the zoom fought the walk — the "lag"/jumpiness Tommy felt.
-    return Gesture.Race(pinch, pan);
+    // Simultaneous so the pinch is always recognized (Race let an accidental
+    // one-finger pan lock the zoom out); pinchActive gates the pan handlers
+    // so zooming never fights the walk.
+    return Gesture.Simultaneous(pan, pinch);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path.total, fitScale, travelScale, reduceMotion, notifyInteract]);
 
@@ -162,5 +167,15 @@ export function useSatelliteNav(
     [path.total]
   );
 
-  return { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant };
+  // One-tap alternative to pinching: glide between the walk and the full-hole
+  // overview. The tilt lays down/stands up automatically via tiltFor(scale).
+  const toggleOverview = useCallback(() => {
+    const target = isOverview ? travelScale : fitScale;
+    scale.value = reduceMotion
+      ? target
+      : withTiming(target, { duration: 450, easing: Easing.inOut(Easing.cubic) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOverview, travelScale, fitScale, reduceMotion]);
+
+  return { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant, toggleOverview };
 }

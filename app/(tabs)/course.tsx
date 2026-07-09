@@ -34,7 +34,7 @@ export default function CourseScreen() {
   }, []);
 
   // Every visit starts at hole 1 — the tee — and you walk up from there.
-  const { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant } =
+  const { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant, toggleOverview } =
     useSatelliteNav(width, height, { onInteract: dismissHint });
 
   const enterStop = (index: number) => {
@@ -67,7 +67,7 @@ export default function CourseScreen() {
           onPress={() => enterStop(i)}
         />
       ))}
-      <FeedChrome isOverview={isOverview} onLegendPress={enterStop} />
+      <FeedChrome isOverview={isOverview} onLegendPress={enterStop} onToggleOverview={toggleOverview} />
       <HintOverlay visible={hintVisible && !isOverview} />
       <ToggleBar active="course" />
     </View>
