@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -33,13 +33,21 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
   const insets = useSafeAreaInsets();
   const { data: history = [] } = useScratchMessages();
   const send = useSendToScratch();
-  const [pending, setPending] = useState<{ text: string } | null>(null);
+  const [exchange, setExchange] = useState<{ text: string; reply?: string; actions?: string[] } | null>(null);
   const [lastError, setLastError] = useState<'not_configured' | 'failed' | null>(null);
   const [draft, setDraft] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
   const lastActions =
     send.data && 'actions' in send.data && send.data.actions.length > 0 ? send.data.actions : null;
+
+  // Once the history refetch lands with the reply we already showed optimistically,
+  // drop the in-flight exchange so the server-backed rows take over.
+  useEffect(() => {
+    if (!exchange?.reply) return;
+    const covered = history.some((row) => row.role !== 'user' && row.content === exchange.reply);
+    if (covered) setExchange(null);
+  }, [history, exchange]);
 
   const messages = useMemo<ChatMessage[]>(() => {
     const base: ChatMessage[] =
@@ -51,9 +59,13 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
           }))
         : [HELLO];
     const out = [...base];
-    if (pending) {
-      out.push({ id: 'pending-user', role: 'user', text: pending.text });
-      out.push({ id: 'pending-typing', role: 'scratch', text: 'Scratch is reading the green…', variant: 'typing' });
+    if (exchange) {
+      out.push({ id: 'pending-user', role: 'user', text: exchange.text });
+      if (exchange.reply) {
+        out.push({ id: 'pending-reply', role: 'scratch', text: exchange.reply });
+      } else {
+        out.push({ id: 'pending-typing', role: 'scratch', text: 'Scratch is reading the green…', variant: 'typing' });
+      }
     } else if (lastError === 'not_configured') {
       out.push({
         id: 'error-not-configured',
@@ -71,23 +83,25 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
       });
     }
     return out;
-  }, [history, pending, lastError]);
+  }, [history, exchange, lastError]);
 
   const onSend = () => {
     const text = draft.trim();
     if (!text || send.isPending) return;
     setDraft('');
     setLastError(null);
-    setPending({ text });
+    setExchange({ text });
     send.mutate(text, {
       onSuccess: (result) => {
-        setPending(null);
         if ('error' in result) {
+          setExchange(null);
           setLastError(result.error === 'not_configured' ? 'not_configured' : 'failed');
+        } else {
+          setExchange((prev) => (prev ? { ...prev, reply: result.reply, actions: result.actions } : prev));
         }
       },
       onError: () => {
-        setPending(null);
+        setExchange(null);
         setLastError('failed');
       },
     });
@@ -133,6 +147,14 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
               renderItem={({ item, index }) => {
                 const isNewestScratchBubble =
                   item.role === 'scratch' && !item.variant && index === messages.length - 1;
+                const chipsForBubble =
+                  item.id === 'pending-reply'
+                    ? exchange?.actions && exchange.actions.length > 0
+                      ? exchange.actions
+                      : null
+                    : isNewestScratchBubble && lastActions && send.data && 'reply' in send.data && item.text === send.data.reply
+                      ? lastActions
+                      : null;
                 return (
                   <View>
                     <View
@@ -151,7 +173,7 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                         {item.text}
                       </Text>
                     </View>
-                    {isNewestScratchBubble && lastActions && (
+                    {chipsForBubble && (
                       <View
                         style={{
                           flexDirection: 'row',
@@ -161,7 +183,7 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                           alignSelf: 'flex-start',
                         }}
                       >
-                        {lastActions.map((action) => (
+                        {chipsForBubble.map((action) => (
                           <View
                             key={action}
                             style={{
