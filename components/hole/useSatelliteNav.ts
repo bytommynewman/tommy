@@ -147,7 +147,10 @@ export function useSatelliteNav(
         scale.value = reduceMotion ? target : withTiming(target, { duration: ZOOM_MS });
       });
 
-    return Gesture.Simultaneous(pan, pinch);
+    // Race, not Simultaneous: a two-finger pinch must own the gesture alone.
+    // When both ran at once, the pan half of a pinch dragged the camera and
+    // the zoom fought the walk — the "lag"/jumpiness Tommy felt.
+    return Gesture.Race(pinch, pan);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path.total, fitScale, travelScale, reduceMotion, notifyInteract]);
 

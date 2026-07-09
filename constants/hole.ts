@@ -60,13 +60,13 @@ export const CAMERA_ZOOM = 2.0; // scene fills 200% of screen width — the came
 // reintroduce a sky band; don't, without asking Tommy.
 export const WALK_TILT = 0.52; // radians (~30°) at full travel zoom
 export const WALK_PERSPECTIVE = 900; // screen px; smaller = stronger depth
-export const WALK_PIVOT_Y = 0.72; // camera standpoint as a fraction of screen height
+export const WALK_PIVOT_Y = 0.64; // camera standpoint — keeps the current section marker clearly framed
 
 // Scene rendering colors (the sanctioned exception to theme tokens — these
 // sit over a photo, not over themed UI). Satellite tint matches HUD_COLORS.bg.
 export const SCENE_COLORS = {
   fallback: '#3E7355', // fairway green shown if the photo fails to load/decode
-  satelliteTint: 'rgba(7, 20, 16, 0.30)', // always-on dark feed tint (kept light so the turf reads real)
+  satelliteTint: 'rgba(7, 20, 16, 0.20)', // always-on dark feed tint (kept light so the turf reads real)
   pathLine: '#5DCAA5', // dashed fairway line (HUD mint)
 };
 

@@ -4,8 +4,10 @@ import {
   ColorMatrix,
   DashPathEffect,
   Fill,
+  FilterMode,
   Group,
   Image as SkiaImage,
+  MipmapMode,
   Path as SkiaPath,
   Skia,
   useImage,
@@ -94,7 +96,15 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
       {image ? (
         <Group transform={perspectiveTransform} origin={{ x: width / 2, y: pivotY }}>
           <Group transform={transform}>
-            <SkiaImage image={image} x={0} y={0} width={SCENE.width} height={SCENE.height} fit="fill">
+            <SkiaImage
+              image={image}
+              x={0}
+              y={0}
+              width={SCENE.width}
+              height={SCENE.height}
+              fit="fill"
+              sampling={{ filter: FilterMode.Linear, mipmap: MipmapMode.Linear }}
+            >
               <ColorMatrix matrix={TURF_SATURATION} />
             </SkiaImage>
             <SkiaPath
