@@ -5,9 +5,12 @@ import {
   Fill,
   Group,
   Image as SkiaImage,
+  LinearGradient,
   Path as SkiaPath,
+  Rect,
   Skia,
   useImage,
+  vec,
 } from '@shopify/react-native-skia';
 import {
   cancelAnimation,
@@ -20,7 +23,14 @@ import {
   type DerivedValue,
 } from 'react-native-reanimated';
 import type { HolePath } from '../../lib/holePath';
-import { HOLE_IMAGE, SCENE, SCENE_COLORS, SHOW_PATH_DEBUG, WALK_PERSPECTIVE } from '../../constants/hole';
+import {
+  HOLE_IMAGE,
+  SCENE,
+  SCENE_COLORS,
+  SHOW_PATH_DEBUG,
+  WALK_PERSPECTIVE,
+  WALK_TILT,
+} from '../../constants/hole';
 
 type HoleSceneProps = {
   width: number; // screen px
@@ -52,6 +62,9 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
     { perspective: WALK_PERSPECTIVE },
     { rotateX: tilt.value },
   ]);
+  // Distance haze: fades the far ground into the dark like real atmosphere.
+  // Screen-space, tied to the tilt so the flat overview stays haze-free.
+  const hazeOpacity = useDerivedValue(() => tilt.value / WALK_TILT);
 
   const skPath = useMemo(() => {
     const p = Skia.Path.Make();
@@ -97,6 +110,16 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
         <Fill color={SCENE_COLORS.fallback} />
       )}
       <Fill color={SCENE_COLORS.satelliteTint} />
+      <Group opacity={hazeOpacity}>
+        <Rect x={0} y={0} width={width} height={height * 0.4}>
+          <LinearGradient
+            start={vec(0, 0)}
+            end={vec(0, height * 0.4)}
+            colors={['rgba(7, 20, 16, 0.96)', 'rgba(10, 26, 20, 0.55)', 'rgba(10, 26, 20, 0)']}
+            positions={[0, 0.35, 1]}
+          />
+        </Rect>
+      </Group>
     </Canvas>
   );
 }

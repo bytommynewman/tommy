@@ -4,7 +4,7 @@ import type { Vec } from '../lib/holePath';
 
 // The aerial photo's pixel dimensions — MUST match assets/hole16.webp
 // (printed by scripts/stitch-hole16.mjs). All scene math is in image px.
-export const SCENE = { width: 1200, height: 2296 };
+export const SCENE = { width: 2400, height: 4591 };
 
 export const HOLE_IMAGE = require('../assets/hole16.webp');
 
@@ -58,7 +58,7 @@ export const WALK_PIVOT_Y = 0.72; // camera standpoint as a fraction of screen h
 // sit over a photo, not over themed UI). Satellite tint matches HUD_COLORS.bg.
 export const SCENE_COLORS = {
   fallback: '#3E7355', // fairway green shown if the photo fails to load/decode
-  satelliteTint: 'rgba(7, 20, 16, 0.42)', // always-on dark feed tint
+  satelliteTint: 'rgba(7, 20, 16, 0.30)', // always-on dark feed tint (kept light so the turf reads real)
   pathLine: '#5DCAA5', // dashed fairway line (HUD mint)
 };
 
