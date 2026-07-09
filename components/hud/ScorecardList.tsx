@@ -21,7 +21,7 @@ export function ScorecardList() {
   return (
     <View>
       <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.line, marginBottom: 6 }}>
-        {'// the course — 5 holes'}
+        {`// the course — ${STOPS.length} holes`}
       </Text>
       <View style={{ gap: 6 }}>
         {STOPS.map((stop, i) => {

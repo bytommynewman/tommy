@@ -119,7 +119,7 @@ export function FeedChrome({
           }}
         >
           <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.text }}>scorecard</Text>
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft }}>front 5</Text>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft }}>{`front ${STOPS.length}`}</Text>
         </View>
         {STOPS.map((stop, i) => {
           const here = activeStop === i && !isOverview;

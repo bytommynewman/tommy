@@ -62,6 +62,57 @@ export type ScratchMessageInsert = {
   content: string;
 };
 
+export type ReelIdeaStatus = 'new' | 'saved' | 'planned' | 'filmed' | 'posted';
+
+export type ReelIdea = {
+  id: string;
+  user_id: string;
+  title: string;
+  hook: string;
+  outline: string;
+  format: string;
+  status: ReelIdeaStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EditPlanShot = { shot: string; note: string; done?: boolean };
+export type EditPlanBeat = { start: number; end: number; description: string };
+
+export type EditPlan = {
+  id: string;
+  user_id: string;
+  idea_id: string;
+  shot_list: EditPlanShot[];
+  beats: EditPlanBeat[];
+  caption: string;
+  hashtags: string;
+  music: string;
+  created_at: string;
+};
+
+export type IgSnapshot = {
+  id: string;
+  user_id: string;
+  followers: number;
+  following: number;
+  media_count: number;
+  captured_at: string;
+};
+
+export type IgMediaStat = {
+  id: string;
+  user_id: string;
+  media_id: string;
+  caption: string | null;
+  permalink: string | null;
+  posted_at: string | null;
+  plays: number | null;
+  likes: number;
+  comments: number;
+  captured_at: string;
+};
+
 export type Profile = {
   user_id: string;
   display_name: string | null;

@@ -8,6 +8,7 @@ import { useSatelliteNav } from '../../components/hole/useSatelliteNav';
 import { TargetMarker } from '../../components/hole/TargetMarker';
 import { FeedChrome } from '../../components/hole/FeedChrome';
 import { HintOverlay } from '../../components/hole/HintOverlay';
+import { SubPanel } from '../../components/hole/SubPanel';
 import { ToggleBar } from '../../components/ui/ToggleBar';
 import { pointAtDistance } from '../../lib/holePath';
 import { HINT_DISMISSED_KEY, STOPS } from '../../constants/hole';
@@ -33,13 +34,32 @@ export default function CourseScreen() {
     setHintVisible(false);
   }, []);
 
+  // Content (hole 6) fans open a sub-panel instead of navigating directly.
+  const [subOpen, setSubOpen] = useState(false);
+  const closeSub = useCallback(() => setSubOpen(false), []);
+  const onInteract = useCallback(() => {
+    dismissHint();
+    setSubOpen(false);
+  }, [dismissHint]);
+
   // Every visit starts at hole 1 — the tee — and you walk up from there.
   const { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant, toggleOverview, goToStop } =
-    useSatelliteNav(width, height, { onInteract: dismissHint });
+    useSatelliteNav(width, height, { onInteract });
 
   const enterStop = (index: number) => {
+    if (STOPS[index].route === '/content') {
+      setSubOpen((open) => !open);
+      return;
+    }
+    setSubOpen(false);
     setCameraInstant(stopDists[index] / (path.total || 1));
     router.push(STOPS[index].route);
+  };
+
+  const openContent = (key: 'ideas' | 'editor' | 'stats') => {
+    setSubOpen(false);
+    setCameraInstant(stopDists[STOPS.length - 1] / (path.total || 1));
+    router.push(`/content/${key}`);
   };
 
   const stopScenePos = useMemo(() => stopDists.map((d) => pointAtDistance(path, d)), [path, stopDists]);
@@ -70,9 +90,16 @@ export default function CourseScreen() {
       <FeedChrome
         isOverview={isOverview}
         activeStop={activeStop}
-        onLegendPress={goToStop}
-        onToggleOverview={toggleOverview}
+        onLegendPress={(i) => {
+          closeSub();
+          goToStop(i);
+        }}
+        onToggleOverview={() => {
+          closeSub();
+          toggleOverview();
+        }}
       />
+      {subOpen ? <SubPanel onSelect={openContent} /> : null}
       <HintOverlay visible={hintVisible && !isOverview} />
       <ToggleBar active="course" />
     </View>

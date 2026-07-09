@@ -79,8 +79,25 @@ login token). Nothing for you to do here.
 
 ---
 
+## 5. Turn on the Content section (2 steps, ~3 minutes)
+
+The Ideas tab needs its database table and its brain deployed:
+
+1. **Database:** Supabase dashboard → SQL Editor → New query → paste all of
+   `supabase/migrations/0004_content.sql` → Run. Expect "Success. No rows returned".
+   (Claude can put it on your clipboard — just ask.)
+2. **Deploy the brain:** in Terminal:
+   ```
+   cd ~/Desktop/coding-projects/my-first-project
+   supabase functions deploy content-agent
+   ```
+
+Then in the app: course → hole 6 (content) → ideas → "radio scratch for ideas".
+
 ## After that
 
-Next build phase whenever you want it: designing the individual sections —
-Recovery, Reflect, Plan, Life, Invest — each gets its own design pass.
-Just tell Claude which one to start with.
+- Content slice 2: the AI edit director (editor tab goes live).
+- Content slice 3: Instagram stats — you'll get CONNECT-INSTAGRAM.md, a
+  click-by-click guide for the Meta/Instagram developer setup.
+- Then: individual section design passes (Recovery, Reflect, Plan, Life,
+  Invest) — tell Claude which one to start with.
