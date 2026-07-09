@@ -18,8 +18,17 @@ import {
   dragDelta,
   isOverviewZoom,
   pathBounds,
+  tiltFor,
 } from '../../lib/courseNav';
-import { CAMERA_ZOOM, SCENE, STOPS, STOP_NEAR_THRESHOLD, WAYPOINTS } from '../../constants/hole';
+import {
+  CAMERA_ZOOM,
+  SCENE,
+  STOPS,
+  STOP_NEAR_THRESHOLD,
+  WALK_PIVOT_Y,
+  WALK_TILT,
+  WAYPOINTS,
+} from '../../constants/hole';
 
 const ZOOM_MS = 350;
 const OVERVIEW_MARGIN = 120; // scene px of photo kept around the path in overview
@@ -53,11 +62,16 @@ export function useSatelliteNav(
       ? centerOffset(screenW, bounds.x, bounds.w, scale.value)
       : cameraOffset(screenW, SCENE.width * scale.value, screenW / 2 - camPos.value.x * scale.value)
   );
+  // In travel mode the camera "stands" at the walking pivot; the tilt pitches
+  // the plane about that same line so your position stays under your feet.
   const ty = useDerivedValue(() =>
     overviewNow.value
       ? centerOffset(screenH, bounds.y, bounds.h, scale.value)
-      : cameraOffset(screenH, SCENE.height * scale.value, screenH * 0.55 - camPos.value.y * scale.value)
+      : cameraOffset(screenH, SCENE.height * scale.value, screenH * WALK_PIVOT_Y - camPos.value.y * scale.value)
   );
+
+  const tilt = useDerivedValue(() => tiltFor(scale.value, travelScale, fitScale, WALK_TILT));
+  const pivotY = screenH * WALK_PIVOT_Y;
 
   const [activeStop, setActiveStop] = useState<number | null>(0);
   const [isOverview, setIsOverview] = useState(false);
@@ -145,5 +159,5 @@ export function useSatelliteNav(
     [path.total]
   );
 
-  return { path, stopDists, tx, ty, scale, gesture, activeStop, isOverview, setCameraInstant };
+  return { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant };
 }

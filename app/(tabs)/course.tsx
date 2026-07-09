@@ -37,7 +37,7 @@ export default function CourseScreen() {
     AsyncStorage.setItem(LAST_DIST_KEY, String(frac)).catch(() => {});
   }, []);
 
-  const { path, stopDists, tx, ty, scale, gesture, activeStop, isOverview, setCameraInstant } =
+  const { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant } =
     useSatelliteNav(width, height, { onInteract: dismissHint, onSettle: persistDist });
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function CourseScreen() {
     <View style={{ flex: 1, backgroundColor: HUD_COLORS.bg }}>
       <GestureDetector gesture={gesture}>
         <View style={{ flex: 1 }}>
-          <HoleScene width={width} height={height} tx={tx} ty={ty} scale={scale} path={path} />
+          <HoleScene width={width} height={height} tx={tx} ty={ty} scale={scale} tilt={tilt} pivotY={pivotY} path={path} />
         </View>
       </GestureDetector>
       {STOPS.map((stop, i) => (
@@ -74,6 +74,9 @@ export default function CourseScreen() {
           tx={tx}
           ty={ty}
           scale={scale}
+          tilt={tilt}
+          pivotY={pivotY}
+          screenW={width}
           active={activeStop === i || isOverview}
           onPress={() => enterStop(i)}
         />

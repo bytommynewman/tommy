@@ -1,6 +1,52 @@
 import { describe, it, expect } from 'vitest';
-import { cameraOffset, centerOffset, coverScale, dragDelta, isOverviewZoom, pathBounds } from '../courseNav';
+import {
+  cameraOffset,
+  centerOffset,
+  coverScale,
+  dragDelta,
+  isOverviewZoom,
+  pathBounds,
+  projectPerspective,
+  tiltFor,
+} from '../courseNav';
 import { buildHolePath } from '../holePath';
+
+describe('tiltFor', () => {
+  it('is full tilt at travel scale and flat at overview fit', () => {
+    expect(tiltFor(0.65, 0.65, 0.37, 0.9)).toBeCloseTo(0.9);
+    expect(tiltFor(0.37, 0.65, 0.37, 0.9)).toBeCloseTo(0);
+  });
+  it('interpolates between and clamps outside', () => {
+    expect(tiltFor(0.51, 0.65, 0.37, 0.9)).toBeCloseTo(0.45);
+    expect(tiltFor(0.9, 0.65, 0.37, 0.9)).toBeCloseTo(0.9);
+    expect(tiltFor(0.1, 0.65, 0.37, 0.9)).toBeCloseTo(0);
+  });
+  it('degenerates safely when travel and fit scales collide', () => {
+    expect(tiltFor(0.5, 0.5, 0.5, 0.9)).toBeCloseTo(0.9);
+  });
+});
+
+describe('projectPerspective', () => {
+  it('is the identity at zero tilt', () => {
+    const p = projectPerspective(40, -120, 0, 1000);
+    expect(p.x).toBeCloseTo(40);
+    expect(p.y).toBeCloseTo(-120);
+    expect(p.k).toBeCloseTo(1);
+  });
+  it('shrinks points above the pivot (far away) and enlarges below (near)', () => {
+    const far = projectPerspective(0, -200, Math.PI / 3, 1000);
+    expect(far.k).toBeLessThan(1);
+    expect(far.y).toBeGreaterThan(-200); // pulled toward the horizon
+    const near = projectPerspective(0, 100, Math.PI / 3, 1000);
+    expect(near.k).toBeGreaterThan(1);
+  });
+  it('matches hand-computed values', () => {
+    // dy=-100, tilt=60deg, p=1000: w = 1 + 86.6/1000, y = -50/w, k = 1/w
+    const p = projectPerspective(0, -100, Math.PI / 3, 1000);
+    expect(p.y).toBeCloseTo(-46.02, 1);
+    expect(p.k).toBeCloseTo(0.9203, 3);
+  });
+});
 
 describe('cameraOffset', () => {
   it('clamps a too-high desired offset to 0 when content is larger', () => {

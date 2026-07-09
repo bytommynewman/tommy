@@ -2,7 +2,8 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring, type DerivedValue } from 'react-native-reanimated';
 import type { Vec } from '../../lib/holePath';
-import type { HoleStop } from '../../constants/hole';
+import { projectPerspective } from '../../lib/courseNav';
+import { WALK_PERSPECTIVE, type HoleStop } from '../../constants/hole';
 import { HUD_COLORS, HUD_FONT } from '../../constants/hud';
 
 const RING = 34;
@@ -15,18 +16,42 @@ type TargetMarkerProps = {
   tx: DerivedValue<number>;
   ty: DerivedValue<number>;
   scale: DerivedValue<number>;
+  tilt: DerivedValue<number>; // walking-view pitch (0 in overview)
+  pivotY: number; // camera standpoint, screen px
+  screenW: number;
   active: boolean;
   onPress: () => void;
 };
 
-export function TargetMarker({ stop, index, scenePos, tx, ty, scale, active, onPress }: TargetMarkerProps) {
-  const style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: scenePos.x * scale.value + tx.value - WIDTH / 2 },
-      { translateY: scenePos.y * scale.value + ty.value - RING / 2 },
-      { scale: withSpring(active ? 1.12 : 1) },
-    ],
-  }));
+export function TargetMarker({
+  stop,
+  index,
+  scenePos,
+  tx,
+  ty,
+  scale,
+  tilt,
+  pivotY,
+  screenW,
+  active,
+  onPress,
+}: TargetMarkerProps) {
+  const style = useAnimatedStyle(() => {
+    // Flat camera position, then the same perspective the Skia scene applies,
+    // so the marker stays pinned to its patch of fairway and shrinks with
+    // distance like a real course object.
+    const flatX = scenePos.x * scale.value + tx.value;
+    const flatY = scenePos.y * scale.value + ty.value;
+    const p = projectPerspective(flatX - screenW / 2, flatY - pivotY, tilt.value, WALK_PERSPECTIVE);
+    const depth = p.k < 0.55 ? 0.55 : p.k > 1.5 ? 1.5 : p.k;
+    return {
+      transform: [
+        { translateX: screenW / 2 + p.x - WIDTH / 2 },
+        { translateY: pivotY + p.y - RING / 2 },
+        { scale: withSpring(depth * (active ? 1.12 : 1)) },
+      ],
+    };
+  });
 
   const color = active ? HUD_COLORS.mint : HUD_COLORS.mintSoft;
   return (

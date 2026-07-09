@@ -48,6 +48,12 @@ export const STOPS: HoleStop[] = [
 export const STOP_NEAR_THRESHOLD = 90; // scene px along the path
 export const CAMERA_ZOOM = 2.0; // scene fills 200% of screen width — the camera travels down the hole (tune on device)
 
+// Walking view (travel mode): the photo plane pitches away like a PGA-game
+// fairway camera. Tilt flattens to 0 as the pinch approaches overview fit.
+export const WALK_TILT = 0.92; // radians (~53°) at full travel zoom
+export const WALK_PERSPECTIVE = 1000; // screen px; smaller = more dramatic
+export const WALK_PIVOT_Y = 0.72; // camera standpoint as a fraction of screen height
+
 // Scene rendering colors (the sanctioned exception to theme tokens — these
 // sit over a photo, not over themed UI). Satellite tint matches HUD_COLORS.bg.
 export const SCENE_COLORS = {
