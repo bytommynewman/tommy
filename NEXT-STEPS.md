@@ -102,10 +102,16 @@ cd ~/Desktop/coding-projects/my-first-project
 supabase functions deploy market-data
 ```
 
-## 7. Connect Wealthsimple (when you're ready)
+## 7. Turn on the Wealthsimple portfolio (SnapTrade keys already set ✓)
 
-Follow `CONNECT-WEALTHSIMPLE.md` — a ~10 minute SnapTrade signup on your
-side, then Claude builds the portfolio sync.
+1. **Database:** SQL Editor → New query → paste `supabase/migrations/0005_snaptrade.sql` → Run.
+2. **Deploy:** in Terminal:
+   ```
+   cd ~/Desktop/coding-projects/my-first-project
+   supabase functions deploy snaptrade-portfolio
+   ```
+3. In the app: Invest → Portfolio → **connect account** → log into
+   Wealthsimple on SnapTrade's page → come back → pull down to refresh.
 
 ## After that
 
