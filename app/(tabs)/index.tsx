@@ -1,45 +1,56 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { format } from 'date-fns';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { ToggleBar, TOGGLE_BAR_CLEARANCE } from '../../components/ui/ToggleBar';
-import { ScratchMascot } from '../../components/scratch/ScratchMascot';
-import { DailyReadCard } from '../../components/scratch/DailyReadCard';
-import { SectionOverviewGrid } from '../../components/scratch/SectionOverviewGrid';
+import { BriefingCard } from '../../components/hud/BriefingCard';
+import { StatChips } from '../../components/hud/StatChips';
+import { ScorecardList } from '../../components/hud/ScorecardList';
 import { ChatSheet } from '../../components/scratch/ChatSheet';
-import { useTheme } from '../../lib/theme';
-import { useProfile } from '../../lib/hooks/useProfile';
+import { HUD_COLORS, HUD_FONT, HUD_RADIUS } from '../../constants/hud';
 
 export default function ScratchScreen() {
-  const { colors, typography, spacing } = useTheme();
   const insets = useSafeAreaInsets();
-  const { data: profile } = useProfile();
-  const firstName = profile?.display_name?.split(' ')[0] ?? 'Tommy';
   const [chatOpen, setChatOpen] = useState(false);
+  const now = new Date();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: HUD_COLORS.bg }}>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: insets.top + spacing.sm,
-          paddingHorizontal: spacing.lg,
-          paddingBottom: insets.bottom + TOGGLE_BAR_CLEARANCE + spacing.xl + 56,
+          paddingTop: insets.top + 8,
+          paddingHorizontal: 16,
+          paddingBottom: insets.bottom + TOGGLE_BAR_CLEARANCE + 24 + 56,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.lg }}>
-          <ScratchMascot size={120} />
-          <View style={{ flex: 1 }}>
-            <Text style={[typography.label, { color: colors.accent, marginBottom: spacing.xs }]}>
-              YOUR CADDIE — SCRATCH
-            </Text>
-            <Text style={[typography.title, { color: colors.text }]}>
-              What&apos;s the play today, {firstName}?
-            </Text>
-          </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint }}>
+            field unit SCR-16
+          </Text>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>
+            {format(now, 'EEE MM.dd · HH:mm').toLowerCase()}
+          </Text>
         </View>
-        <DailyReadCard />
-        <SectionOverviewGrid />
+        <View style={{ alignItems: 'flex-end', marginTop: 2, marginBottom: 12 }}>
+          <Text
+            style={{
+              fontFamily: HUD_FONT,
+              fontSize: 10,
+              color: HUD_COLORS.mintSoft,
+              borderWidth: 0.75,
+              borderColor: HUD_COLORS.line,
+              borderRadius: 2,
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+            }}
+          >
+            clearance: scratch
+          </Text>
+        </View>
+        <BriefingCard />
+        <StatChips />
+        <ScorecardList />
       </ScrollView>
       <Pressable
         onPress={() => setChatOpen(true)}
@@ -47,27 +58,20 @@ export default function ScratchScreen() {
         accessibilityLabel="Chat with Scratch"
         style={{
           position: 'absolute',
-          left: spacing.lg,
-          right: spacing.lg,
-          bottom: insets.bottom + TOGGLE_BAR_CLEARANCE + spacing.md,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: spacing.sm,
-          backgroundColor: colors.surface,
-          borderRadius: 999,
-          borderWidth: 1,
-          borderColor: colors.border,
-          paddingVertical: spacing.sm + 2,
-          paddingHorizontal: spacing.md,
-          shadowColor: '#000',
-          shadowOpacity: 0.2,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 6,
+          left: 16,
+          right: 16,
+          bottom: insets.bottom + TOGGLE_BAR_CLEARANCE + 12,
+          backgroundColor: HUD_COLORS.panel,
+          borderRadius: HUD_RADIUS,
+          borderWidth: 0.75,
+          borderColor: HUD_COLORS.lineBright,
+          paddingVertical: 12,
+          paddingHorizontal: 12,
         }}
       >
-        <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.primary} />
-        <Text style={[typography.body, { color: colors.textFaint, flex: 1 }]}>Ask Scratch anything…</Text>
+        <Text style={{ fontFamily: HUD_FONT, fontSize: 12, color: HUD_COLORS.mint }}>
+          {'> radio your caddie_'}
+        </Text>
       </Pressable>
       <ChatSheet visible={chatOpen} onClose={() => setChatOpen(false)} />
       <ToggleBar active="scratch" />
