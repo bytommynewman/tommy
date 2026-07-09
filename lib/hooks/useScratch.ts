@@ -30,7 +30,7 @@ export function useDailyRead() {
   return useQuery({
     queryKey: ['scratch_daily_read', format(new Date(), 'yyyy-MM-dd')],
     queryFn: fetchDailyRead,
-    staleTime: 1000 * 60 * 60, // the AsyncStorage day-cache is the real gate
+    staleTime: 1000 * 60 * 60, // the SecureStore day-cache is the real gate
     retry: false,
   });
 }

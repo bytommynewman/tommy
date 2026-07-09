@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { format } from 'date-fns';
 import { supabase } from '../supabase';
 import type { ScratchMessage } from '../../types/database.types';
@@ -38,12 +38,17 @@ export async function sendToScratch(text: string): Promise<ScratchReply | Scratc
   return data as ScratchReply | ScratchFailure;
 }
 
+// Stored in expo-secure-store (iOS Keychain) rather than AsyncStorage: the daily
+// read can reference recovery/habit specifics, so it shouldn't sit unencrypted
+// on-device. The payload is a short string, well under SecureStore's ~2KB limit.
+// SecureStore has no web implementation; there the catches below swallow the
+// error and every load falls through to a fresh fetch.
 const DAILY_READ_KEY = 'scratch.dailyRead'; // stores { day: 'YYYY-MM-DD', reply: string }
 
 export async function fetchDailyRead(): Promise<{ reply: string } | null> {
   const today = format(new Date(), 'yyyy-MM-dd');
   try {
-    const cached = await AsyncStorage.getItem(DAILY_READ_KEY);
+    const cached = await SecureStore.getItemAsync(DAILY_READ_KEY);
     if (cached) {
       const parsed = JSON.parse(cached) as { day: string; reply: string };
       if (parsed.day === today && parsed.reply) return { reply: parsed.reply };
@@ -53,6 +58,6 @@ export async function fetchDailyRead(): Promise<{ reply: string } | null> {
   }
   const { data, error } = await supabase.functions.invoke('scratch-agent', { body: localizedBody({ mode: 'brief' }) });
   if (error || !data || typeof data.reply !== 'string') return null;
-  AsyncStorage.setItem(DAILY_READ_KEY, JSON.stringify({ day: today, reply: data.reply })).catch(() => {});
+  SecureStore.setItemAsync(DAILY_READ_KEY, JSON.stringify({ day: today, reply: data.reply })).catch(() => {});
   return { reply: data.reply };
 }
