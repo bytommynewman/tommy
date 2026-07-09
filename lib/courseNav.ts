@@ -4,13 +4,6 @@
 
 import { clamp, type HolePath } from './holePath';
 
-// stepStop survives only until useCourseNav.ts is deleted (PR B Task 5).
-export function stepStop(current: number, direction: 1 | -1, stopCount: number): number {
-  'worklet';
-  const next = current + direction;
-  return next < 0 ? 0 : next > stopCount - 1 ? stopCount - 1 : next;
-}
-
 export function pathBounds(
   path: HolePath,
   margin: number,

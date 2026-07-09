@@ -45,20 +45,18 @@ export const STOPS: HoleStop[] = [
   { frac: 1.0, route: '/invest', label: 'Invest', icon: 'trending-up-outline', tagline: 'Portfolio, watchlist, markets' },
 ];
 
-export const BALL_RADIUS = 14; // scene px
 export const STOP_NEAR_THRESHOLD = 90; // scene px along the path
 export const CAMERA_ZOOM = 2.0; // scene fills 200% of screen width — the camera travels down the hole (tune on device)
 
 // Scene rendering colors (the sanctioned exception to theme tokens — these
-// sit over a photo, not over themed UI).
+// sit over a photo, not over themed UI). Satellite tint matches HUD_COLORS.bg.
 export const SCENE_COLORS = {
   fallback: '#3E7355', // fairway green shown if the photo fails to load/decode
-  duskTint: 'rgba(10, 14, 34, 0.38)', // dark-mode twilight overlay
-  ball: '#FFFFFF',
-  ballShadow: 'rgba(0,0,0,0.45)',
+  satelliteTint: 'rgba(7, 20, 16, 0.42)', // always-on dark feed tint
+  pathLine: '#5DCAA5', // dashed fairway line (HUD mint)
 };
 
-export const LAST_STOP_KEY = 'hole.lastStop';
+export const LAST_DIST_KEY = 'hole.lastDist'; // camera position as a 0..1 fraction
 export const HINT_DISMISSED_KEY = 'hole.hintDismissed';
 
 // Dev aid: draws the centerline + waypoints in red over the photo.

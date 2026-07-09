@@ -4,21 +4,17 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HoleScene } from '../../components/hole/HoleScene';
-import { useCourseNav } from '../../components/hole/useCourseNav';
-import { Flag } from '../../components/hole/Flag';
-import { StopPreviewCard } from '../../components/hole/StopPreviewCard';
-import { TodayCard } from '../../components/hole/TodayCard';
+import { useSatelliteNav } from '../../components/hole/useSatelliteNav';
+import { TargetMarker } from '../../components/hole/TargetMarker';
+import { FeedChrome } from '../../components/hole/FeedChrome';
 import { HintOverlay } from '../../components/hole/HintOverlay';
 import { ToggleBar } from '../../components/ui/ToggleBar';
-import { useTheme } from '../../lib/theme';
 import { pointAtDistance } from '../../lib/holePath';
-import { HINT_DISMISSED_KEY, LAST_STOP_KEY, STOPS } from '../../constants/hole';
-import { useHabits, useRelapses } from '../../lib/hooks/useHabits';
-import { daysClean } from '../../lib/streaks';
+import { HINT_DISMISSED_KEY, LAST_DIST_KEY, STOPS } from '../../constants/hole';
+import { HUD_COLORS } from '../../constants/hud';
 
 export default function CourseScreen() {
   const { width, height } = useWindowDimensions();
-  const { scheme } = useTheme();
 
   const [hintVisible, setHintVisible] = useState(false);
   const hintWritten = useRef(false);
@@ -37,79 +33,53 @@ export default function CourseScreen() {
     setHintVisible(false);
   }, []);
 
-  const { path, stopDists, ballPos, tx, ty, scale, gesture, activeStop, isOverview, goToStop, exitOverview, setBallInstant } =
-    useCourseNav(width, height, { onSwipe: dismissHint });
+  const persistDist = useCallback((frac: number) => {
+    AsyncStorage.setItem(LAST_DIST_KEY, String(frac)).catch(() => {});
+  }, []);
+
+  const { path, stopDists, tx, ty, scale, gesture, activeStop, isOverview, setCameraInstant } =
+    useSatelliteNav(width, height, { onInteract: dismissHint, onSettle: persistDist });
 
   useEffect(() => {
-    AsyncStorage.getItem(LAST_STOP_KEY)
+    AsyncStorage.getItem(LAST_DIST_KEY)
       .then((v) => {
-        const i = v == null ? NaN : Number(v);
-        if (Number.isInteger(i) && i >= 0 && i < STOPS.length) setBallInstant(i);
+        const f = v == null ? NaN : Number(v);
+        if (Number.isFinite(f) && f >= 0 && f <= 1) setCameraInstant(f);
       })
       .catch(() => {});
-  }, [setBallInstant]);
-
-  const { data: habits = [] } = useHabits();
-  const { data: relapses = [] } = useRelapses();
-  const stats = useMemo<(string | null)[]>(() => {
-    const recovery = habits.filter((h) => h.kind === 'recovery');
-    const best = recovery.map((h) => daysClean(h, relapses)).sort((a, b) => b - a)[0];
-    return STOPS.map((s) =>
-      s.label === 'Recovery' && best !== undefined && best > 0 ? `${best} days clean` : null
-    );
-  }, [habits, relapses]);
+  }, [setCameraInstant]);
 
   const enterStop = (index: number) => {
-    AsyncStorage.setItem(LAST_STOP_KEY, String(index)).catch(() => {});
+    const frac = stopDists[index] / (path.total || 1);
+    setCameraInstant(frac);
+    persistDist(frac);
     router.push(STOPS[index].route);
-  };
-
-  // Overview mode: tapping a flag goes straight into the section.
-  const onFlagPress = (index: number) => {
-    if (isOverview) {
-      setBallInstant(index);
-      enterStop(index);
-    } else {
-      goToStop(index);
-    }
   };
 
   const stopScenePos = useMemo(() => stopDists.map((d) => pointAtDistance(path, d)), [path, stopDists]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: HUD_COLORS.bg }}>
       <GestureDetector gesture={gesture}>
         <View style={{ flex: 1 }}>
-          <HoleScene
-            width={width}
-            height={height}
-            ballPos={ballPos}
-            tx={tx}
-            ty={ty}
-            scale={scale}
-            scheme={scheme}
-            path={path}
-          />
+          <HoleScene width={width} height={height} tx={tx} ty={ty} scale={scale} path={path} />
         </View>
       </GestureDetector>
       {STOPS.map((stop, i) => (
-        <Flag
+        <TargetMarker
           key={stop.label}
           stop={stop}
+          index={i}
           scenePos={stopScenePos[i]}
           tx={tx}
           ty={ty}
           scale={scale}
           active={activeStop === i || isOverview}
-          anchor={i === STOPS.length - 1 ? 'below' : 'above'}
-          onPress={() => onFlagPress(i)}
+          onPress={() => enterStop(i)}
         />
       ))}
-      {activeStop != null && !isOverview ? (
-        <StopPreviewCard stop={STOPS[activeStop]} stat={stats[activeStop]} onEnter={() => enterStop(activeStop)} />
-      ) : null}
+      <FeedChrome isOverview={isOverview} onLegendPress={enterStop} />
       <HintOverlay visible={hintVisible && !isOverview} />
-      {!isOverview ? <TodayCard /> : null}
       <ToggleBar active="course" />
     </View>
   );

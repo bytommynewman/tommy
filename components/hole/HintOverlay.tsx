@@ -2,10 +2,9 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../lib/theme';
+import { HUD_COLORS, HUD_FONT, HUD_RADIUS } from '../../constants/hud';
 
 export function HintOverlay({ visible }: { visible: boolean }) {
-  const { colors, spacing, radii, typography } = useTheme();
   if (!visible) return null;
 
   return (
@@ -25,18 +24,18 @@ export function HintOverlay({ visible }: { visible: boolean }) {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: spacing.sm,
-          backgroundColor: colors.surface,
-          borderRadius: radii.pill,
-          borderWidth: 1,
-          borderColor: colors.border,
-          paddingVertical: spacing.sm,
-          paddingHorizontal: spacing.md,
+          gap: 8,
+          backgroundColor: 'rgba(4, 36, 27, 0.85)',
+          borderRadius: HUD_RADIUS,
+          borderWidth: 0.75,
+          borderColor: HUD_COLORS.line,
+          paddingVertical: 8,
+          paddingHorizontal: 12,
         }}
       >
-        <Ionicons name="chevron-up-outline" size={16} color={colors.primary} />
-        <Text style={[typography.caption, { color: colors.text }]}>
-          Swipe up to play the hole — pinch out to see it all
+        <Ionicons name="chevron-up-outline" size={16} color={HUD_COLORS.mint} />
+        <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>
+          drag ↑↓ · tap a target · pinch for overview
         </Text>
       </View>
     </Animated.View>
