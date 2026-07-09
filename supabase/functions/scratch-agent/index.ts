@@ -68,15 +68,21 @@ Deno.serve(async (req) => {
       const history = (historyRows ?? [])
         .reverse()
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      // A previously failed request can leave an orphan user row with no matching
+      // assistant reply; if the fetched window then starts on an assistant row (odd
+      // parity), the Anthropic API 400s because the first message must be from 'user'.
+      while (history.length > 0 && history[0].role === 'assistant') history.shift();
 
-      await supabase.from('scratch_messages').insert({ role: 'user', content: userText });
+      const { error: userInsertError } = await supabase.from('scratch_messages').insert({ role: 'user', content: userText });
+      if (userInsertError) console.error('scratch_messages insert failed', userInsertError.message);
 
       const { reply, actions } = await runAgentLoop(anthropic, supabase, system, [
         ...history,
         { role: 'user', content: userText },
       ]);
 
-      await supabase.from('scratch_messages').insert({ role: 'assistant', content: reply });
+      const { error: assistantInsertError } = await supabase.from('scratch_messages').insert({ role: 'assistant', content: reply });
+      if (assistantInsertError) console.error('scratch_messages insert failed', assistantInsertError.message);
       return json({ reply, actions });
     }
 
@@ -244,6 +250,7 @@ async function runTool(
 ): Promise<{ result: string; summary: string | null }> {
   switch (name) {
     case 'upsert_habit_log': {
+      const { data: habit } = await supabase.from('habits').select('name').eq('id', input.habit_id).maybeSingle();
       const { error } = await supabase
         .from('habit_logs')
         .upsert(
@@ -253,7 +260,7 @@ async function runTool(
       if (error) throw new Error(error.message);
       return {
         result: `Logged ${input.status} for ${input.log_date}.`,
-        summary: `${input.status === 'done' ? 'Checked off' : 'Marked skipped'} a habit for ${input.log_date}`,
+        summary: `${input.status === 'done' ? 'Checked off' : 'Marked skipped'} ${habit?.name ?? 'a habit'} for ${input.log_date}`,
       };
     }
     case 'create_habit': {

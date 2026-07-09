@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { fetchDailyRead, fetchScratchMessages, sendToScratch } from '../api/scratch';
 
 export function useScratchMessages() {
@@ -27,7 +28,7 @@ export function useSendToScratch() {
 
 export function useDailyRead() {
   return useQuery({
-    queryKey: ['scratch_daily_read', new Date().toISOString().slice(0, 10)],
+    queryKey: ['scratch_daily_read', format(new Date(), 'yyyy-MM-dd')],
     queryFn: fetchDailyRead,
     staleTime: 1000 * 60 * 60, // the AsyncStorage day-cache is the real gate
     retry: false,

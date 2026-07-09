@@ -29,4 +29,4 @@ Ask him to check off a habit — a "✓ Checked off …" chip should appear and 
 habit should show done in Recovery.
 
 If he says his brain isn't hooked up: the secret didn't take — re-run step 3.
-If he "shanks" every message: `supabase functions logs scratch-agent` shows why.
+If he "shanks" every message: check the function's logs in the Supabase dashboard → Edge Functions → scratch-agent → Logs.

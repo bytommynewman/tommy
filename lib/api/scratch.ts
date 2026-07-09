@@ -31,13 +31,17 @@ export async function sendToScratch(text: string): Promise<ScratchReply | Scratc
     body: localizedBody({ mode: 'chat', text }),
   });
   if (error) return { error: 'agent_failed' };
+  const record = data as Record<string, unknown>;
+  if (!record || (typeof record.reply !== 'string' && typeof record.error !== 'string')) {
+    return { error: 'agent_failed' };
+  }
   return data as ScratchReply | ScratchFailure;
 }
 
 const DAILY_READ_KEY = 'scratch.dailyRead'; // stores { day: 'YYYY-MM-DD', reply: string }
 
 export async function fetchDailyRead(): Promise<{ reply: string } | null> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = format(new Date(), 'yyyy-MM-dd');
   try {
     const cached = await AsyncStorage.getItem(DAILY_READ_KEY);
     if (cached) {

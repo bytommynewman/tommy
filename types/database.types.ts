@@ -73,6 +73,9 @@ export type Profile = {
   updated_at: string;
 };
 
+// Documentation-only: the supabase client is currently untyped (see lib/supabase.ts).
+// Wiring `createClient<Database>` would require revisiting the Insert shapes below
+// that currently rely on DB defaults (e.g. server-side `default auth.uid()`).
 export type Database = {
   public: {
     Tables: {
