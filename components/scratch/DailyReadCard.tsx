@@ -4,15 +4,18 @@ import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../lib/theme';
 import { useHabits, useRecentLogs, useRelapses } from '../../lib/hooks/useHabits';
+import { useDailyRead } from '../../lib/hooks/useScratch';
 import { daysClean } from '../../lib/streaks';
 
-// Project A: the read is composed locally from live data. Project B replaces
-// the body with Scratch's agent-written brief.
+// Project A: the read was composed locally from live data. Project B prefers
+// Scratch's agent-written brief when available, falling back to the local
+// composition (and its footnote) whenever the agent read isn't ready.
 export function DailyReadCard() {
   const { colors, spacing, radii, typography } = useTheme();
   const { data: habits = [] } = useHabits();
   const { data: logs = [] } = useRecentLogs(1);
   const { data: relapses = [] } = useRelapses();
+  const { data: agentRead } = useDailyRead();
 
   const lines = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -38,6 +41,9 @@ export function DailyReadCard() {
     return out;
   }, [habits, logs, relapses]);
 
+  const agentLines = agentRead?.reply ? agentRead.reply.split('\n').filter((l) => l.length > 0) : null;
+  const displayLines = agentLines ?? lines;
+
   return (
     <View
       style={{
@@ -53,13 +59,13 @@ export function DailyReadCard() {
         <Ionicons name="reader-outline" size={16} color={colors.primary} />
         <Text style={[typography.label, { color: colors.primary }]}>THE DAILY READ</Text>
       </View>
-      {lines.map((line) => (
-        <Text key={line} style={[typography.body, { color: colors.text, marginBottom: spacing.xs }]}>
+      {displayLines.map((line, i) => (
+        <Text key={`${i}-${line}`} style={[typography.body, { color: colors.text, marginBottom: spacing.xs }]}>
           {line}
         </Text>
       ))}
       <Text style={[typography.caption, { color: colors.textFaint, marginTop: spacing.xs }]}>
-        Scratch&apos;s brain isn&apos;t connected yet — this is the quick read.
+        {agentLines ? 'Read by Scratch · refreshes daily' : "Scratch's brain isn't connected yet — this is the quick read."}
       </Text>
     </View>
   );

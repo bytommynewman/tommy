@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -13,38 +13,85 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme';
 import { ScratchMascot } from './ScratchMascot';
+import { useScratchMessages, useSendToScratch } from '../../lib/hooks/useScratch';
 
-type ChatMessage = { id: string; role: 'user' | 'scratch'; text: string };
+type ChatMessage = {
+  id: string;
+  role: 'user' | 'scratch';
+  text: string;
+  variant?: 'setup' | 'error' | 'typing';
+};
 
-// Project A placeholder brain: canned replies. Project B replaces sendToScratch
-// with the real edge-function agent; the UI contract stays identical.
-const CANNED = [
-  "Brain's not hooked up yet — once my API key is in, I can actually do that for you.",
-  "Heard. I'll be able to handle that myself once my brain's connected — for now, hit the Sections page.",
-  "Love the energy. Wire up my brain (Settings will walk you through it soon) and I'm on it.",
-];
+const HELLO: ChatMessage = {
+  id: 'hello',
+  role: 'scratch',
+  text: "What's the play? Ask me anything — habits, streaks, the whole card.",
+};
 
 export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors, spacing, radii, typography } = useTheme();
   const insets = useSafeAreaInsets();
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'hello', role: 'scratch', text: "What's the play? Ask me anything — habits, streaks, the whole card." },
-  ]);
+  const { data: history = [] } = useScratchMessages();
+  const send = useSendToScratch();
+  const [pending, setPending] = useState<{ text: string } | null>(null);
+  const [lastError, setLastError] = useState<'not_configured' | 'failed' | null>(null);
   const [draft, setDraft] = useState('');
-  const cannedIndex = useRef(0);
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  const send = useCallback(() => {
+  const lastActions =
+    send.data && 'actions' in send.data && send.data.actions.length > 0 ? send.data.actions : null;
+
+  const messages = useMemo<ChatMessage[]>(() => {
+    const base: ChatMessage[] =
+      history.length > 0
+        ? history.map((row) => ({
+            id: row.id,
+            role: row.role === 'user' ? 'user' : 'scratch',
+            text: row.content,
+          }))
+        : [HELLO];
+    const out = [...base];
+    if (pending) {
+      out.push({ id: 'pending-user', role: 'user', text: pending.text });
+      out.push({ id: 'pending-typing', role: 'scratch', text: 'Scratch is reading the green…', variant: 'typing' });
+    } else if (lastError === 'not_configured') {
+      out.push({
+        id: 'error-not-configured',
+        role: 'scratch',
+        text:
+          "My brain isn't hooked up yet. Add your Anthropic API key to Supabase (see DEPLOY-SCRATCH.md in the project) and I'm ready to caddie.",
+        variant: 'setup',
+      });
+    } else if (lastError === 'failed') {
+      out.push({
+        id: 'error-failed',
+        role: 'scratch',
+        text: 'Shanked that one — give it another swing.',
+        variant: 'error',
+      });
+    }
+    return out;
+  }, [history, pending, lastError]);
+
+  const onSend = () => {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || send.isPending) return;
     setDraft('');
-    const reply = CANNED[cannedIndex.current % CANNED.length];
-    cannedIndex.current += 1;
-    setMessages((m) => [...m, { id: `u${Date.now()}`, role: 'user', text }]);
-    setTimeout(() => {
-      setMessages((m) => [...m, { id: `s${Date.now()}`, role: 'scratch', text: reply }]);
-    }, 450);
-  }, [draft]);
+    setLastError(null);
+    setPending({ text });
+    send.mutate(text, {
+      onSuccess: (result) => {
+        setPending(null);
+        if ('error' in result) {
+          setLastError(result.error === 'not_configured' ? 'not_configured' : 'failed');
+        }
+      },
+      onError: () => {
+        setPending(null);
+        setLastError('failed');
+      },
+    });
+  };
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -83,30 +130,61 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
               onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
               style={{ maxHeight: 380 }}
               contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
-              renderItem={({ item }) => (
-                <View
-                  style={{
-                    alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
-                    maxWidth: '82%',
-                    backgroundColor: item.role === 'user' ? colors.primary : colors.surface,
-                    borderRadius: radii.md,
-                    borderWidth: item.role === 'user' ? 0 : 1,
-                    borderColor: colors.border,
-                    paddingVertical: spacing.sm,
-                    paddingHorizontal: spacing.md,
-                  }}
-                >
-                  <Text style={[typography.body, { color: item.role === 'user' ? colors.onPrimary : colors.text }]}>
-                    {item.text}
-                  </Text>
-                </View>
-              )}
+              renderItem={({ item, index }) => {
+                const isNewestScratchBubble =
+                  item.role === 'scratch' && !item.variant && index === messages.length - 1;
+                return (
+                  <View>
+                    <View
+                      style={{
+                        alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
+                        maxWidth: '82%',
+                        backgroundColor: item.role === 'user' ? colors.primary : colors.surface,
+                        borderRadius: radii.md,
+                        borderWidth: item.role === 'user' ? 0 : 1,
+                        borderColor: colors.border,
+                        paddingVertical: spacing.sm,
+                        paddingHorizontal: spacing.md,
+                      }}
+                    >
+                      <Text style={[typography.body, { color: item.role === 'user' ? colors.onPrimary : colors.text }]}>
+                        {item.text}
+                      </Text>
+                    </View>
+                    {isNewestScratchBubble && lastActions && (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          flexWrap: 'wrap',
+                          gap: spacing.xs,
+                          marginTop: spacing.xs,
+                          alignSelf: 'flex-start',
+                        }}
+                      >
+                        {lastActions.map((action) => (
+                          <View
+                            key={action}
+                            style={{
+                              backgroundColor: colors.primaryMuted,
+                              borderRadius: radii.pill,
+                              paddingVertical: spacing.xs,
+                              paddingHorizontal: spacing.sm,
+                            }}
+                          >
+                            <Text style={[typography.caption, { color: colors.primary }]}>{`✓ ${action}`}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                );
+              }}
             />
             <View style={{ flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.sm }}>
               <TextInput
                 value={draft}
                 onChangeText={setDraft}
-                onSubmitEditing={send}
+                onSubmitEditing={onSend}
                 placeholder="Ask Scratch anything…"
                 placeholderTextColor={colors.textFaint}
                 returnKeyType="send"
@@ -125,7 +203,7 @@ export function ChatSheet({ visible, onClose }: { visible: boolean; onClose: () 
                 ]}
               />
               <Pressable
-                onPress={send}
+                onPress={onSend}
                 accessibilityRole="button"
                 accessibilityLabel="Send"
                 style={{
