@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -28,10 +29,14 @@ function Bracket({ corner }: { corner: 'tl' | 'tr' | 'bl' | 'br' }) {
 // and the 1-5 legend panel in overview.
 export function FeedChrome({
   isOverview,
+  activeStop,
   onLegendPress,
+  onToggleOverview,
 }: {
   isOverview: boolean;
+  activeStop: number | null;
   onLegendPress: (index: number) => void;
+  onToggleOverview: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
@@ -88,23 +93,97 @@ export function FeedChrome({
           </Text>
         </View>
       </View>
-      {isOverview ? (
-        <View style={[plate, { position: 'absolute', left: 16, bottom: insets.bottom + 110, paddingVertical: 6 }]}>
-          {STOPS.map((stop, i) => (
+      <View
+        style={[
+          plate,
+          {
+            position: 'absolute',
+            left: 16,
+            bottom: insets.bottom + 110,
+            paddingVertical: 0,
+            paddingHorizontal: 0,
+            borderColor: HUD_COLORS.lineBright,
+            overflow: 'hidden',
+            minWidth: 150,
+          },
+        ]}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderBottomWidth: 0.75,
+            borderBottomColor: HUD_COLORS.line,
+          }}
+        >
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.text }}>scorecard</Text>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft }}>front 5</Text>
+        </View>
+        {STOPS.map((stop, i) => {
+          const here = activeStop === i && !isOverview;
+          return (
             <Pressable
               key={stop.label}
               onPress={() => onLegendPress(i)}
               accessibilityRole="button"
-              accessibilityLabel={`Enter ${stop.label}`}
-              style={{ paddingVertical: 3 }}
+              accessibilityLabel={`Go to ${stop.label} on the course`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderBottomWidth: i < STOPS.length - 1 ? 0.75 : 0,
+                borderBottomColor: HUD_COLORS.line,
+                backgroundColor: here ? 'rgba(29, 158, 117, 0.25)' : 'transparent',
+              }}
             >
-              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft }}>
-                {`${i + 1} ${stop.label.toLowerCase()}`}
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderWidth: 0.75,
+                  borderColor: here ? HUD_COLORS.mint : HUD_COLORS.line,
+                  borderRadius: 2,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mint }}>{i + 1}</Text>
+              </View>
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.text }}>
+                {stop.label.toLowerCase()}
               </Text>
             </Pressable>
-          ))}
-        </View>
-      ) : null}
+          );
+        })}
+      </View>
+      <Pressable
+        onPress={onToggleOverview}
+        accessibilityRole="button"
+        accessibilityLabel={isOverview ? 'Back to walking view' : 'See the whole hole'}
+        style={[
+          plate,
+          {
+            position: 'absolute',
+            right: 16,
+            bottom: insets.bottom + 110,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingVertical: 8,
+            paddingHorizontal: 10,
+            borderColor: HUD_COLORS.lineBright,
+          },
+        ]}
+      >
+        <Ionicons name={isOverview ? 'contract-outline' : 'expand-outline'} size={15} color={HUD_COLORS.mint} />
+        <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mint }}>
+          {isOverview ? 'walk' : 'whole hole'}
+        </Text>
+      </Pressable>
     </View>
   );
 }

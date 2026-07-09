@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import {
+  Easing,
   runOnJS,
   useAnimatedReaction,
   useDerivedValue,
@@ -55,30 +56,42 @@ export function useSatelliteNav(
   const cameraDist = useSharedValue(0);
   const scale = useSharedValue(travelScale);
   const hapticsArmed = useSharedValue(false);
+  const pinchActive = useSharedValue(false);
 
   const camPos = useDerivedValue(() => pointAtDistance(path, cameraDist.value));
   const overviewNow = useDerivedValue(() => isOverviewZoom(scale.value, travelScale, fitScale));
   const tilt = useDerivedValue(() => tiltFor(scale.value, travelScale, fitScale, WALK_TILT));
   const pivotY = screenH * WALK_PIVOT_Y;
 
-  const tx = useDerivedValue(() =>
-    overviewNow.value
-      ? centerOffset(screenW, bounds.x, bounds.w, scale.value)
-      : cameraOffset(screenW, SCENE.width * scale.value, screenW / 2 - camPos.value.x * scale.value)
-  );
+  // 0 at full travel zoom, 1 at the overview fit. Framing BLENDS between the
+  // walk (camera at the pivot) and the whole-hole frame along this progress,
+  // so zooming out is one continuous glide — no mid-zoom view jump.
+  const overviewProgress = useDerivedValue(() => {
+    const span = travelScale - fitScale;
+    if (Math.abs(span) < 1e-9) return 0;
+    return clamp((travelScale - scale.value) / span, 0, 1);
+  });
+
+  const tx = useDerivedValue(() => {
+    const walk = cameraOffset(screenW, SCENE.width * scale.value, screenW / 2 - camPos.value.x * scale.value);
+    const whole = centerOffset(screenW, bounds.x, bounds.w, scale.value);
+    const p = overviewProgress.value;
+    return walk * (1 - p) + whole * p;
+  });
   // In travel mode the camera "stands" at the walking pivot; the tilt pitches
   // the plane about that same line so your position stays under your feet.
   // The extra Math.min keeps the tilted view from ever looking past the
-  // photo's top edge: near the green the world stops scrolling and the last
-  // markers ride up the screen instead — real imagery on every pixel.
+  // photo's top edge — real imagery on every pixel.
   const ty = useDerivedValue(() => {
-    if (overviewNow.value) return centerOffset(screenH, bounds.y, bounds.h, scale.value);
     const flat = cameraOffset(
       screenH,
       SCENE.height * scale.value,
       pivotY - camPos.value.y * scale.value
     );
-    return Math.min(flat, pivotY - visibleAboveFlat(pivotY, tilt.value, WALK_PERSPECTIVE));
+    const walk = Math.min(flat, pivotY - visibleAboveFlat(pivotY, tilt.value, WALK_PERSPECTIVE));
+    const whole = centerOffset(screenH, bounds.y, bounds.h, scale.value);
+    const p = overviewProgress.value;
+    return walk * (1 - p) + whole * p;
   });
 
   const [activeStop, setActiveStop] = useState<number | null>(0);
@@ -117,11 +130,12 @@ export function useSatelliteNav(
         runOnJS(notifyInteract)();
       })
       .onChange((e) => {
-        if (overviewNow.value) return; // overview is a fixed full-hole frame
+        // A pinch in progress owns the screen — never walk mid-zoom.
+        if (overviewNow.value || pinchActive.value) return;
         cameraDist.value = clamp(cameraDist.value + dragDelta(e.changeY, scale.value), 0, path.total);
       })
       .onEnd((e) => {
-        if (overviewNow.value) return;
+        if (overviewNow.value || pinchActive.value) return;
         cameraDist.value = withDecay({
           velocity: dragDelta(e.velocityY, scale.value),
           deceleration: GLIDE_DECELERATION,
@@ -132,6 +146,7 @@ export function useSatelliteNav(
     const pinchStart = { value: 1 };
     const pinch = Gesture.Pinch()
       .onStart(() => {
+        pinchActive.value = true;
         pinchStart.value = scale.value;
         runOnJS(notifyInteract)();
       })
@@ -143,10 +158,14 @@ export function useSatelliteNav(
         );
       })
       .onEnd(() => {
+        pinchActive.value = false;
         const target = isOverviewZoom(scale.value, travelScale, fitScale) ? fitScale : travelScale;
         scale.value = reduceMotion ? target : withTiming(target, { duration: ZOOM_MS });
       });
 
+    // Simultaneous so the pinch is always recognized (Race let an accidental
+    // one-finger pan lock the zoom out); pinchActive gates the pan handlers
+    // so zooming never fights the walk.
     return Gesture.Simultaneous(pan, pinch);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path.total, fitScale, travelScale, reduceMotion, notifyInteract]);
@@ -159,5 +178,33 @@ export function useSatelliteNav(
     [path.total]
   );
 
-  return { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant };
+  // One-tap alternative to pinching: glide between the walk and the full-hole
+  // overview. Reads the live scale (not React state, which can lag a frame)
+  // so rapid taps always toggle from where the camera actually is.
+  const toggleOverview = useCallback(() => {
+    const target = isOverviewZoom(scale.value, travelScale, fitScale) ? travelScale : fitScale;
+    scale.value = reduceMotion
+      ? target
+      : withTiming(target, { duration: 450, easing: Easing.inOut(Easing.cubic) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [travelScale, fitScale, reduceMotion]);
+
+  // Glide the camera along the fairway to a section (scorecard-row taps).
+  // From the overview it also zooms back into the walk, arriving on the
+  // section. Never navigates — the target marker is the only "enter" button.
+  const goToStop = useCallback(
+    (index: number) => {
+      hapticsArmed.value = true;
+      const d = stopDists[index];
+      const ease = { duration: 700, easing: Easing.inOut(Easing.cubic) };
+      cameraDist.value = reduceMotion ? d : withTiming(d, ease);
+      if (scale.value < (travelScale + fitScale) / 2) {
+        scale.value = reduceMotion ? travelScale : withTiming(travelScale, ease);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stopDists, travelScale, fitScale, reduceMotion]
+  );
+
+  return { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant, toggleOverview, goToStop };
 }

@@ -7,9 +7,11 @@ import { useTheme } from '../../lib/theme';
 export default function HomeShellLayout() {
   const { colors } = useTheme();
 
+  // Sections are full pages, not modal cards — Tommy's call: tapping a target
+  // on the course takes you TO the section, no popup feel. Back = swipe from
+  // the left edge (iOS) or the back gesture/button (Android).
   const section = {
     headerShown: false,
-    presentation: 'modal' as const, // iOS: swipe-down to dismiss; Android: back gesture/button
     contentStyle: { backgroundColor: colors.background },
   };
 
