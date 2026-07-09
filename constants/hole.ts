@@ -4,7 +4,7 @@ import type { Vec } from '../lib/holePath';
 
 // The aerial photo's pixel dimensions — MUST match assets/hole16.webp
 // (printed by scripts/stitch-hole16.mjs). All scene math is in image px.
-export const SCENE = { width: 2400, height: 4591 };
+export const SCENE = { width: 2400, height: 5660 };
 
 export const HOLE_IMAGE = require('../assets/hole16.webp');
 
@@ -12,16 +12,19 @@ export const HOLE_IMAGE = require('../assets/hole16.webp');
 // normalized 0–1. Seeded from OSM-verified tee/green/dogleg positions
 // measured in the final image. Tune with SHOW_PATH_DEBUG=true until
 // the red line hugs the fairway in the actual photo.
+// y values remapped for the 2026-07-09 extended crop (crop.top 4158 -> 3000,
+// out 2400x4591 -> 2400x5660): new_y = (old_y * 4591 + 1069) / 5660, where
+// 1069 output px of clubhouse grounds were added above the green. x unchanged.
 const NORM_WAYPOINTS: Vec[] = [
-  { x: 0.353, y: 0.819 }, // tee boxes (OSM-verified centroid)
-  { x: 0.467, y: 0.775 },
-  { x: 0.583, y: 0.688 },
-  { x: 0.617, y: 0.61 }, // dogleg elbow, right of the tree stand (fairway landing area)
-  { x: 0.583, y: 0.501 },
-  { x: 0.467, y: 0.37 },
-  { x: 0.375, y: 0.24 },
-  { x: 0.333, y: 0.139 },
-  { x: 0.347, y: 0.101 }, // green (OSM-verified centroid)
+  { x: 0.353, y: 0.8532 }, // tee boxes (OSM-verified centroid)
+  { x: 0.467, y: 0.8175 },
+  { x: 0.583, y: 0.7469 },
+  { x: 0.617, y: 0.6837 }, // dogleg elbow, right of the tree stand (fairway landing area)
+  { x: 0.583, y: 0.5953 },
+  { x: 0.467, y: 0.489 },
+  { x: 0.375, y: 0.3835 },
+  { x: 0.333, y: 0.3016 },
+  { x: 0.347, y: 0.2708 }, // green (OSM-verified centroid)
 ];
 
 export const WAYPOINTS: Vec[] = NORM_WAYPOINTS.map((p) => ({
@@ -50,8 +53,12 @@ export const CAMERA_ZOOM = 2.0; // scene fills 200% of screen width — the came
 
 // Walking view (travel mode): the photo plane pitches away like a PGA-game
 // fairway camera. Tilt flattens to 0 as the pinch approaches overview fit.
-export const WALK_TILT = 0.92; // radians (~53°) at full travel zoom
-export const WALK_PERSPECTIVE = 1000; // screen px; smaller = more dramatic
+// Perspective is deliberately short (480) so the horizon sits ~25% from the
+// top of the screen — the ground converges into the haze before the photo
+// runs out, and sky fills the strip above. Never raise it past ~700 without
+// also extending the photo further (see scripts/stitch-hole16.mjs crop note).
+export const WALK_TILT = 0.88; // radians (~50°) at full travel zoom
+export const WALK_PERSPECTIVE = 480; // screen px; smaller = closer horizon, more drama
 export const WALK_PIVOT_Y = 0.72; // camera standpoint as a fraction of screen height
 
 // Scene rendering colors (the sanctioned exception to theme tokens — these

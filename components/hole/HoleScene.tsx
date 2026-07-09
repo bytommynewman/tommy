@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import {
   Canvas,
+  ColorMatrix,
   DashPathEffect,
   Fill,
   Group,
@@ -43,8 +44,19 @@ type HoleSceneProps = {
   path: HolePath;
 };
 
-const DASH_ON = 16;
-const DASH_OFF = 12;
+// Dash pattern is in scene px; the z20 photo doubled scene resolution, so
+// these are 2x the old values to keep the same on-screen rhythm.
+const DASH_ON = 32;
+const DASH_OFF = 24;
+
+// Mild saturation boost (~1.25x) so the treated turf still reads vivid
+// through the satellite tint. Standard luminance-preserving saturation matrix.
+const TURF_SATURATION = [
+  1.19675, -0.17875, -0.018, 0, 0,
+  -0.05325, 1.07125, -0.018, 0, 0,
+  -0.05325, -0.17875, 1.232, 0, 0,
+  0, 0, 0, 1, 0,
+];
 
 export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: HoleSceneProps) {
   const image = useImage(HOLE_IMAGE);
@@ -86,21 +98,32 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
 
   return (
     <Canvas style={{ width, height }}>
+      {/* Dusk sky — visible only above where the ground plane reaches. */}
+      <Rect x={0} y={0} width={width} height={height}>
+        <LinearGradient
+          start={vec(0, 0)}
+          end={vec(0, height * 0.5)}
+          colors={['#020806', '#07231a', '#0a3324']}
+          positions={[0, 0.55, 1]}
+        />
+      </Rect>
       {image ? (
         <Group transform={perspectiveTransform} origin={{ x: width / 2, y: pivotY }}>
           <Group transform={transform}>
-            <SkiaImage image={image} x={0} y={0} width={SCENE.width} height={SCENE.height} fit="fill" />
+            <SkiaImage image={image} x={0} y={0} width={SCENE.width} height={SCENE.height} fit="fill">
+              <ColorMatrix matrix={TURF_SATURATION} />
+            </SkiaImage>
             <SkiaPath
               path={skPath}
               color={SCENE_COLORS.pathLine}
               style="stroke"
-              strokeWidth={4}
+              strokeWidth={8}
               opacity={0.85}
             >
               <DashPathEffect intervals={[DASH_ON, DASH_OFF]} phase={dashPhase} />
             </SkiaPath>
             {SHOW_PATH_DEBUG ? (
-              <SkiaPath path={skPath} color="red" style="stroke" strokeWidth={2} />
+              <SkiaPath path={skPath} color="red" style="stroke" strokeWidth={4} />
             ) : null}
           </Group>
         </Group>
@@ -110,13 +133,16 @@ export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: 
         <Fill color={SCENE_COLORS.fallback} />
       )}
       <Fill color={SCENE_COLORS.satelliteTint} />
+      {/* Horizon fog: dense right where the tilted ground converges (~25%
+          from the top with WALK_PERSPECTIVE 480), fading to clear mid-screen.
+          Hides the photo's far edge and blends ground into sky. */}
       <Group opacity={hazeOpacity}>
-        <Rect x={0} y={0} width={width} height={height * 0.4}>
+        <Rect x={0} y={0} width={width} height={height * 0.42}>
           <LinearGradient
             start={vec(0, 0)}
-            end={vec(0, height * 0.4)}
-            colors={['rgba(7, 20, 16, 0.96)', 'rgba(10, 26, 20, 0.55)', 'rgba(10, 26, 20, 0)']}
-            positions={[0, 0.35, 1]}
+            end={vec(0, height * 0.42)}
+            colors={['rgba(2, 8, 6, 0.97)', 'rgba(7, 30, 22, 0.82)', 'rgba(10, 26, 20, 0.4)', 'rgba(10, 26, 20, 0)']}
+            positions={[0, 0.45, 0.72, 1]}
           />
         </Rect>
       </Group>
