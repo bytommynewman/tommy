@@ -8,6 +8,7 @@ import {
   pathBounds,
   projectPerspective,
   tiltFor,
+  visibleAboveFlat,
 } from '../courseNav';
 import { buildHolePath } from '../holePath';
 
@@ -96,6 +97,18 @@ describe('centerOffset', () => {
   it('centers the bounds region on screen', () => {
     // bounds 100..300 at scale 2 → center 400 → screen 400 wide → offset -200
     expect(centerOffset(400, 100, 200, 2)).toBe(-200);
+  });
+});
+
+describe('visibleAboveFlat', () => {
+  it('equals the pivot height when flat (no tilt)', () => {
+    expect(visibleAboveFlat(608, 0, 900)).toBeCloseTo(608);
+  });
+  it('grows with tilt — the camera sees further up the flat plane', () => {
+    expect(visibleAboveFlat(608, 0.5, 900)).toBeCloseTo(1098, 0);
+  });
+  it('caps at a huge value when the horizon would enter the screen', () => {
+    expect(visibleAboveFlat(608, 1.2, 480)).toBeGreaterThan(1e8);
   });
 });
 

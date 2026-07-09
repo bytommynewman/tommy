@@ -19,28 +19,30 @@ import {
   isOverviewZoom,
   pathBounds,
   tiltFor,
+  visibleAboveFlat,
 } from '../../lib/courseNav';
 import {
   CAMERA_ZOOM,
   SCENE,
   STOPS,
   STOP_NEAR_THRESHOLD,
+  WALK_PERSPECTIVE,
   WALK_PIVOT_Y,
   WALK_TILT,
   WAYPOINTS,
 } from '../../constants/hole';
 
 const ZOOM_MS = 350;
-const OVERVIEW_MARGIN = 120; // scene px of photo kept around the path in overview
-const GLIDE_DECELERATION = 0.995; // gentle glide-to-rest, no flick-jumps
+const OVERVIEW_MARGIN = 240; // scene px of photo kept around the path in overview
+const GLIDE_DECELERATION = 0.996; // gentle glide-to-rest, no flick-jumps
 
 // Satellite-feed camera: a pan gesture drags the camera 1:1 along the traced
 // fairway (no stops, no snapping); pinch toggles travel <-> whole-hole cover
-// framing. `onSettle` reports the camera fraction for persistence.
+// framing.
 export function useSatelliteNav(
   screenW: number,
   screenH: number,
-  opts?: { onInteract?: () => void; onSettle?: (frac: number) => void }
+  opts?: { onInteract?: () => void }
 ) {
   const path = useMemo(() => buildHolePath(WAYPOINTS), []);
   const stopDists = useMemo(() => STOPS.map((s) => s.frac * path.total), [path]);
@@ -56,6 +58,8 @@ export function useSatelliteNav(
 
   const camPos = useDerivedValue(() => pointAtDistance(path, cameraDist.value));
   const overviewNow = useDerivedValue(() => isOverviewZoom(scale.value, travelScale, fitScale));
+  const tilt = useDerivedValue(() => tiltFor(scale.value, travelScale, fitScale, WALK_TILT));
+  const pivotY = screenH * WALK_PIVOT_Y;
 
   const tx = useDerivedValue(() =>
     overviewNow.value
@@ -64,14 +68,18 @@ export function useSatelliteNav(
   );
   // In travel mode the camera "stands" at the walking pivot; the tilt pitches
   // the plane about that same line so your position stays under your feet.
-  const ty = useDerivedValue(() =>
-    overviewNow.value
-      ? centerOffset(screenH, bounds.y, bounds.h, scale.value)
-      : cameraOffset(screenH, SCENE.height * scale.value, screenH * WALK_PIVOT_Y - camPos.value.y * scale.value)
-  );
-
-  const tilt = useDerivedValue(() => tiltFor(scale.value, travelScale, fitScale, WALK_TILT));
-  const pivotY = screenH * WALK_PIVOT_Y;
+  // The extra Math.min keeps the tilted view from ever looking past the
+  // photo's top edge: near the green the world stops scrolling and the last
+  // markers ride up the screen instead — real imagery on every pixel.
+  const ty = useDerivedValue(() => {
+    if (overviewNow.value) return centerOffset(screenH, bounds.y, bounds.h, scale.value);
+    const flat = cameraOffset(
+      screenH,
+      SCENE.height * scale.value,
+      pivotY - camPos.value.y * scale.value
+    );
+    return Math.min(flat, pivotY - visibleAboveFlat(pivotY, tilt.value, WALK_PERSPECTIVE));
+  });
 
   const [activeStop, setActiveStop] = useState<number | null>(0);
   const [isOverview, setIsOverview] = useState(false);
@@ -100,11 +108,6 @@ export function useSatelliteNav(
 
   const onInteract = opts?.onInteract;
   const notifyInteract = useCallback(() => onInteract?.(), [onInteract]);
-  const onSettle = opts?.onSettle;
-  const notifySettle = useCallback(
-    (dist: number) => onSettle?.(path.total === 0 ? 0 : dist / path.total),
-    [onSettle, path.total]
-  );
 
   const gesture = useMemo(() => {
     const pan = Gesture.Pan()
@@ -119,14 +122,11 @@ export function useSatelliteNav(
       })
       .onEnd((e) => {
         if (overviewNow.value) return;
-        cameraDist.value = withDecay(
-          {
-            velocity: dragDelta(e.velocityY, scale.value),
-            deceleration: GLIDE_DECELERATION,
-            clamp: [0, path.total],
-          },
-          () => runOnJS(notifySettle)(cameraDist.value)
-        );
+        cameraDist.value = withDecay({
+          velocity: dragDelta(e.velocityY, scale.value),
+          deceleration: GLIDE_DECELERATION,
+          clamp: [0, path.total],
+        });
       });
 
     const pinchStart = { value: 1 };
@@ -149,7 +149,7 @@ export function useSatelliteNav(
 
     return Gesture.Simultaneous(pan, pinch);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path.total, fitScale, travelScale, reduceMotion, notifyInteract, notifySettle]);
+  }, [path.total, fitScale, travelScale, reduceMotion, notifyInteract]);
 
   const setCameraInstant = useCallback(
     (frac: number) => {

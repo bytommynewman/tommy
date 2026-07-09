@@ -10,7 +10,7 @@ import { FeedChrome } from '../../components/hole/FeedChrome';
 import { HintOverlay } from '../../components/hole/HintOverlay';
 import { ToggleBar } from '../../components/ui/ToggleBar';
 import { pointAtDistance } from '../../lib/holePath';
-import { HINT_DISMISSED_KEY, LAST_DIST_KEY, STOPS } from '../../constants/hole';
+import { HINT_DISMISSED_KEY, STOPS } from '../../constants/hole';
 import { HUD_COLORS } from '../../constants/hud';
 
 export default function CourseScreen() {
@@ -33,26 +33,12 @@ export default function CourseScreen() {
     setHintVisible(false);
   }, []);
 
-  const persistDist = useCallback((frac: number) => {
-    AsyncStorage.setItem(LAST_DIST_KEY, String(frac)).catch(() => {});
-  }, []);
-
+  // Every visit starts at hole 1 — the tee — and you walk up from there.
   const { path, stopDists, tx, ty, scale, tilt, pivotY, gesture, activeStop, isOverview, setCameraInstant } =
-    useSatelliteNav(width, height, { onInteract: dismissHint, onSettle: persistDist });
-
-  useEffect(() => {
-    AsyncStorage.getItem(LAST_DIST_KEY)
-      .then((v) => {
-        const f = v == null ? NaN : Number(v);
-        if (Number.isFinite(f) && f >= 0 && f <= 1) setCameraInstant(f);
-      })
-      .catch(() => {});
-  }, [setCameraInstant]);
+    useSatelliteNav(width, height, { onInteract: dismissHint });
 
   const enterStop = (index: number) => {
-    const frac = stopDists[index] / (path.total || 1);
-    setCameraInstant(frac);
-    persistDist(frac);
+    setCameraInstant(stopDists[index] / (path.total || 1));
     router.push(STOPS[index].route);
   };
 

@@ -50,6 +50,19 @@ export function tiltFor(scale: number, travelScale: number, fitScale: number, ma
   return clamp((scale - fitScale) / span, 0, 1) * maxTilt;
 }
 
+// How many FLAT screen px above the pivot are visible once the plane is
+// tilted — i.e. which flat point projects exactly onto the screen top.
+// Used to clamp the camera so the tilted view can never look past the top
+// edge of the photo (which would show background instead of imagery).
+// At tilt 0 this is simply the pivot height. If the horizon would enter the
+// screen (denominator <= 0), visibility is effectively infinite.
+export function visibleAboveFlat(pivotY: number, tilt: number, perspective: number): number {
+  'worklet';
+  const denom = Math.cos(tilt) - (pivotY * Math.sin(tilt)) / perspective;
+  if (denom <= 0.05) return 1e9;
+  return pivotY / denom;
+}
+
 // Perspective projection used by BOTH the Skia scene transform and the RN
 // marker overlays, so they stay pinned together. Input is a point relative to
 // the pivot (the camera standpoint on screen); rotateX(tilt) then perspective

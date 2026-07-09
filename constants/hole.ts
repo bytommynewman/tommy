@@ -53,12 +53,13 @@ export const CAMERA_ZOOM = 2.0; // scene fills 200% of screen width — the came
 
 // Walking view (travel mode): the photo plane pitches away like a PGA-game
 // fairway camera. Tilt flattens to 0 as the pinch approaches overview fit.
-// Perspective is deliberately short (480) so the horizon sits ~25% from the
-// top of the screen — the ground converges into the haze before the photo
-// runs out, and sky fills the strip above. Never raise it past ~700 without
-// also extending the photo further (see scripts/stitch-hole16.mjs crop note).
-export const WALK_TILT = 0.88; // radians (~50°) at full travel zoom
-export const WALK_PERSPECTIVE = 480; // screen px; smaller = closer horizon, more drama
+// Tommy's rule: real imagery on every pixel, no sky/background — so the tilt
+// stays gentle enough that the horizon never enters the screen, and
+// useSatelliteNav clamps the camera (via visibleAboveFlat) so the view can
+// never look past the photo's top edge. Raising WALK_TILT past ~0.6 will
+// reintroduce a sky band; don't, without asking Tommy.
+export const WALK_TILT = 0.52; // radians (~30°) at full travel zoom
+export const WALK_PERSPECTIVE = 900; // screen px; smaller = stronger depth
 export const WALK_PIVOT_Y = 0.72; // camera standpoint as a fraction of screen height
 
 // Scene rendering colors (the sanctioned exception to theme tokens — these
@@ -69,7 +70,6 @@ export const SCENE_COLORS = {
   pathLine: '#5DCAA5', // dashed fairway line (HUD mint)
 };
 
-export const LAST_DIST_KEY = 'hole.lastDist'; // camera position as a 0..1 fraction
 export const HINT_DISMISSED_KEY = 'hole.hintDismissed';
 
 // Dev aid: draws the centerline + waypoints in red over the photo.
