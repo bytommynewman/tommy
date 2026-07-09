@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { format, subDays } from 'date-fns';
-import { bestDaysClean, formatVsPar, recoveryStatus, todaysCard, vsLastWeek } from '../hudStats';
+import { bestBuildStreak, bestDaysClean, formatVsPar, recoveryStatus, todaysCard, vsLastWeek } from '../hudStats';
 import type { Habit, HabitLog, RelapseIncident } from '../../types/database.types';
 
 const day = (offset: number) => format(subDays(new Date(), offset), 'yyyy-MM-dd');
@@ -54,6 +54,22 @@ describe('bestDaysClean', () => {
   });
   it('returns null when there are no recovery habits', () => {
     expect(bestDaysClean([habit({ kind: 'build' })], [])).toBeNull();
+  });
+});
+
+describe('bestBuildStreak', () => {
+  it('returns the longest current streak across build habits', () => {
+    const habits = [habit({ id: 'a' }), habit({ id: 'b' }), habit({ id: 'r', kind: 'recovery' })];
+    const logs = [
+      log({ id: '1', habit_id: 'a', log_date: day(0) }),
+      log({ id: '2', habit_id: 'a', log_date: day(1) }),
+      log({ id: '3', habit_id: 'a', log_date: day(2) }),
+      log({ id: '4', habit_id: 'b', log_date: day(0) }),
+    ];
+    expect(bestBuildStreak(habits, logs)).toBe(3);
+  });
+  it('returns null when there are no build habits', () => {
+    expect(bestBuildStreak([habit({ kind: 'recovery' })], [])).toBeNull();
   });
 });
 

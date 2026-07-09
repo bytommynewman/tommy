@@ -1,6 +1,6 @@
 import { format, parseISO, subDays } from 'date-fns';
 import type { Habit, HabitLog, RelapseIncident } from '../types/database.types';
-import { daysClean } from './streaks';
+import { buildStreak, daysClean } from './streaks';
 
 export function todaysCard(habits: Habit[], logs: HabitLog[], today: string): { done: number; total: number } {
   const doneIds = new Set(
@@ -13,6 +13,14 @@ export function bestDaysClean(habits: Habit[], relapses: RelapseIncident[]): num
   const recovery = habits.filter((h) => h.kind === 'recovery');
   if (recovery.length === 0) return null;
   return Math.max(...recovery.map((h) => daysClean(h, relapses)));
+}
+
+// Longest current streak across "build" habits (gym, reading, …) — the
+// headline number when the user tracks no recovery habits.
+export function bestBuildStreak(habits: Habit[], logs: HabitLog[]): number | null {
+  const build = habits.filter((h) => h.kind === 'build');
+  if (build.length === 0) return null;
+  return Math.max(...build.map((h) => buildStreak(h, logs)));
 }
 
 // Momentum: habits done in the last 7 days minus the 7 days before that.

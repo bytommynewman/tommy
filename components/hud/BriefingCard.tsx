@@ -46,27 +46,18 @@ export function BriefingCard() {
 
   return (
     <GlowBox glow style={{ padding: 12, marginBottom: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: HUD_RADIUS,
-            backgroundColor: HUD_COLORS.panelDeep,
-            borderWidth: 0.75,
-            borderColor: HUD_COLORS.lineBright,
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-          }}
-        >
-          <ScratchMascot size={58} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 14, color: HUD_COLORS.text }}>
-            agent scratch · caddie
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
+        {/* The character himself, full size — leaning on his driver, not
+            cropped into a badge. He IS the home page. */}
+        <ScratchMascot size={116} />
+        <View style={{ flex: 1, paddingBottom: 8 }}>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 15, color: HUD_COLORS.text }}>
+            agent scratch
           </Text>
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint, marginTop: 2 }}>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
+            caddie · field operative
+          </Text>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint, marginTop: 6 }}>
             on your bag · channel secure
           </Text>
         </View>
