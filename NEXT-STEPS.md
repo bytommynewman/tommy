@@ -72,12 +72,10 @@ When the phone test feels good:
 
 ---
 
-## 4. One decision to make (no rush)
+## 4. ~~One decision to make~~ — done ✓
 
-The Daily Read can mention streak details (e.g. "12 days clean on …") and is
-cached in the phone's normal app storage — not the encrypted keychain your
-login token uses. Fine for most people since it's your own phone; if you'd
-rather it be encrypted too, tell Claude: "encrypt the daily read cache."
+The Daily Read cache now lives in the encrypted keychain (same place as your
+login token). Nothing for you to do here.
 
 ---
 
