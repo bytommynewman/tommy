@@ -97,6 +97,8 @@ export type IgSnapshot = {
   followers: number;
   following: number;
   media_count: number;
+  username: string | null; // added by migration 0007
+  profile_picture_url: string | null; // added by migration 0007
   captured_at: string;
 };
 

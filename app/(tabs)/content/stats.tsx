@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Image, Linking, Pressable, RefreshControl, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Polyline } from 'react-native-svg';
+import Svg, { Polygon, Polyline } from 'react-native-svg';
 import { ContentHeader } from '../../../components/content/ContentHeader';
 import { GlowBox } from '../../../components/hud/GlowBox';
+import { HoloCard } from '../../../components/hud/HoloCard';
 import { SkeletonCard } from '../../../components/hud/SkeletonCard';
 import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS, MONEY_COLORS, MONEY_SERIF } from '../../../constants/hud';
 import { followerDelta, snapshotPoints } from '../../../lib/contentLogic';
@@ -166,34 +167,80 @@ export default function StatsScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={HUD_COLORS.mint} />}
       >
-        <GlowBox glow style={{ padding: 16, marginBottom: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 16, color: HUD_COLORS.text, letterSpacing: 0.5 }}>
-              @bytommynewman
-            </Text>
+        <HoloCard glow style={{ padding: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {latest?.profile_picture_url ? (
+              <Image
+                source={{ uri: latest.profile_picture_url }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: HUD_RADIUS,
+                  borderWidth: 0.75,
+                  borderColor: HUD_COLORS.lineBright,
+                  backgroundColor: HUD_COLORS.panelDeep,
+                }}
+                resizeMode="cover"
+                accessibilityIgnoresInvertColors
+              />
+            ) : (
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: HUD_RADIUS,
+                  borderWidth: 0.75,
+                  borderColor: HUD_COLORS.lineBright,
+                  backgroundColor: HUD_COLORS.panelDeep,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="person-outline" size={18} color={HUD_COLORS.mint} />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 16, color: HUD_COLORS.text, letterSpacing: 0.5 }}>
+                {`@${latest?.username ?? 'bytommynewman'}`}
+              </Text>
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
+                instagram · creator intel
+              </Text>
+            </View>
             <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mint, letterSpacing: 1.5 }}>
-              {connected ? '● LIVE INTEL' : '○ STANDBY'}
+              {connected ? '● LIVE' : '○ STANDBY'}
             </Text>
           </View>
 
-          <View style={{ alignItems: 'center', paddingVertical: 14 }}>
-            <Text style={{ fontFamily: MONEY_SERIF, fontSize: 44, color: MONEY_COLORS.cream }}>
+          <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+            <Text style={{ fontFamily: MONEY_SERIF, fontSize: 48, color: MONEY_COLORS.cream }}>
               {latest ? n(latest.followers) : '—'}
             </Text>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, letterSpacing: 2, marginTop: 2 }}>
+            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 3, marginTop: 4 }}>
               FOLLOWERS
             </Text>
             {delta !== null ? (
-              <Text
+              <View
                 style={{
-                  fontFamily: HUD_FONT,
-                  fontSize: 11,
-                  color: delta >= 0 ? HUD_COLORS.mint : HUD_COLORS.amber,
-                  marginTop: 6,
+                  marginTop: 8,
+                  borderWidth: 0.75,
+                  borderColor: delta >= 0 ? HUD_COLORS.mint : HUD_COLORS.amber,
+                  borderRadius: 999,
+                  paddingHorizontal: 10,
+                  paddingVertical: 3,
+                  backgroundColor: HUD_COLORS.panelDeep,
                 }}
               >
-                {`${delta >= 0 ? '+' : ''}${n(delta)} since last sync`}
-              </Text>
+                <Text
+                  style={{
+                    fontFamily: HUD_FONT_BOLD,
+                    fontSize: 10,
+                    color: delta >= 0 ? HUD_COLORS.mint : HUD_COLORS.amber,
+                  }}
+                >
+                  {`${delta >= 0 ? '+' : ''}${n(delta)} since last sync`}
+                </Text>
+              </View>
             ) : null}
           </View>
 
@@ -201,6 +248,11 @@ export default function StatsScreen() {
             <View onLayout={onSparkLayout} style={{ height: SPARK_H }}>
               {sparkWidth > 0 ? (
                 <Svg width={sparkWidth} height={SPARK_H}>
+                  <Polygon
+                    points={`0,${SPARK_H} ${points} ${sparkWidth},${SPARK_H}`}
+                    fill={HUD_COLORS.mint}
+                    opacity={0.12}
+                  />
                   <Polyline points={points} fill="none" stroke={HUD_COLORS.mint} strokeWidth={1.5} />
                 </Svg>
               ) : null}
@@ -230,7 +282,7 @@ export default function StatsScreen() {
               {syncError}
             </Text>
           ) : null}
-        </GlowBox>
+        </HoloCard>
 
         {isLoading ? <SkeletonCard lines={3} /> : null}
 

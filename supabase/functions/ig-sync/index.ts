@@ -31,19 +31,22 @@ async function igGet(path: string, params: Record<string, string>, token: string
   return data;
 }
 
-// "views" replaced "plays" as the reel metric; older accounts may still only
-// answer to plays. Try both, and treat a refusal as "no number" not an error.
+// Instagram exposes several overlapping play-count metrics ("views" replaced
+// "plays"; reels also have an aggregated all-plays counter) and they disagree
+// — "plays" excludes replays and can badly undercount. Ask for all of them
+// and keep the largest, which is what the Instagram app itself displays.
 async function fetchViews(mediaId: string, token: string): Promise<number | null> {
-  for (const metric of ['views', 'plays']) {
+  let best: number | null = null;
+  for (const metric of ['views', 'ig_reels_aggregated_all_plays_count', 'plays']) {
     try {
       const data = await igGet(`/${mediaId}/insights`, { metric }, token);
-      const value = data?.data?.[0]?.values?.[0]?.value;
-      if (typeof value === 'number') return value;
+      const value = data?.data?.[0]?.values?.[0]?.value ?? data?.data?.[0]?.total_value?.value;
+      if (typeof value === 'number' && (best === null || value > best)) best = value;
     } catch {
-      // fall through to the next metric
+      // metric not available for this media — try the next one
     }
   }
-  return null;
+  return best;
 }
 
 Deno.serve(async (req) => {
@@ -61,12 +64,24 @@ Deno.serve(async (req) => {
   if (userError || !userData.user) return json({ error: 'unauthorized' }, 401);
 
   try {
-    const me = await igGet('/me', { fields: 'username,followers_count,follows_count,media_count' }, token);
-    const { error: snapError } = await supabase.from('ig_snapshots').insert({
+    const me = await igGet(
+      '/me',
+      { fields: 'username,profile_picture_url,followers_count,follows_count,media_count' },
+      token
+    );
+    const snapshot: Record<string, unknown> = {
       followers: me.followers_count ?? 0,
       following: me.follows_count ?? 0,
       media_count: me.media_count ?? 0,
-    });
+      username: typeof me.username === 'string' ? me.username : null,
+      profile_picture_url: typeof me.profile_picture_url === 'string' ? me.profile_picture_url : null,
+    };
+    let { error: snapError } = await supabase.from('ig_snapshots').insert(snapshot);
+    if (snapError && /username|profile_picture_url/.test(snapError.message)) {
+      // Migration 0007 not applied yet — snapshot the numbers anyway.
+      const { username: _u, profile_picture_url: _p, ...bare } = snapshot;
+      ({ error: snapError } = await supabase.from('ig_snapshots').insert(bare));
+    }
     if (snapError) return json({ error: 'ig_failed', detail: snapError.message }, 500);
 
     const media = await igGet(

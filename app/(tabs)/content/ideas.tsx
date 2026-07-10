@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { ContentHeader } from '../../../components/content/ContentHeader';
-import { GlowBox } from '../../../components/hud/GlowBox';
+import { HoloCard } from '../../../components/hud/HoloCard';
 import { SkeletonCard } from '../../../components/hud/SkeletonCard';
 import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS, MONEY_COLORS } from '../../../constants/hud';
 import { splitOutline } from '../../../lib/contentLogic';
@@ -30,31 +30,6 @@ function statusColor(status: ReelIdeaStatus): string {
   if (status === 'posted') return HUD_COLORS.mint;
   if (status === 'filmed' || status === 'planned') return HUD_COLORS.amber;
   return HUD_COLORS.mintSoft;
-}
-
-// Sci-fi corner ticks on top of a GlowBox — four static views, no animation.
-function HoloCard({ children, glow = false }: { children: React.ReactNode; glow?: boolean }) {
-  const tick = (pos: object) => (
-    <View
-      pointerEvents="none"
-      style={{
-        position: 'absolute',
-        width: 10,
-        height: 10,
-        borderColor: glow ? HUD_COLORS.mint : HUD_COLORS.lineBright,
-        ...pos,
-      }}
-    />
-  );
-  return (
-    <GlowBox glow={glow} style={{ padding: 14, marginBottom: 12 }}>
-      {tick({ top: 3, left: 3, borderTopWidth: 1.5, borderLeftWidth: 1.5 })}
-      {tick({ top: 3, right: 3, borderTopWidth: 1.5, borderRightWidth: 1.5 })}
-      {tick({ bottom: 3, left: 3, borderBottomWidth: 1.5, borderLeftWidth: 1.5 })}
-      {tick({ bottom: 3, right: 3, borderBottomWidth: 1.5, borderRightWidth: 1.5 })}
-      {children}
-    </GlowBox>
-  );
 }
 
 function IdeaCard({ idea }: { idea: ReelIdea }) {
