@@ -31,7 +31,12 @@ export async function fetchPortfolioStatus(): Promise<{ connected: boolean }> {
 
 export async function startConnect(): Promise<string> {
   const data = await invoke('connect');
-  if (typeof data.redirectURI !== 'string') throw new Error((data.error as string) ?? 'st_failed');
+  if (typeof data.redirectURI !== 'string') {
+    // Prefer the function's `detail` (the actual SnapTrade response) so the
+    // failure reason is visible right in the app.
+    const detail = typeof data.detail === 'string' ? data.detail : null;
+    throw new Error(detail ?? (data.error as string) ?? 'st_failed');
+  }
   return data.redirectURI;
 }
 

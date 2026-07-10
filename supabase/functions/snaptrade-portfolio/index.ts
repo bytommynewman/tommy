@@ -156,6 +156,9 @@ Deno.serve(async (req) => {
     return json({ error: 'bad_request' }, 400);
   } catch (err) {
     console.error('snaptrade-portfolio error', err);
-    return json({ error: 'st_failed' }, 500);
+    // Surface the real reason (SnapTrade's status + message) so failures are
+    // debuggable from the phone instead of requiring dashboard log access.
+    const detail = err instanceof Error ? err.message : String(err);
+    return json({ error: 'st_failed', detail: detail.slice(0, 240) }, 500);
   }
 });

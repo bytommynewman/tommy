@@ -22,35 +22,43 @@ const TRACKERS = [
   { symbol: 'BTC-USD', label: 'bitcoin' },
 ];
 
+type SeriesPoint = { t: number; v: number };
 type Tracker = {
   symbol: string;
   label: string;
+  currency: string;
   price: number;
   prevClose: number;
   changePct: number;
-  spark: number[];
+  series: SeriesPoint[]; // today's intraday closes, unix seconds — scrubbable
 };
 
 async function fetchTracker(t: { symbol: string; label: string }): Promise<Tracker> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t.symbol)}?range=1d&interval=15m`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t.symbol)}?range=1d&interval=5m`;
   const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
   if (!res.ok) throw new Error(`yahoo ${res.status}`);
   const data = await res.json();
   const result = data?.chart?.result?.[0];
   const meta = result?.meta;
-  const closes: number[] = (result?.indicators?.quote?.[0]?.close ?? []).filter(
-    (v: unknown): v is number => typeof v === 'number'
-  );
+  const timestamps: unknown[] = result?.timestamp ?? [];
+  const closes: unknown[] = result?.indicators?.quote?.[0]?.close ?? [];
+  const series: SeriesPoint[] = [];
+  for (let i = 0; i < Math.min(timestamps.length, closes.length); i++) {
+    if (typeof timestamps[i] === 'number' && typeof closes[i] === 'number') {
+      series.push({ t: timestamps[i] as number, v: closes[i] as number });
+    }
+  }
   const price = meta?.regularMarketPrice;
   const prev = meta?.chartPreviousClose ?? meta?.previousClose;
   if (typeof price !== 'number' || typeof prev !== 'number' || prev === 0) throw new Error('bad payload');
   return {
     symbol: t.symbol,
     label: t.label,
+    currency: typeof meta?.currency === 'string' ? meta.currency : 'USD',
     price,
     prevClose: prev,
     changePct: ((price - prev) / prev) * 100,
-    spark: closes.slice(-40),
+    series: series.slice(-120),
   };
 }
 

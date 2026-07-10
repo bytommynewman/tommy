@@ -1,12 +1,15 @@
 import { supabase } from '../supabase';
 
+export type MarketSeriesPoint = { t: number; v: number };
+
 export type MarketTracker = {
   symbol: string;
   label: string;
+  currency: string;
   price: number;
   prevClose: number;
   changePct: number;
-  spark: number[];
+  series: MarketSeriesPoint[];
 };
 
 export type MarketOverview = { trackers: MarketTracker[]; asOf: string };

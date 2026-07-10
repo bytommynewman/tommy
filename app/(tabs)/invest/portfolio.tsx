@@ -90,8 +90,8 @@ export default function PortfolioScreen() {
               </Text>
             </Pressable>
             {connect.isError ? (
-              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.amber, marginTop: 8 }}>
-                couldn't open the link — is snaptrade-portfolio deployed? (NEXT-STEPS.md §7)
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, lineHeight: 16, color: HUD_COLORS.amber, marginTop: 8 }}>
+                {`connection failed: ${connect.error instanceof Error ? connect.error.message : 'unknown'} — screenshot this for claude`}
               </Text>
             ) : null}
           </GlowBox>
