@@ -100,7 +100,7 @@ function SignalBars({ media }: { media: IgMediaStat[] }) {
   );
 }
 
-function ReelRow({ media }: { media: IgMediaStat }) {
+function ReelRow({ media, rank }: { media: IgMediaStat; rank?: number }) {
   const caption = (media.caption ?? '').split('\n')[0] || 'untitled reel';
   const posted = media.posted_at
     ? new Date(media.posted_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
@@ -151,7 +151,22 @@ function ReelRow({ media }: { media: IgMediaStat }) {
             <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 12, color: HUD_COLORS.text, flex: 1 }} numberOfLines={2}>
               {caption}
             </Text>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft }}>{posted}</Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft }}>{posted}</Text>
+              {rank ? (
+                <Text
+                  style={{
+                    fontFamily: HUD_FONT_BOLD,
+                    fontSize: 9,
+                    color: rank === 1 ? MONEY_COLORS.brass : HUD_COLORS.line,
+                    letterSpacing: 1,
+                    marginTop: 2,
+                  }}
+                >
+                  {rank === 1 ? '▲ TOP SIGNAL' : `#${rank}`}
+                </Text>
+              ) : null}
+            </View>
           </View>
           <View>
             <View style={{ flexDirection: 'row', gap: 14 }}>
@@ -211,6 +226,12 @@ export default function StatsScreen() {
   const avgViews = playsCounted > 0 ? Math.round(totalPlays / playsCounted) : 0;
   // Engagement: interactions per view across everything we can see.
   const engagement = totalPlays > 0 ? ((totalLikes + totalComments + totalSaves) / totalPlays) * 100 : null;
+  const rankByViews = new Map(
+    [...media]
+      .filter((m) => (m.plays ?? 0) > 0)
+      .sort((a, b) => (b.plays ?? 0) - (a.plays ?? 0))
+      .map((m, i) => [m.media_id, i + 1])
+  );
 
   const onSync = () => {
     if (sync.isPending) return;
@@ -367,6 +388,36 @@ export default function StatsScreen() {
 
         {isLoading ? <SkeletonCard lines={3} /> : null}
 
+        {connected && typeof latest.views_28d === 'number' ? (
+          <>
+            <SectionHead label="reach report · last 28 days" />
+            <HoloCard glow style={{ padding: 16 }}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontFamily: MONEY_SERIF, fontSize: 36, color: MONEY_COLORS.cream }}>
+                  {n(latest.views_28d)}
+                </Text>
+                <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginTop: 3 }}>
+                  TOTAL VIEWS
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+                <StatChip
+                  label="accounts reached"
+                  value={typeof latest.reach_28d === 'number' ? n(latest.reach_28d) : '—'}
+                />
+                <StatChip
+                  label="accounts engaged"
+                  value={typeof latest.engaged_28d === 'number' ? n(latest.engaged_28d) : '—'}
+                />
+              </View>
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 8, lineHeight: 13, color: HUD_COLORS.line, marginTop: 8 }}>
+                whole-account totals straight from instagram — same math as your
+                professional dashboard, includes facebook crosspost + boosted views
+              </Text>
+            </HoloCard>
+          </>
+        ) : null}
+
         {connected ? (
           <>
             <SectionHead label="account telemetry" />
@@ -395,7 +446,7 @@ export default function StatsScreen() {
           <>
             <SectionHead label="recent transmissions · tap to open" />
             {media.map((m) => (
-              <ReelRow key={m.media_id} media={m} />
+              <ReelRow key={m.media_id} media={m} rank={rankByViews.get(m.media_id)} />
             ))}
           </>
         ) : null}

@@ -99,6 +99,9 @@ export type IgSnapshot = {
   media_count: number;
   username: string | null; // added by migration 0007
   profile_picture_url: string | null; // added by migration 0007
+  views_28d: number | null; // added by migration 0009
+  reach_28d: number | null; // added by migration 0009
+  engaged_28d: number | null; // added by migration 0009
   captured_at: string;
 };
 

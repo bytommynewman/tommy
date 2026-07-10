@@ -70,6 +70,36 @@ async function fetchInsights(mediaId: string, token: string): Promise<MediaInsig
   return out;
 }
 
+type AccountInsights = { views: number | null; reach: number | null; engaged: number | null };
+
+// Account-level 28-day totals — this is the number the Instagram app's own
+// "Professional dashboard" shows, and it counts views the per-media insights
+// can't see (boosts, Facebook crossposting). Periods vary by metric, so try
+// days_28 first and fall back to day.
+async function fetchAccountInsights(token: string): Promise<AccountInsights> {
+  const out: AccountInsights = { views: null, reach: null, engaged: null };
+  const metrics: [string, keyof AccountInsights][] = [
+    ['views', 'views'],
+    ['reach', 'reach'],
+    ['accounts_engaged', 'engaged'],
+  ];
+  for (const [metric, key] of metrics) {
+    for (const period of ['days_28', 'day']) {
+      try {
+        const data = await igGet('/me/insights', { metric, period, metric_type: 'total_value' }, token);
+        const value = data?.data?.[0]?.total_value?.value ?? data?.data?.[0]?.values?.[0]?.value;
+        if (typeof value === 'number') {
+          out[key] = value;
+          break;
+        }
+      } catch {
+        // metric/period combo not supported — try the next
+      }
+    }
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -90,17 +120,33 @@ Deno.serve(async (req) => {
       { fields: 'username,profile_picture_url,followers_count,follows_count,media_count' },
       token
     );
+    const account = await fetchAccountInsights(token);
     const snapshot: Record<string, unknown> = {
       followers: me.followers_count ?? 0,
       following: me.follows_count ?? 0,
       media_count: me.media_count ?? 0,
       username: typeof me.username === 'string' ? me.username : null,
       profile_picture_url: typeof me.profile_picture_url === 'string' ? me.profile_picture_url : null,
+      views_28d: account.views,
+      reach_28d: account.reach,
+      engaged_28d: account.engaged,
     };
     let { error: snapError } = await supabase.from('ig_snapshots').insert(snapshot);
+    if (snapError && /views_28d|reach_28d|engaged_28d/.test(snapError.message)) {
+      // Migration 0009 not applied yet — snapshot without the 28d totals.
+      const { views_28d: _v, reach_28d: _r, engaged_28d: _e, ...withoutInsights } = snapshot;
+      ({ error: snapError } = await supabase.from('ig_snapshots').insert(withoutInsights));
+    }
     if (snapError && /username|profile_picture_url/.test(snapError.message)) {
-      // Migration 0007 not applied yet — snapshot the numbers anyway.
-      const { username: _u, profile_picture_url: _p, ...bare } = snapshot;
+      // Migration 0007 not applied yet either — snapshot the numbers anyway.
+      const {
+        username: _u,
+        profile_picture_url: _p,
+        views_28d: _v2,
+        reach_28d: _r2,
+        engaged_28d: _e2,
+        ...bare
+      } = snapshot;
       ({ error: snapError } = await supabase.from('ig_snapshots').insert(bare));
     }
     if (snapError) return json({ error: 'ig_failed', detail: snapError.message }, 500);
