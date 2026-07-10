@@ -31,22 +31,43 @@ async function igGet(path: string, params: Record<string, string>, token: string
   return data;
 }
 
-// Instagram exposes several overlapping play-count metrics ("views" replaced
-// "plays"; reels also have an aggregated all-plays counter) and they disagree
-// — "plays" excludes replays and can badly undercount. Ask for all of them
-// and keep the largest, which is what the Instagram app itself displays.
-async function fetchViews(mediaId: string, token: string): Promise<number | null> {
-  let best: number | null = null;
+type MediaInsights = {
+  views: number | null;
+  reach: number | null;
+  saves: number | null;
+  shares: number | null;
+};
+
+// One combined insights call per media (views/reach/saved/shares), then the
+// overlapping play-count metrics singly — "plays" excludes replays and can
+// badly undercount, so the largest play-count wins, matching what the
+// Instagram app shows. Any refused metric is just a null, never an error.
+async function fetchInsights(mediaId: string, token: string): Promise<MediaInsights> {
+  const out: MediaInsights = { views: null, reach: null, saves: null, shares: null };
+  try {
+    const data = await igGet(`/${mediaId}/insights`, { metric: 'views,reach,saved,shares' }, token);
+    for (const m of data?.data ?? []) {
+      const value = m?.values?.[0]?.value ?? m?.total_value?.value;
+      if (typeof value !== 'number') continue;
+      if (m.name === 'views') out.views = value;
+      else if (m.name === 'reach') out.reach = value;
+      else if (m.name === 'saved') out.saves = value;
+      else if (m.name === 'shares') out.shares = value;
+    }
+  } catch {
+    // combined call refused for this media type — the loop below still runs
+  }
   for (const metric of ['views', 'ig_reels_aggregated_all_plays_count', 'plays']) {
+    if (metric === 'views' && out.views !== null) continue;
     try {
       const data = await igGet(`/${mediaId}/insights`, { metric }, token);
       const value = data?.data?.[0]?.values?.[0]?.value ?? data?.data?.[0]?.total_value?.value;
-      if (typeof value === 'number' && (best === null || value > best)) best = value;
+      if (typeof value === 'number' && (out.views === null || value > out.views)) out.views = value;
     } catch {
       // metric not available for this media — try the next one
     }
   }
-  return best;
+  return out;
 }
 
 Deno.serve(async (req) => {
@@ -93,9 +114,9 @@ Deno.serve(async (req) => {
       token
     );
     const items = Array.isArray(media?.data) ? media.data : [];
-    const views = await Promise.all(
+    const insights = await Promise.all(
       // deno-lint-ignore no-explicit-any
-      items.map((m: any) => fetchViews(String(m.id), token))
+      items.map((m: any) => fetchInsights(String(m.id), token))
     );
     if (items.length > 0) {
       const rows = items.map((m: Record<string, unknown>, i: number) => ({
@@ -107,7 +128,10 @@ Deno.serve(async (req) => {
         thumbnail_url:
           typeof m.thumbnail_url === 'string' ? m.thumbnail_url : typeof m.media_url === 'string' ? m.media_url : null,
         posted_at: typeof m.timestamp === 'string' ? m.timestamp : null,
-        plays: views[i],
+        plays: insights[i].views,
+        reach: insights[i].reach,
+        saves: insights[i].saves,
+        shares: insights[i].shares,
         likes: typeof m.like_count === 'number' ? m.like_count : 0,
         comments: typeof m.comments_count === 'number' ? m.comments_count : 0,
         captured_at: new Date().toISOString(),
@@ -115,11 +139,22 @@ Deno.serve(async (req) => {
       let { error: mediaError } = await supabase
         .from('ig_media_stats')
         .upsert(rows, { onConflict: 'user_id,media_id' });
-      if (mediaError && /thumbnail_url/.test(mediaError.message)) {
-        // Migration 0006 not applied yet — sync everything else anyway.
+      if (mediaError && /reach|saves|shares/.test(mediaError.message)) {
+        // Migration 0008 not applied yet — sync everything else anyway.
         ({ error: mediaError } = await supabase
           .from('ig_media_stats')
-          .upsert(rows.map(({ thumbnail_url: _t, ...rest }) => rest), { onConflict: 'user_id,media_id' }));
+          .upsert(rows.map(({ reach: _r, saves: _sv, shares: _sh, ...rest }) => rest), {
+            onConflict: 'user_id,media_id',
+          }));
+      }
+      if (mediaError && /thumbnail_url/.test(mediaError.message)) {
+        // Migration 0006 not applied yet either.
+        ({ error: mediaError } = await supabase
+          .from('ig_media_stats')
+          .upsert(
+            rows.map(({ thumbnail_url: _t, reach: _r, saves: _sv, shares: _sh, ...rest }) => rest),
+            { onConflict: 'user_id,media_id' }
+          ));
       }
       if (mediaError) return json({ error: 'ig_failed', detail: mediaError.message }, 500);
     }

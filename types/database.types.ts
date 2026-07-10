@@ -111,6 +111,9 @@ export type IgMediaStat = {
   thumbnail_url: string | null; // added by migration 0006
   posted_at: string | null;
   plays: number | null;
+  reach: number | null; // added by migration 0008
+  saves: number | null; // added by migration 0008
+  shares: number | null; // added by migration 0008
   likes: number;
   comments: number;
   captured_at: string;

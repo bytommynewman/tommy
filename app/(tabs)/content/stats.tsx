@@ -26,15 +26,77 @@ function StatChip({ label, value }: { label: string; value: string }) {
         borderColor: HUD_COLORS.line,
         borderRadius: HUD_RADIUS,
         backgroundColor: HUD_COLORS.panel,
-        paddingVertical: 10,
+        paddingVertical: 9,
+        paddingHorizontal: 2,
         alignItems: 'center',
       }}
     >
-      <Text style={{ fontFamily: MONEY_SERIF, fontSize: 18, color: MONEY_COLORS.cream }}>{value}</Text>
-      <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 3, letterSpacing: 1 }}>
+      <Text style={{ fontFamily: MONEY_SERIF, fontSize: 15, color: MONEY_COLORS.cream }} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Text>
+      <Text style={{ fontFamily: HUD_FONT, fontSize: 7.5, color: HUD_COLORS.mintSoft, marginTop: 3, letterSpacing: 0.8 }} numberOfLines={1}>
         {label.toUpperCase()}
       </Text>
     </View>
+  );
+}
+
+function SectionHead({ label }: { label: string }) {
+  return (
+    <Text
+      style={{
+        fontFamily: HUD_FONT_BOLD,
+        fontSize: 10,
+        color: MONEY_COLORS.brass,
+        letterSpacing: 2.5,
+        marginTop: 16,
+        marginBottom: 8,
+      }}
+    >
+      {label.toUpperCase()}
+    </Text>
+  );
+}
+
+// Static horizontal bars ranking reels by views — no animation on purpose.
+function SignalBars({ media }: { media: IgMediaStat[] }) {
+  const ranked = media.filter((m) => (m.plays ?? 0) > 0).slice(0, 8);
+  if (ranked.length < 2) return null;
+  const max = Math.max(...ranked.map((m) => m.plays ?? 0));
+  return (
+    <>
+      <SectionHead label="signal by reel" />
+      <GlowBox style={{ padding: 12 }}>
+        {ranked.map((m, i) => {
+          const pct = Math.max(((m.plays ?? 0) / max) * 100, 4);
+          const posted = m.posted_at
+            ? new Date(m.posted_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
+            : '—';
+          return (
+            <View key={m.media_id} style={{ marginTop: i === 0 ? 0 : 10 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
+                <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft }} numberOfLines={1}>
+                  {`${posted} · ${(m.caption ?? 'untitled').split('\n')[0].slice(0, 34)}`}
+                </Text>
+                <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color: HUD_COLORS.mint }}>
+                  {n(m.plays ?? 0)}
+                </Text>
+              </View>
+              <View style={{ height: 6, borderRadius: 2, backgroundColor: HUD_COLORS.panelDeep, overflow: 'hidden' }}>
+                <View
+                  style={{
+                    width: `${pct}%`,
+                    height: 6,
+                    borderRadius: 2,
+                    backgroundColor: pct === 100 ? HUD_COLORS.mint : HUD_COLORS.lineBright,
+                  }}
+                />
+              </View>
+            </View>
+          );
+        })}
+      </GlowBox>
+    </>
   );
 }
 
@@ -91,21 +153,34 @@ function ReelRow({ media }: { media: IgMediaStat }) {
             </Text>
             <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft }}>{posted}</Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: 14 }}>
-            {media.plays !== null ? (
+          <View>
+            <View style={{ flexDirection: 'row', gap: 14 }}>
+              {media.plays !== null ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="play-outline" size={11} color={HUD_COLORS.mint} />
+                  <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 11, color: HUD_COLORS.mint }}>{n(media.plays)}</Text>
+                </View>
+              ) : null}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Ionicons name="play-outline" size={11} color={HUD_COLORS.mint} />
-                <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint }}>{n(media.plays)}</Text>
+                <Ionicons name="heart-outline" size={11} color={HUD_COLORS.mintSoft} />
+                <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.likes)}</Text>
               </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="chatbubble-outline" size={11} color={HUD_COLORS.mintSoft} />
+                <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.comments)}</Text>
+              </View>
+            </View>
+            {media.reach !== null || media.saves !== null || media.shares !== null ? (
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 4 }}>
+                {[
+                  media.reach !== null ? `reach ${n(media.reach)}` : null,
+                  media.saves !== null ? `saves ${n(media.saves)}` : null,
+                  media.shares !== null ? `shares ${n(media.shares)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
             ) : null}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="heart-outline" size={11} color={HUD_COLORS.mintSoft} />
-              <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.likes)}</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="chatbubble-outline" size={11} color={HUD_COLORS.mintSoft} />
-              <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.comments)}</Text>
-            </View>
           </View>
         </View>
       </View>
@@ -130,6 +205,12 @@ export default function StatsScreen() {
   const totalLikes = media.reduce((sum, m) => sum + m.likes, 0);
   const totalComments = media.reduce((sum, m) => sum + m.comments, 0);
   const totalPlays = media.reduce((sum, m) => sum + (m.plays ?? 0), 0);
+  const totalSaves = media.reduce((sum, m) => sum + (m.saves ?? 0), 0);
+  const totalShares = media.reduce((sum, m) => sum + (m.shares ?? 0), 0);
+  const playsCounted = media.filter((m) => (m.plays ?? 0) > 0).length;
+  const avgViews = playsCounted > 0 ? Math.round(totalPlays / playsCounted) : 0;
+  // Engagement: interactions per view across everything we can see.
+  const engagement = totalPlays > 0 ? ((totalLikes + totalComments + totalSaves) / totalPlays) * 100 : null;
 
   const onSync = () => {
     if (sync.isPending) return;
@@ -288,27 +369,31 @@ export default function StatsScreen() {
 
         {connected ? (
           <>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+            <SectionHead label="account telemetry" />
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
               <StatChip label="posts" value={n(latest.media_count)} />
               <StatChip label="following" value={n(latest.following)} />
-              <StatChip label="likes" value={n(totalLikes)} />
+              <StatChip label="avg views" value={avgViews > 0 ? n(avgViews) : '—'} />
+              <StatChip label="engaged" value={engagement !== null ? `${engagement.toFixed(1)}%` : '—'} />
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
               <StatChip label="views" value={totalPlays > 0 ? n(totalPlays) : '—'} />
+              <StatChip label="likes" value={n(totalLikes)} />
               <StatChip label="comments" value={n(totalComments)} />
+              <StatChip label="saves" value={totalSaves > 0 ? n(totalSaves) : '—'} />
+              <StatChip label="shares" value={totalShares > 0 ? n(totalShares) : '—'} />
             </View>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 8, lineHeight: 13, color: HUD_COLORS.line, marginBottom: 8 }}>
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 8, lineHeight: 13, color: HUD_COLORS.line, marginBottom: 4 }}>
               totals across your last {media.length} posts · instagram-side views only — facebook
               crosspost views and collab posts aren't exposed by instagram's api
             </Text>
+            <SignalBars media={media} />
           </>
         ) : null}
 
         {media.length > 0 ? (
           <>
-            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginTop: 8, marginBottom: 8 }}>
-              RECENT REELS · TAP TO OPEN
-            </Text>
+            <SectionHead label="recent transmissions · tap to open" />
             {media.map((m) => (
               <ReelRow key={m.media_id} media={m} />
             ))}
