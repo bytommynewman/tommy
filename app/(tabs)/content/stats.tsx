@@ -170,12 +170,12 @@ function ReelRow({ media }: { media: IgMediaStat }) {
                 <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.comments)}</Text>
               </View>
             </View>
-            {media.reach !== null || media.saves !== null || media.shares !== null ? (
+            {typeof media.reach === 'number' || typeof media.saves === 'number' || typeof media.shares === 'number' ? (
               <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 4 }}>
                 {[
-                  media.reach !== null ? `reach ${n(media.reach)}` : null,
-                  media.saves !== null ? `saves ${n(media.saves)}` : null,
-                  media.shares !== null ? `shares ${n(media.shares)}` : null,
+                  typeof media.reach === 'number' ? `reach ${n(media.reach)}` : null,
+                  typeof media.saves === 'number' ? `saves ${n(media.saves)}` : null,
+                  typeof media.shares === 'number' ? `shares ${n(media.shares)}` : null,
                 ]
                   .filter(Boolean)
                   .join(' · ')}
