@@ -139,7 +139,7 @@ export default function StatsScreen() {
           setSyncError(
             result.error === 'not_configured'
               ? 'instagram isn’t hooked up yet — the one-time setup lives in CONNECT-INSTAGRAM.md (ask claude to walk you through it).'
-              : 'sync failed — pull down to retry, or screenshot this for claude.'
+              : `sync failed — screenshot this for claude.\nreason: ${result.detail ?? result.error}`
           );
         } else {
           snapshots.refetch();

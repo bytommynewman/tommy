@@ -1,8 +1,9 @@
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { format } from 'date-fns';
 import { supabase } from '../supabase';
 import type { EditPlan, IgMediaStat, IgSnapshot, ReelIdea, ReelIdeaStatus } from '../../types/database.types';
 
-export type ContentFailure = { error: string };
+export type ContentFailure = { error: string; detail?: string };
 
 export async function fetchIdeas(): Promise<ReelIdea[]> {
   const { data, error } = await supabase
@@ -99,7 +100,22 @@ export async function fetchMediaStats(): Promise<IgMediaStat[]> {
 
 export async function syncInstagram(): Promise<{ ok: true } | ContentFailure> {
   const { data, error } = await supabase.functions.invoke('ig-sync', { body: {} });
-  if (error) return { error: 'ig_failed' };
+  if (error) {
+    // Non-2xx lands here with the body unread — pull out the function's
+    // `detail` (the actual Instagram error) so it reaches the screen.
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const body = (await error.context.json()) as Record<string, unknown>;
+        return {
+          error: typeof body?.error === 'string' ? body.error : 'ig_failed',
+          detail: typeof body?.detail === 'string' ? body.detail : undefined,
+        };
+      } catch {
+        // fall through to the generic failure
+      }
+    }
+    return { error: 'ig_failed' };
+  }
   const record = data as Record<string, unknown>;
   if (record && typeof record.error === 'string') return record as ContentFailure;
   return { ok: true };
