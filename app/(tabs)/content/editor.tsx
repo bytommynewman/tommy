@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { ContentHeader } from '../../../components/content/ContentHeader';
 import { GlowBox } from '../../../components/hud/GlowBox';
+import { SkeletonCard } from '../../../components/hud/SkeletonCard';
 import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS } from '../../../constants/hud';
 import {
   useBuildEditPlan,
@@ -131,8 +132,9 @@ function PlanCard({ plan, idea }: { plan: EditPlan; idea: ReelIdea | undefined }
 }
 
 export default function EditorScreen() {
-  const { data: ideas = [], isRefetching: ideasRefetching, refetch: refetchIdeas } = useIdeas();
-  const { data: plans = [], isRefetching: plansRefetching, refetch: refetchPlans } = useEditPlans();
+  const { data: ideas = [], isLoading: ideasLoading, isRefetching: ideasRefetching, refetch: refetchIdeas } = useIdeas();
+  const { data: plans = [], isLoading: plansLoading, isRefetching: plansRefetching, refetch: refetchPlans } = useEditPlans();
+  const isLoading = ideasLoading || plansLoading;
   const build = useBuildEditPlan();
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [lastError, setLastError] = useState(false);
@@ -176,6 +178,12 @@ export default function EditorScreen() {
           <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.amber, marginBottom: 12 }}>
             shanked that one — run it again.
           </Text>
+        ) : null}
+        {isLoading ? (
+          <>
+            <SkeletonCard lines={4} />
+            <SkeletonCard lines={3} />
+          </>
         ) : null}
         {buildable.length > 0 ? (
           <>
@@ -228,7 +236,7 @@ export default function EditorScreen() {
             ))}
           </>
         ) : null}
-        {buildable.length === 0 && plans.length === 0 ? (
+        {!isLoading && buildable.length === 0 && plans.length === 0 ? (
           <Text style={{ fontFamily: HUD_FONT, fontSize: 12, lineHeight: 20, color: HUD_COLORS.mintSoft }}>
             nothing on the cutting board. save an idea in the ideas tab, then
             come back — scratch turns it into a full shoot-and-edit plan.

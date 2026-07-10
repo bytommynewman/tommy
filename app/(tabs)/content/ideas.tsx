@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { ContentHeader } from '../../../components/content/ContentHeader';
 import { GlowBox } from '../../../components/hud/GlowBox';
+import { SkeletonCard } from '../../../components/hud/SkeletonCard';
 import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS } from '../../../constants/hud';
 import { useDeleteIdea, useGenerateIdeas, useIdeas, useSetIdeaStatus } from '../../../lib/hooks/useContent';
 import type { ReelIdea, ReelIdeaStatus } from '../../../types/database.types';
@@ -101,7 +102,7 @@ function IdeaCard({ idea }: { idea: ReelIdea }) {
 }
 
 export default function IdeasScreen() {
-  const { data: ideas = [], isRefetching, refetch } = useIdeas();
+  const { data: ideas = [], isLoading, isRefetching, refetch } = useIdeas();
   const generate = useGenerateIdeas();
   const [lastError, setLastError] = useState(false);
 
@@ -149,6 +150,13 @@ export default function IdeasScreen() {
             shanked that one — run it again.
           </Text>
         ) : null}
+        {isLoading ? (
+          <>
+            <SkeletonCard lines={4} />
+            <SkeletonCard lines={3} />
+            <SkeletonCard lines={3} />
+          </>
+        ) : null}
         {fresh.length > 0 ? (
           <>
             <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.line, marginBottom: 8 }}>
@@ -169,7 +177,7 @@ export default function IdeasScreen() {
             ))}
           </>
         ) : null}
-        {fresh.length === 0 && kept.length === 0 && !generate.isPending ? (
+        {!isLoading && fresh.length === 0 && kept.length === 0 && !generate.isPending ? (
           <Text style={{ fontFamily: HUD_FONT, fontSize: 12, lineHeight: 20, color: HUD_COLORS.mintSoft }}>
             no ideas on the board yet. radio scratch — he knows your niche, your
             streaks, and what you filmed already.
