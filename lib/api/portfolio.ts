@@ -1,7 +1,14 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 
-export type PortfolioAccount = { id: string; name: string; institution: string; value: number };
+export type PortfolioTotal = { currency: string; value: number };
+export type PortfolioAccount = {
+  id: string;
+  name: string;
+  institution: string;
+  value: number;
+  currency: string;
+};
 export type PortfolioHolding = {
   symbol: string;
   description: string;
@@ -11,8 +18,7 @@ export type PortfolioHolding = {
   openPnl: number | null;
 };
 export type Portfolio = {
-  totalValue: number;
-  currency: string;
+  totals: PortfolioTotal[]; // one entry per currency — never blended
   accounts: PortfolioAccount[];
   holdings: PortfolioHolding[];
   asOf: string;

@@ -2,7 +2,14 @@ import React from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GlowBox } from '../../../components/hud/GlowBox';
-import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS } from '../../../constants/hud';
+import {
+  HUD_COLORS,
+  HUD_FONT,
+  HUD_FONT_BOLD,
+  HUD_RADIUS,
+  MONEY_COLORS,
+  MONEY_SERIF,
+} from '../../../constants/hud';
 import { useConnectPortfolio, usePortfolio, usePortfolioStatus } from '../../../lib/hooks/usePortfolio';
 
 function money(n: number, currency: string): string {
@@ -99,16 +106,45 @@ export default function PortfolioScreen() {
 
         {connected && portfolio.data ? (
           <>
-            <GlowBox glow style={{ padding: 16, alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft }}>
-                total portfolio
-              </Text>
-              <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 28, color: HUD_COLORS.mint, marginTop: 4 }}>
-                {money(portfolio.data.totalValue, portfolio.data.currency)}
-              </Text>
-              <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.line, marginTop: 4 }}>
-                {`wealthsimple · synced ${new Date(portfolio.data.asOf).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-              </Text>
+            <GlowBox glow style={{ padding: 4, marginBottom: 12 }}>
+              {/* Double brass rule — the old-money engraving inside the HUD frame */}
+              <View
+                style={{
+                  borderWidth: 0.75,
+                  borderColor: MONEY_COLORS.brass,
+                  borderRadius: HUD_RADIUS,
+                  paddingVertical: 18,
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: MONEY_SERIF,
+                    fontSize: 12,
+                    color: MONEY_COLORS.brass,
+                    letterSpacing: 3,
+                  }}
+                >
+                  PORTFOLIO
+                </Text>
+                {(portfolio.data.totals ?? []).map((t, i) => (
+                  <Text
+                    key={t.currency}
+                    style={{
+                      fontFamily: MONEY_SERIF,
+                      fontSize: i === 0 ? 34 : 17,
+                      color: MONEY_COLORS.cream,
+                      marginTop: i === 0 ? 8 : 4,
+                    }}
+                  >
+                    {`${money(t.value, t.currency)}`}
+                  </Text>
+                ))}
+                <View style={{ width: 56, height: 1, backgroundColor: MONEY_COLORS.brass, marginTop: 12, opacity: 0.7 }} />
+                <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 8 }}>
+                  {`wealthsimple · synced ${new Date(portfolio.data.asOf).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · quotes can lag a few min`}
+                </Text>
+              </View>
             </GlowBox>
             {portfolio.data.accounts.map((a) => (
               <View
@@ -116,18 +152,19 @@ export default function PortfolioScreen() {
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
                   borderWidth: 0.75,
                   borderColor: HUD_COLORS.line,
                   borderRadius: HUD_RADIUS,
-                  padding: 10,
+                  padding: 12,
                   marginBottom: 6,
                 }}
               >
                 <Text style={{ fontFamily: HUD_FONT, fontSize: 12, color: HUD_COLORS.text }}>
                   {a.name.toLowerCase()}
                 </Text>
-                <Text style={{ fontFamily: HUD_FONT, fontSize: 12, color: HUD_COLORS.mintSoft }}>
-                  {money(a.value, portfolio.data.currency)}
+                <Text style={{ fontFamily: MONEY_SERIF, fontSize: 15, color: MONEY_COLORS.cream }}>
+                  {money(a.value, a.currency)}
                 </Text>
               </View>
             ))}
@@ -161,8 +198,8 @@ export default function PortfolioScreen() {
                     </Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontFamily: HUD_FONT, fontSize: 12, color: HUD_COLORS.text }}>
-                      {money(h.value, portfolio.data.currency)}
+                    <Text style={{ fontFamily: MONEY_SERIF, fontSize: 14, color: MONEY_COLORS.cream }}>
+                      {h.value.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                     </Text>
                     {h.openPnl !== null ? (
                       <Text

@@ -28,7 +28,8 @@
       "expo-secure-store",
       "expo-notifications",
       "expo-local-authentication",
-      "expo-font"
+      "expo-font",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

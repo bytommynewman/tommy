@@ -19,3 +19,13 @@ export const HUD_FONT = 'JetBrainsMono_400Regular';
 export const HUD_FONT_BOLD = 'JetBrainsMono_700Bold';
 
 export const HUD_RADIUS = 4; // tight corners — HUD panels are not bubbly
+
+// Old-money accents for the Invest pages: engraved-serif numerals in cream
+// with brass rules, layered inside the HUD frame. Baskerville ships with iOS;
+// Android quietly falls back to the system serif.
+import { Platform } from 'react-native';
+export const MONEY_SERIF = Platform.select({ ios: 'Baskerville', default: 'serif' }) as string;
+export const MONEY_COLORS = {
+  cream: '#F1EFE8',
+  brass: '#C9A961',
+} as const;

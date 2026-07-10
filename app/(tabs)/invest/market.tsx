@@ -2,7 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Line, Polygon, Polyline, Circle } from 'react-native-svg';
 import { GlowBox } from '../../../components/hud/GlowBox';
-import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS } from '../../../constants/hud';
+import {
+  HUD_COLORS,
+  HUD_FONT,
+  HUD_FONT_BOLD,
+  HUD_RADIUS,
+  MONEY_COLORS,
+  MONEY_SERIF,
+} from '../../../constants/hud';
 import { useMarketOverview } from '../../../lib/hooks/useMarket';
 import type { MarketTracker } from '../../../lib/api/market';
 
@@ -65,7 +72,7 @@ function FeaturedChart({ tracker }: { tracker: MarketTracker }) {
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 22, color: HUD_COLORS.text }}>
+          <Text style={{ fontFamily: MONEY_SERIF, fontSize: 26, color: MONEY_COLORS.cream }}>
             {money(shownPrice)}
           </Text>
           <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: shown ? HUD_COLORS.mintSoft : color, marginTop: 2 }}>
@@ -203,7 +210,7 @@ export default function MarketScreen() {
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 14, color: HUD_COLORS.text }}>
+                  <Text style={{ fontFamily: MONEY_SERIF, fontSize: 16, color: MONEY_COLORS.cream }}>
                     {money(t.price)}
                   </Text>
                   <Text

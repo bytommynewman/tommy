@@ -119,17 +119,19 @@ Deno.serve(async (req) => {
 
       const summaries = [];
       const holdings = [];
-      let totalValue = 0;
-      let currency = 'CAD';
+      // Never blend currencies into one number — a USD account added raw to a
+      // CAD total reads "close but wrong" next to Wealthsimple's own display.
+      const totalsByCurrency: Record<string, number> = {};
       for (const acct of accounts) {
-        const value = acct?.balance?.total?.amount ?? 0;
-        currency = acct?.balance?.total?.currency ?? currency;
-        totalValue += typeof value === 'number' ? value : 0;
+        const value = typeof acct?.balance?.total?.amount === 'number' ? acct.balance.total.amount : 0;
+        const acctCurrency = acct?.balance?.total?.currency ?? 'CAD';
+        totalsByCurrency[acctCurrency] = (totalsByCurrency[acctCurrency] ?? 0) + value;
         summaries.push({
           id: acct.id,
           name: acct.name ?? 'account',
           institution: acct.institution_name ?? 'wealthsimple',
-          value: typeof value === 'number' ? value : 0,
+          value,
+          currency: acctCurrency,
         });
         try {
           const positions = await stRequest(auth, 'GET', `/api/v1/accounts/${acct.id}/positions`, null);
@@ -150,7 +152,18 @@ Deno.serve(async (req) => {
         }
       }
       holdings.sort((a, b) => b.value - a.value);
-      return json({ totalValue, currency, accounts: summaries, holdings, asOf: new Date().toISOString() });
+      const totals = Object.entries(totalsByCurrency)
+        .map(([currency, value]) => ({ currency, value }))
+        .sort((a, b) => b.value - a.value);
+      return json({
+        totals,
+        // Kept for one release so an un-reloaded app doesn't break:
+        totalValue: totals[0]?.value ?? 0,
+        currency: totals[0]?.currency ?? 'CAD',
+        accounts: summaries,
+        holdings,
+        asOf: new Date().toISOString(),
+      });
     }
 
     return json({ error: 'bad_request' }, 400);
