@@ -297,8 +297,9 @@ export default function StatsScreen() {
               <StatChip label="views" value={totalPlays > 0 ? n(totalPlays) : '—'} />
               <StatChip label="comments" value={n(totalComments)} />
             </View>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 8, color: HUD_COLORS.line, marginBottom: 8 }}>
-              totals across your last {media.length} posts
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 8, lineHeight: 13, color: HUD_COLORS.line, marginBottom: 8 }}>
+              totals across your last {media.length} posts · instagram-side views only — facebook
+              crosspost views and collab posts aren't exposed by instagram's api
             </Text>
           </>
         ) : null}
