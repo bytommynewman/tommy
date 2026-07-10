@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 
 export type PortfolioAccount = { id: string; name: string; institution: string; value: number };
@@ -19,7 +20,20 @@ export type Portfolio = {
 
 async function invoke(mode: string): Promise<Record<string, unknown>> {
   const { data, error } = await supabase.functions.invoke('snaptrade-portfolio', { body: { mode } });
-  if (error) throw new Error('st_failed');
+  if (error) {
+    // Non-2xx responses land here with the body unread — pull out the
+    // function's `detail` so real failure reasons reach the screen.
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const body = (await error.context.json()) as Record<string, unknown>;
+        if (typeof body?.detail === 'string') throw new Error(body.detail);
+        if (typeof body?.error === 'string') throw new Error(body.error);
+      } catch (parsed) {
+        if (parsed instanceof Error && parsed.message !== 'st_failed') throw parsed;
+      }
+    }
+    throw new Error('st_failed');
+  }
   return (data ?? {}) as Record<string, unknown>;
 }
 

@@ -42,7 +42,7 @@ type StAuth = { clientId: string; consumerKey: string };
 // query string per the docs; the Signature header covers content+path+query.
 async function stRequest(
   auth: StAuth,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE',
   path: string,
   // deno-lint-ignore no-explicit-any
   body: any,
@@ -91,7 +91,15 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { data: row } = await service.from('snaptrade_users').select('st_user_secret').eq('user_id', uid).maybeSingle();
+    const { data: row, error: rowError } = await service
+      .from('snaptrade_users')
+      .select('st_user_secret')
+      .eq('user_id', uid)
+      .maybeSingle();
+    // A silently-ignored error here is what created the ghost-user bug
+    // (missing table -> row null -> registered at SnapTrade with no stored
+    // secret). Fail loudly instead.
+    if (rowError) throw new Error(`snaptrade_users read failed: ${rowError.message}`);
 
     if (body.mode === 'status') {
       return json({ connected: !!row });
@@ -100,7 +108,20 @@ Deno.serve(async (req) => {
     if (body.mode === 'connect') {
       let userSecret = row?.st_user_secret;
       if (!userSecret) {
-        const reg = await stRequest(auth, 'POST', '/api/v1/snapTrade/registerUser', { userId: uid });
+        // Early attempts (before migration 0005 ran) could register the user
+        // at SnapTrade but fail to store the secret — leaving a ghost user we
+        // hold no key for. Detect "already exists", wipe the ghost, retry.
+        // deno-lint-ignore no-explicit-any
+        let reg: any;
+        try {
+          reg = await stRequest(auth, 'POST', '/api/v1/snapTrade/registerUser', { userId: uid });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (!/exist/i.test(msg)) throw err;
+          await stRequest(auth, 'DELETE', '/api/v1/snapTrade/deleteUser', null, { userId: uid });
+          await new Promise((r) => setTimeout(r, 1500));
+          reg = await stRequest(auth, 'POST', '/api/v1/snapTrade/registerUser', { userId: uid });
+        }
         userSecret = reg.userSecret as string;
         if (!userSecret) throw new Error('registerUser returned no secret');
         const { error } = await service.from('snaptrade_users').insert({ user_id: uid, st_user_secret: userSecret });
