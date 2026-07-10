@@ -1,5 +1,56 @@
 import { describe, expect, it } from 'vitest';
-import { followerDelta, parseEditPlan, parseIdeas, snapshotPoints } from '../contentLogic';
+import {
+  followerDelta,
+  parseDirector,
+  parseEditPlan,
+  parseIdeas,
+  snapshotPoints,
+  splitOutline,
+} from '../contentLogic';
+
+describe('splitOutline', () => {
+  it('separates beats from the film-it-like example line', () => {
+    const { beats, example } = splitOutline(
+      'open on the phone alarm\njump cut to the desk\nend on the app running\nfilm it like: those 0.5s-per-clip day-in-the-life edits'
+    );
+    expect(beats).toEqual(['open on the phone alarm', 'jump cut to the desk', 'end on the app running']);
+    expect(example).toBe('those 0.5s-per-clip day-in-the-life edits');
+  });
+  it('handles old outlines without an example', () => {
+    const { beats, example } = splitOutline('beat one\nbeat two');
+    expect(beats).toEqual(['beat one', 'beat two']);
+    expect(example).toBeNull();
+  });
+});
+
+describe('parseDirector', () => {
+  it('parses a reply with no plan changes', () => {
+    expect(parseDirector('{"reply": "keep the hook, tighten beat 2", "plan": null}')).toEqual({
+      reply: 'keep the hook, tighten beat 2',
+      plan: null,
+    });
+  });
+  it('parses a reply with partial plan changes', () => {
+    const out = parseDirector(
+      '{"reply": "done — faster cut", "plan": {"beats": [{"start": 0, "end": 1.5, "description": "hook"}], "caption": "new caption"}}'
+    );
+    expect(out?.reply).toBe('done — faster cut');
+    expect(out?.plan?.beats).toHaveLength(1);
+    expect(out?.plan?.caption).toBe('new caption');
+    expect(out?.plan?.shot_list).toBeUndefined();
+  });
+  it('rejects malformed plans and empty replies', () => {
+    expect(parseDirector('{"reply": "", "plan": null}')).toBeNull();
+    expect(parseDirector('{"reply": "ok", "plan": {"beats": [{"start": "x"}]}}')).toBeNull();
+    expect(parseDirector('not json')).toBeNull();
+  });
+  it('treats an empty plan object as no changes', () => {
+    expect(parseDirector('{"reply": "all good as is", "plan": {}}')).toEqual({
+      reply: 'all good as is',
+      plan: null,
+    });
+  });
+});
 
 describe('parseIdeas', () => {
   it('parses a clean JSON array', () => {

@@ -58,6 +58,20 @@ export async function buildEditPlan(ideaId: string): Promise<{ plan: EditPlan } 
   return data as { plan: EditPlan } | ContentFailure;
 }
 
+export type DirectorResult = { reply: string; plan: EditPlan | null };
+
+export async function directPlan(planId: string, message: string): Promise<DirectorResult | ContentFailure> {
+  const { data, error } = await supabase.functions.invoke('content-agent', {
+    body: { mode: 'director', plan_id: planId, message },
+  });
+  if (error) return { error: 'agent_failed' };
+  const record = data as Record<string, unknown>;
+  if (!record || typeof record.reply !== 'string') {
+    return { error: typeof record?.error === 'string' ? (record.error as string) : 'agent_failed' };
+  }
+  return data as DirectorResult;
+}
+
 export async function updateEditPlanShots(id: string, shotList: EditPlan['shot_list']): Promise<void> {
   const { error } = await supabase.from('edit_plans').update({ shot_list: shotList }).eq('id', id);
   if (error) throw error;

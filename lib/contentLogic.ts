@@ -76,6 +76,66 @@ export function parseEditPlan(raw: string): EditPlanDraft | null {
   };
 }
 
+// Outlines may carry a trailing "film it like: …" reference line (newer
+// generations do; old rows don't). Split it out so the card can render the
+// video example separately from the beats.
+export function splitOutline(outline: string): { beats: string[]; example: string | null } {
+  const lines = outline
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  const beats: string[] = [];
+  let example: string | null = null;
+  for (const line of lines) {
+    const m = line.match(/^film it like:\s*(.+)$/i);
+    if (m) example = m[1];
+    else beats.push(line);
+  }
+  return { beats, example };
+}
+
+// Director-mode model output: a spoken reply plus optional plan changes.
+// Null on malformed output; partial plans only carry the fields to update.
+export function parseDirector(raw: string): { reply: string; plan: Partial<EditPlanDraft> | null } | null {
+  let data: unknown;
+  try {
+    data = JSON.parse(stripFences(raw));
+  } catch {
+    return null;
+  }
+  const rec = data as Record<string, unknown>;
+  if (!rec || typeof rec !== 'object' || !nonEmptyString(rec.reply)) return null;
+  if (rec.plan === null || rec.plan === undefined) return { reply: rec.reply, plan: null };
+  const p = rec.plan as Record<string, unknown>;
+  if (typeof p !== 'object') return null;
+  const plan: Partial<EditPlanDraft> = {};
+  if (p.shot_list !== undefined) {
+    if (!Array.isArray(p.shot_list)) return null;
+    for (const s of p.shot_list) {
+      const shot = s as Record<string, unknown>;
+      if (!nonEmptyString(shot.shot) || typeof shot.note !== 'string') return null;
+    }
+    plan.shot_list = p.shot_list as EditPlanShot[];
+  }
+  if (p.beats !== undefined) {
+    if (!Array.isArray(p.beats)) return null;
+    for (const b of p.beats) {
+      const beat = b as Record<string, unknown>;
+      if (typeof beat.start !== 'number' || typeof beat.end !== 'number' || !nonEmptyString(beat.description)) {
+        return null;
+      }
+    }
+    plan.beats = p.beats as EditPlanBeat[];
+  }
+  for (const key of ['caption', 'hashtags', 'music'] as const) {
+    if (p[key] !== undefined) {
+      if (typeof p[key] !== 'string') return null;
+      plan[key] = p[key] as string;
+    }
+  }
+  return { reply: rec.reply, plan: Object.keys(plan).length > 0 ? plan : null };
+}
+
 type SnapshotLike = { followers: number; captured_at: string };
 
 // Points for an svg <Polyline>: snapshots arrive newest-first from the API

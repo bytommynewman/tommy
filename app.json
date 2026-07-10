@@ -29,7 +29,8 @@
       "expo-notifications",
       "expo-local-authentication",
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

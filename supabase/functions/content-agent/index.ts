@@ -25,9 +25,11 @@ corporate. Every idea must be filmable by one person with a phone.`;
 const IDEAS_SYSTEM = `You generate Instagram Reel concepts. Reply with STRICT JSON only —
 an array of exactly 5 objects, each {"title": string, "hook": string, "outline": string,
 "format": string}. "hook" is the first line viewers hear/see (make it stop thumbs).
-"outline" is 3 short beats separated by newlines. "format" is a 2-4 word style tag
-(e.g. "talking head", "b-roll montage", "screen recording"). No markdown, no fences,
-no commentary — JSON array only.`;
+"outline" is 3 short beats separated by newlines, then a FINAL line exactly of the form
+"film it like: <one-line description of a well-known reel style/example to copy, concrete
+enough to search for>". "format" is a 2-4 word style tag (e.g. "talking head",
+"b-roll montage", "screen recording"). Vary the formats across the 5 ideas. No markdown,
+no fences, no commentary — JSON array only.`;
 
 const PLAN_SYSTEM = `You are an expert short-form video edit director. Reply with STRICT
 JSON only: {"shot_list": [{"shot": string, "note": string}], "beats": [{"start": number,
@@ -36,6 +38,14 @@ shot_list: 4-8 concrete shots one person can film on a phone. beats: the full cu
 20-40 second reel, seconds as numbers, covering hook to CTA. caption: 1-2 punchy lines,
 first person. hashtags: 15-20 space-separated tags mixing niche sizes. music: one line
 describing the track vibe/tempo to search for. No markdown, no fences — JSON only.`;
+
+const DIRECTOR_SYSTEM = `You are the edit director working over an existing reel edit plan.
+The user tells you what to change (pace, tone, cut order, caption, anything). Reply with
+STRICT JSON only: {"reply": string, "plan": object | null}. "reply" is your short spoken
+answer (2-3 sentences, direct, a director on set). "plan" carries ONLY the fields you
+changed, from: shot_list [{"shot","note"}], beats [{"start","end","description"}] (seconds
+as numbers), caption (string), hashtags (string), music (string) — or null if you changed
+nothing. Never invent fields. No markdown, no fences — JSON only.`;
 
 const MAX_IDEAS = 8;
 
@@ -95,6 +105,45 @@ function validatePlan(raw: string):
     hashtags: rec.hashtags,
     music: rec.music,
   };
+}
+
+// Mirrors lib/contentLogic.ts parseDirector (same keep-in-sync contract).
+function validateDirector(raw: string):
+  | { reply: string; plan: Record<string, unknown> | null }
+  | null {
+  let data: unknown;
+  try {
+    data = JSON.parse(stripFences(raw));
+  } catch {
+    return null;
+  }
+  const rec = data as Record<string, unknown>;
+  if (!rec || typeof rec !== 'object' || !nonEmpty(rec.reply)) return null;
+  if (rec.plan === null || rec.plan === undefined) return { reply: rec.reply, plan: null };
+  const p = rec.plan as Record<string, unknown>;
+  if (typeof p !== 'object') return null;
+  const plan: Record<string, unknown> = {};
+  if (p.shot_list !== undefined) {
+    if (!Array.isArray(p.shot_list)) return null;
+    for (const s of p.shot_list as Record<string, unknown>[]) {
+      if (!nonEmpty(s.shot) || typeof s.note !== 'string') return null;
+    }
+    plan.shot_list = p.shot_list;
+  }
+  if (p.beats !== undefined) {
+    if (!Array.isArray(p.beats)) return null;
+    for (const b of p.beats as Record<string, unknown>[]) {
+      if (typeof b.start !== 'number' || typeof b.end !== 'number' || !nonEmpty(b.description)) return null;
+    }
+    plan.beats = p.beats;
+  }
+  for (const key of ['caption', 'hashtags', 'music']) {
+    if (p[key] !== undefined) {
+      if (typeof p[key] !== 'string') return null;
+      plan[key] = p[key];
+    }
+  }
+  return { reply: rec.reply, plan: Object.keys(plan).length > 0 ? plan : null };
 }
 
 function textOf(response: Anthropic.Message): string {
@@ -190,6 +239,42 @@ Deno.serve(async (req) => {
         .single();
       if (error) return json({ error: 'agent_failed' }, 500);
       return json({ plan: inserted });
+    }
+
+    if (body.mode === 'director' && typeof body.plan_id === 'string' && nonEmpty(body.message)) {
+      const { data: plan } = await supabase.from('edit_plans').select('*').eq('id', body.plan_id).maybeSingle();
+      if (!plan) return json({ error: 'bad_request' }, 400);
+      const { data: idea } = await supabase.from('reel_ideas').select('*').eq('id', plan.idea_id).maybeSingle();
+      const response = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 2048,
+        system: `${DIRECTOR_SYSTEM}\n\n<creator_context>\n${NICHE}\n</creator_context>`,
+        messages: [
+          {
+            role: 'user',
+            content: `Current edit plan (JSON):\n${JSON.stringify({
+              shot_list: plan.shot_list,
+              beats: plan.beats,
+              caption: plan.caption,
+              hashtags: plan.hashtags,
+              music: plan.music,
+            })}\n\nReel: ${idea ? `${idea.title} — hook: ${idea.hook}` : 'unknown'}\n\nDirection from the creator: ${body.message.slice(0, 600)}`,
+          },
+        ],
+      });
+      const out = validateDirector(textOf(response));
+      if (!out) return json({ error: 'agent_failed' }, 500);
+      if (out.plan) {
+        const { data: updated, error } = await supabase
+          .from('edit_plans')
+          .update(out.plan)
+          .eq('id', plan.id)
+          .select('*')
+          .single();
+        if (error) return json({ error: 'agent_failed' }, 500);
+        return json({ reply: out.reply, plan: updated });
+      }
+      return json({ reply: out.reply, plan: null });
     }
 
     return json({ error: 'bad_request' }, 400);

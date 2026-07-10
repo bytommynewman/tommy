@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   buildEditPlan,
   deleteIdea,
+  directPlan,
   fetchEditPlans,
   fetchIdeas,
   fetchMediaStats,
@@ -50,6 +51,17 @@ export function useBuildEditPlan() {
   return useMutation({
     mutationFn: buildEditPlan,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['edit_plans'] }),
+  });
+}
+
+export function useDirectPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ planId, message }: { planId: string; message: string }) => directPlan(planId, message),
+    onSuccess: (result) => {
+      // Only refetch when the director actually changed the plan.
+      if ('plan' in result && result.plan) queryClient.invalidateQueries({ queryKey: ['edit_plans'] });
+    },
   });
 }
 

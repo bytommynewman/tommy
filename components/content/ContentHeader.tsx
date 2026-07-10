@@ -6,15 +6,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS } from '../../constants/hud';
 
 const TABS = [
-  { key: 'ideas', route: '/content/ideas' as const, icon: 'bulb-outline' as const },
-  { key: 'editor', route: '/content/editor' as const, icon: 'cut-outline' as const },
-  { key: 'stats', route: '/content/stats' as const, icon: 'stats-chart-outline' as const },
-];
+  { key: 'ideas', label: 'ideas', route: '/content/ideas' as const, icon: 'bulb-outline' as const },
+  { key: 'editor', label: 'editor', route: '/content/editor' as const, icon: 'cut-outline' as const },
+  { key: 'stats', label: '@bytommynewman', route: '/content/stats' as const, icon: 'stats-chart-outline' as const },
+] as const;
+
+const TITLES = {
+  ideas: 'content · ideas',
+  editor: 'content · editor',
+  stats: '@bytommynewman',
+} as const;
 
 const SUBTITLES = {
   ideas: 'reel concepts, tuned to your come-up',
-  editor: 'from idea to cut sheet',
-  stats: 'the numbers behind the account',
+  editor: 'cutting room · director ai on set',
+  stats: 'live intel on the account',
 } as const;
 
 function backToCourse() {
@@ -60,8 +66,8 @@ export function ContentHeader({ active }: { active: 'ideas' | 'editor' | 'stats'
           <Ionicons name="arrow-back" size={18} color={HUD_COLORS.mint} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 16, color: HUD_COLORS.text }}>
-            {`content · ${active}`}
+          <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 16, color: HUD_COLORS.text }} numberOfLines={1}>
+            {TITLES[active]}
           </Text>
           <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 1 }}>
             {SUBTITLES[active]}
@@ -95,13 +101,14 @@ export function ContentHeader({ active }: { active: 'ideas' | 'editor' | 'stats'
             >
               <Ionicons name={tab.icon} size={13} color={isActive ? HUD_COLORS.mint : HUD_COLORS.mintSoft} />
               <Text
+                numberOfLines={1}
                 style={{
                   fontFamily: HUD_FONT,
-                  fontSize: 12,
+                  fontSize: tab.label.length > 8 ? 9 : 12,
                   color: isActive ? HUD_COLORS.mint : HUD_COLORS.mintSoft,
                 }}
               >
-                {tab.key}
+                {tab.label}
               </Text>
             </Pressable>
           );
