@@ -1,26 +1,38 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 
-export type PortfolioTotal = { currency: string; value: number };
+export type PortfolioTotal = {
+  currency: string;
+  value: number;
+  dayChange: number | null; // null when any account couldn't be priced live
+  dayChangePct: number | null;
+};
 export type PortfolioAccount = {
   id: string;
   name: string;
   institution: string;
   value: number;
   currency: string;
+  dayChange: number | null;
+  dayChangePct: number | null;
 };
+export type PortfolioCash = { currency: string; amount: number };
 export type PortfolioHolding = {
   symbol: string;
   description: string;
   units: number;
   price: number;
   value: number;
+  currency: string;
+  dayChange: number | null;
+  dayChangePct: number | null;
   openPnl: number | null;
 };
 export type Portfolio = {
   totals: PortfolioTotal[]; // one entry per currency — never blended
   accounts: PortfolioAccount[];
   holdings: PortfolioHolding[];
+  cash: PortfolioCash[]; // "available to trade", per currency
   asOf: string;
 };
 

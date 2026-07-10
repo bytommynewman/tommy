@@ -38,6 +38,26 @@ async function hmacBase64(key: string, message: string): Promise<string> {
 
 type StAuth = { clientId: string; consumerKey: string };
 
+type Quote = { price: number; prevClose: number; currency: string };
+
+// Keyless Yahoo quote (same endpoint market-data proxies). SnapTrade balances
+// are snapshots from its last brokerage sync, so they drift from what
+// Wealthsimple shows live — values get rebuilt from these quotes instead.
+async function yahooQuote(symbol: string): Promise<Quote | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    if (!res.ok) return null;
+    const meta = (await res.json())?.chart?.result?.[0]?.meta;
+    const price = meta?.regularMarketPrice;
+    const prev = meta?.chartPreviousClose ?? meta?.previousClose;
+    if (typeof price !== 'number' || typeof prev !== 'number' || prev <= 0) return null;
+    return { price, prevClose: prev, currency: typeof meta?.currency === 'string' ? meta.currency : 'USD' };
+  } catch {
+    return null;
+  }
+}
+
 // Signed SnapTrade request. `path` includes /api/v1; user creds ride in the
 // query string per the docs; the Signature header covers content+path+query.
 async function stRequest(
@@ -117,44 +137,160 @@ Deno.serve(async (req) => {
       const accounts = await stRequest(auth, 'GET', '/api/v1/accounts', null);
       if (!Array.isArray(accounts) || accounts.length === 0) return json({ error: 'not_connected' });
 
-      const summaries = [];
-      const holdings = [];
-      // Never blend currencies into one number — a USD account added raw to a
-      // CAD total reads "close but wrong" next to Wealthsimple's own display.
-      const totalsByCurrency: Record<string, number> = {};
+      type RawPosition = {
+        symbol: string;
+        description: string;
+        units: number;
+        stPrice: number;
+        openPnl: number | null;
+      };
+      type RawAccount = {
+        id: string;
+        name: string;
+        institution: string;
+        snapValue: number;
+        currency: string;
+        positions: RawPosition[];
+        cash: Record<string, number>;
+      };
+
+      const raw: RawAccount[] = [];
       for (const acct of accounts) {
-        const value = typeof acct?.balance?.total?.amount === 'number' ? acct.balance.total.amount : 0;
-        const acctCurrency = acct?.balance?.total?.currency ?? 'CAD';
-        totalsByCurrency[acctCurrency] = (totalsByCurrency[acctCurrency] ?? 0) + value;
-        summaries.push({
-          id: acct.id,
-          name: acct.name ?? 'account',
-          institution: acct.institution_name ?? 'wealthsimple',
-          value,
-          currency: acctCurrency,
-        });
+        const positions: RawPosition[] = [];
         try {
-          const positions = await stRequest(auth, 'GET', `/api/v1/accounts/${acct.id}/positions`, null);
-          for (const p of positions ?? []) {
-            const units = p?.units ?? 0;
-            const price = p?.price ?? 0;
-            holdings.push({
+          for (const p of (await stRequest(auth, 'GET', `/api/v1/accounts/${acct.id}/positions`, null)) ?? []) {
+            positions.push({
               symbol: p?.symbol?.symbol?.symbol ?? p?.symbol?.symbol?.raw_symbol ?? '—',
               description: p?.symbol?.symbol?.description ?? '',
-              units,
-              price,
-              value: units * price,
-              openPnl: p?.open_pnl ?? null,
+              units: typeof p?.units === 'number' ? p.units : 0,
+              stPrice: typeof p?.price === 'number' ? p.price : 0,
+              openPnl: typeof p?.open_pnl === 'number' ? p.open_pnl : null,
             });
           }
         } catch (err) {
           console.error('positions failed for account', acct.id, err);
         }
+        const cash: Record<string, number> = {};
+        try {
+          for (const b of (await stRequest(auth, 'GET', `/api/v1/accounts/${acct.id}/balances`, null)) ?? []) {
+            const code = b?.currency?.code;
+            if (typeof code === 'string' && typeof b?.cash === 'number') cash[code] = (cash[code] ?? 0) + b.cash;
+          }
+        } catch (err) {
+          console.error('balances failed for account', acct.id, err);
+        }
+        raw.push({
+          id: acct.id,
+          name: acct.name ?? 'account',
+          institution: acct.institution_name ?? 'wealthsimple',
+          snapValue: typeof acct?.balance?.total?.amount === 'number' ? acct.balance.total.amount : 0,
+          currency: acct?.balance?.total?.currency ?? 'CAD',
+          positions,
+          cash,
+        });
       }
+
+      // Live quotes for every held symbol, plus the FX pairs needed to fold
+      // foreign-currency holdings/cash into each account's own currency.
+      const symbols = [...new Set(raw.flatMap((a) => a.positions.map((p) => p.symbol)).filter((s) => s !== '—'))];
+      const quotes = new Map<string, Quote>();
+      await Promise.all(
+        symbols.map(async (s) => {
+          const q = await yahooQuote(s);
+          if (q) quotes.set(s, q);
+        })
+      );
+      const fxPairs = new Set<string>();
+      for (const a of raw) {
+        for (const p of a.positions) {
+          const ccy = quotes.get(p.symbol)?.currency ?? a.currency;
+          if (ccy !== a.currency) fxPairs.add(`${ccy}${a.currency}`);
+        }
+        for (const ccy of Object.keys(a.cash)) if (ccy !== a.currency) fxPairs.add(`${ccy}${a.currency}`);
+      }
+      const fx = new Map<string, number>();
+      await Promise.all(
+        [...fxPairs].map(async (pair) => {
+          const q = await yahooQuote(`${pair}=X`);
+          if (q) fx.set(pair, q.price);
+        })
+      );
+      const rate = (from: string, to: string): number | null => (from === to ? 1 : fx.get(`${from}${to}`) ?? null);
+
+      const summaries = [];
+      const holdings = [];
+      const cashByCurrency: Record<string, number> = {};
+      // Never blend currencies into one number — a USD account added raw to a
+      // CAD total reads "close but wrong" next to Wealthsimple's own display.
+      // (USD *holdings* inside a CAD account do get FX-folded into the account
+      // value, which is exactly what Wealthsimple itself displays.)
+      const totalsByCurrency: Record<string, { value: number; dayChange: number; live: boolean }> = {};
+      for (const a of raw) {
+        // Rebuild the account value from live quotes (cash + positions); fall
+        // back to SnapTrade's synced total when any piece can't be priced.
+        let liveValue = 0;
+        let dayChange = 0;
+        let live = a.positions.length > 0 || Object.keys(a.cash).length > 0;
+        for (const [ccy, amount] of Object.entries(a.cash)) {
+          cashByCurrency[ccy] = (cashByCurrency[ccy] ?? 0) + amount;
+          const r = rate(ccy, a.currency);
+          if (r === null) live = false;
+          else liveValue += amount * r;
+        }
+        for (const p of a.positions) {
+          const q = quotes.get(p.symbol) ?? null;
+          const ccy = q?.currency ?? a.currency;
+          const price = q?.price ?? p.stPrice;
+          const value = p.units * price;
+          holdings.push({
+            symbol: p.symbol,
+            description: p.description,
+            units: p.units,
+            price,
+            value,
+            currency: ccy,
+            dayChange: q ? p.units * (q.price - q.prevClose) : null,
+            dayChangePct: q ? ((q.price - q.prevClose) / q.prevClose) * 100 : null,
+            openPnl: p.openPnl,
+          });
+          const r = rate(ccy, a.currency);
+          if (q && r !== null) {
+            liveValue += value * r;
+            dayChange += p.units * (q.price - q.prevClose) * r;
+          } else {
+            live = false;
+          }
+        }
+        const value = live ? liveValue : a.snapValue;
+        const dc = live ? dayChange : null;
+        summaries.push({
+          id: a.id,
+          name: a.name,
+          institution: a.institution,
+          value,
+          currency: a.currency,
+          dayChange: dc,
+          dayChangePct: dc !== null && value - dc !== 0 ? (dc / (value - dc)) * 100 : null,
+        });
+        const t = totalsByCurrency[a.currency] ?? { value: 0, dayChange: 0, live: true };
+        t.value += value;
+        if (dc === null) t.live = false;
+        else t.dayChange += dc;
+        totalsByCurrency[a.currency] = t;
+      }
+
       holdings.sort((a, b) => b.value - a.value);
       const totals = Object.entries(totalsByCurrency)
-        .map(([currency, value]) => ({ currency, value }))
+        .map(([currency, t]) => ({
+          currency,
+          value: t.value,
+          dayChange: t.live ? t.dayChange : null,
+          dayChangePct: t.live && t.value - t.dayChange !== 0 ? (t.dayChange / (t.value - t.dayChange)) * 100 : null,
+        }))
         .sort((a, b) => b.value - a.value);
+      const cash = Object.entries(cashByCurrency)
+        .map(([currency, amount]) => ({ currency, amount }))
+        .sort((a, b) => b.amount - a.amount);
       return json({
         totals,
         // Kept for one release so an un-reloaded app doesn't break:
@@ -162,6 +298,7 @@ Deno.serve(async (req) => {
         currency: totals[0]?.currency ?? 'CAD',
         accounts: summaries,
         holdings,
+        cash,
         asOf: new Date().toISOString(),
       });
     }
