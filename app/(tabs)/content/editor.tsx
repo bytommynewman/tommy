@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +22,79 @@ function secs(n: number): string {
   return `${n.toFixed(1)}s`;
 }
 
+async function pickVideoUri(): Promise<string | null> {
+  // iOS shows its own permission sheet after selection when allowsEditing is
+  // off — ask up front so it never interrupts mid-flow.
+  await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'] });
+  return result.canceled ? null : (result.assets?.[0]?.uri ?? null);
+}
+
+// Always-on screening bay at the top of the cutting room: drop any clip in
+// and watch it, even before an edit plan exists.
+function QuickBay() {
+  const [videoUri, setVideoUri] = useState<string | null>(null);
+  const player = useVideoPlayer(null);
+
+  const load = async () => {
+    const uri = await pickVideoUri();
+    if (!uri) return;
+    setVideoUri(uri);
+    try {
+      await player.replaceAsync(uri);
+      player.play();
+    } catch {
+      setVideoUri(null);
+    }
+  };
+
+  return (
+    <GlowBox glow style={{ padding: 14, marginBottom: 14 }}>
+      <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color: MONEY_COLORS.brass, letterSpacing: 2 }}>
+        SCREENING BAY
+      </Text>
+      {videoUri ? (
+        <>
+          <VideoView
+            player={player}
+            style={{ width: '100%', height: 240, borderRadius: HUD_RADIUS, backgroundColor: '#000', marginTop: 8 }}
+            contentFit="contain"
+          />
+          <Pressable onPress={load} accessibilityRole="button" accessibilityLabel="Swap clip" hitSlop={6}>
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 6 }}>
+              ⇄ swap clip
+            </Text>
+          </Pressable>
+        </>
+      ) : (
+        <Pressable
+          onPress={load}
+          accessibilityRole="button"
+          accessibilityLabel="Load a clip to screen"
+          style={{
+            marginTop: 8,
+            borderWidth: 0.75,
+            borderColor: HUD_COLORS.lineBright,
+            borderStyle: 'dashed',
+            borderRadius: HUD_RADIUS,
+            paddingVertical: 30,
+            alignItems: 'center',
+            backgroundColor: HUD_COLORS.panelDeep,
+          }}
+        >
+          <Ionicons name="videocam-outline" size={24} color={HUD_COLORS.mint} />
+          <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 13, color: HUD_COLORS.mint, marginTop: 6, letterSpacing: 1 }}>
+            DROP A CLIP IN ▸
+          </Text>
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 3 }}>
+            screen any video from your library right here
+          </Text>
+        </Pressable>
+      )}
+    </GlowBox>
+  );
+}
+
 function Label({ text, color = HUD_COLORS.line }: { text: string; color?: string }) {
   return (
     <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color, letterSpacing: 2, marginTop: 14, marginBottom: 6 }}>
@@ -39,11 +113,7 @@ function PlanCard({ plan, idea }: { plan: EditPlan; idea: ReelIdea | undefined }
   const player = useVideoPlayer(null);
 
   const pickVideo = async () => {
-    // iOS shows its own permission sheet after selection when allowsEditing
-    // is off — ask up front so it never interrupts mid-flow.
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'] });
-    const uri = result.canceled ? null : (result.assets?.[0]?.uri ?? null);
+    const uri = await pickVideoUri();
     if (!uri) return;
     setVideoUri(uri);
     try {
@@ -376,6 +446,8 @@ export default function EditorScreen() {
           </Text>
         ) : null}
 
+        <QuickBay />
+
         {isLoading ? (
           <>
             <SkeletonCard lines={4} />
@@ -437,10 +509,38 @@ export default function EditorScreen() {
         ) : null}
 
         {!isLoading && buildable.length === 0 && plans.length === 0 ? (
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 12, lineHeight: 20, color: HUD_COLORS.mintSoft }}>
-            nothing on the cutting board. save an idea in the ideas tab, then
-            come back — scratch turns it into a full shoot-and-edit plan.
-          </Text>
+          <View
+            style={{
+              borderWidth: 0.75,
+              borderColor: HUD_COLORS.line,
+              borderRadius: HUD_RADIUS,
+              padding: 14,
+            }}
+          >
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 12, lineHeight: 20, color: HUD_COLORS.mintSoft }}>
+              no edits on the board yet. the flow: keep an idea in the ideas
+              tab → build the edit here → the director ai recuts it however
+              you tell him, and the beat timeline drives your clip preview.
+            </Text>
+            <Pressable
+              onPress={() => router.replace('/content/ideas')}
+              accessibilityRole="button"
+              accessibilityLabel="Go get ideas"
+              style={{
+                marginTop: 10,
+                alignItems: 'center',
+                paddingVertical: 10,
+                backgroundColor: HUD_COLORS.panelDeep,
+                borderWidth: 0.75,
+                borderColor: HUD_COLORS.lineBright,
+                borderRadius: HUD_RADIUS,
+              }}
+            >
+              <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 12, color: HUD_COLORS.mint, letterSpacing: 1 }}>
+                GO GET IDEAS ▸
+              </Text>
+            </Pressable>
+          </View>
         ) : null}
       </ScrollView>
     </View>

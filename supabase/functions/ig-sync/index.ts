@@ -71,7 +71,10 @@ Deno.serve(async (req) => {
 
     const media = await igGet(
       '/me/media',
-      { fields: 'id,caption,permalink,timestamp,like_count,comments_count,media_type', limit: '30' },
+      {
+        fields: 'id,caption,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count,media_type',
+        limit: '30',
+      },
       token
     );
     const items = Array.isArray(media?.data) ? media.data : [];
@@ -85,15 +88,24 @@ Deno.serve(async (req) => {
         media_id: String(m.id),
         caption: typeof m.caption === 'string' ? m.caption.slice(0, 500) : null,
         permalink: typeof m.permalink === 'string' ? m.permalink : null,
+        // Videos carry thumbnail_url; images only media_url.
+        thumbnail_url:
+          typeof m.thumbnail_url === 'string' ? m.thumbnail_url : typeof m.media_url === 'string' ? m.media_url : null,
         posted_at: typeof m.timestamp === 'string' ? m.timestamp : null,
         plays: views[i],
         likes: typeof m.like_count === 'number' ? m.like_count : 0,
         comments: typeof m.comments_count === 'number' ? m.comments_count : 0,
         captured_at: new Date().toISOString(),
       }));
-      const { error: mediaError } = await supabase
+      let { error: mediaError } = await supabase
         .from('ig_media_stats')
         .upsert(rows, { onConflict: 'user_id,media_id' });
+      if (mediaError && /thumbnail_url/.test(mediaError.message)) {
+        // Migration 0006 not applied yet — sync everything else anyway.
+        ({ error: mediaError } = await supabase
+          .from('ig_media_stats')
+          .upsert(rows.map(({ thumbnail_url: _t, ...rest }) => rest), { onConflict: 'user_id,media_id' }));
+      }
       if (mediaError) return json({ error: 'ig_failed', detail: mediaError.message }, 500);
     }
 

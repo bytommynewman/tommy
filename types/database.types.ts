@@ -106,6 +106,7 @@ export type IgMediaStat = {
   media_id: string;
   caption: string | null;
   permalink: string | null;
+  thumbnail_url: string | null; // added by migration 0006
   posted_at: string | null;
   plays: number | null;
   likes: number;

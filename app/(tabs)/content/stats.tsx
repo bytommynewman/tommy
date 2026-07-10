@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Linking, Pressable, RefreshControl, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Image, Linking, Pressable, RefreshControl, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Polyline } from 'react-native-svg';
 import { ContentHeader } from '../../../components/content/ContentHeader';
@@ -59,26 +59,53 @@ function ReelRow({ media }: { media: IgMediaStat }) {
         marginBottom: 6,
       }}
     >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-        <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 12, color: HUD_COLORS.text, flex: 1 }} numberOfLines={1}>
-          {caption}
-        </Text>
-        <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft }}>{posted}</Text>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 14, marginTop: 7 }}>
-        {media.plays !== null ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ionicons name="play-outline" size={11} color={HUD_COLORS.mint} />
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint }}>{n(media.plays)}</Text>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        {media.thumbnail_url ? (
+          <Image
+            source={{ uri: media.thumbnail_url }}
+            style={{ width: 54, height: 72, borderRadius: HUD_RADIUS, backgroundColor: HUD_COLORS.panelDeep }}
+            resizeMode="cover"
+            accessibilityIgnoresInvertColors
+          />
+        ) : (
+          <View
+            style={{
+              width: 54,
+              height: 72,
+              borderRadius: HUD_RADIUS,
+              borderWidth: 0.75,
+              borderColor: HUD_COLORS.line,
+              backgroundColor: HUD_COLORS.panelDeep,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="film-outline" size={18} color={HUD_COLORS.line} />
           </View>
-        ) : null}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Ionicons name="heart-outline" size={11} color={HUD_COLORS.mintSoft} />
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.likes)}</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Ionicons name="chatbubble-outline" size={11} color={HUD_COLORS.mintSoft} />
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.comments)}</Text>
+        )}
+        <View style={{ flex: 1, justifyContent: 'space-between', paddingVertical: 2 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 12, color: HUD_COLORS.text, flex: 1 }} numberOfLines={2}>
+              {caption}
+            </Text>
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft }}>{posted}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 14 }}>
+            {media.plays !== null ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="play-outline" size={11} color={HUD_COLORS.mint} />
+                <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint }}>{n(media.plays)}</Text>
+              </View>
+            ) : null}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons name="heart-outline" size={11} color={HUD_COLORS.mintSoft} />
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.likes)}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons name="chatbubble-outline" size={11} color={HUD_COLORS.mintSoft} />
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>{n(media.comments)}</Text>
+            </View>
+          </View>
         </View>
       </View>
     </Pressable>
