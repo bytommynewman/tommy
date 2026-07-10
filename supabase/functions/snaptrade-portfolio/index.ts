@@ -84,58 +84,37 @@ Deno.serve(async (req) => {
   );
   const { data: userData, error: userError } = await anonClient.auth.getUser();
   if (userError || !userData.user) return json({ error: 'unauthorized' }, 401);
-  const uid = userData.user.id;
 
-  // Service client ONLY for the secrets table (no client-side policies exist).
-  const service = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-
+  // Personal SnapTrade key: the key IS the user (Tommy's own account), so
+  // there's no registerUser and no userId/userSecret anywhere — SnapTrade
+  // resolves the account owner from the signed key (their error 1012 says
+  // registerUser is not available for personal keys).
   try {
     const body = await req.json();
-    const { data: row, error: rowError } = await service
-      .from('snaptrade_users')
-      .select('st_user_secret')
-      .eq('user_id', uid)
-      .maybeSingle();
-    // A silently-ignored error here is what created the ghost-user bug
-    // (missing table -> row null -> registered at SnapTrade with no stored
-    // secret). Fail loudly instead.
-    if (rowError) throw new Error(`snaptrade_users read failed: ${rowError.message}`);
 
     if (body.mode === 'status') {
-      return json({ connected: !!row });
+      try {
+        const accounts = await stRequest(auth, 'GET', '/api/v1/accounts', null);
+        return json({ connected: Array.isArray(accounts) && accounts.length > 0 });
+      } catch {
+        return json({ connected: false });
+      }
     }
 
     if (body.mode === 'connect') {
-      let userSecret = row?.st_user_secret;
-      if (!userSecret) {
-        // Early attempts (before migration 0005 ran) could register the user
-        // at SnapTrade but fail to store the secret — leaving a ghost user we
-        // hold no key for. Detect "already exists", wipe the ghost, retry.
-        // deno-lint-ignore no-explicit-any
-        let reg: any;
-        try {
-          reg = await stRequest(auth, 'POST', '/api/v1/snapTrade/registerUser', { userId: uid });
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          if (!/exist/i.test(msg)) throw err;
-          await stRequest(auth, 'DELETE', '/api/v1/snapTrade/deleteUser', null, { userId: uid });
-          await new Promise((r) => setTimeout(r, 1500));
-          reg = await stRequest(auth, 'POST', '/api/v1/snapTrade/registerUser', { userId: uid });
-        }
-        userSecret = reg.userSecret as string;
-        if (!userSecret) throw new Error('registerUser returned no secret');
-        const { error } = await service.from('snaptrade_users').insert({ user_id: uid, st_user_secret: userSecret });
-        if (error) throw new Error(error.message);
+      // Personal accounts connect brokerages on SnapTrade's own site; try the
+      // portal endpoint first in case it's supported, else open the dashboard.
+      try {
+        const login = await stRequest(auth, 'POST', '/api/v1/snapTrade/login', {});
+        if (login?.redirectURI) return json({ redirectURI: login.redirectURI });
+      } catch (err) {
+        console.error('portal login unavailable for personal key', err);
       }
-      const login = await stRequest(auth, 'POST', '/api/v1/snapTrade/login', {}, { userId: uid, userSecret });
-      if (!login.redirectURI) throw new Error('login returned no redirectURI');
-      return json({ redirectURI: login.redirectURI });
+      return json({ redirectURI: 'https://dashboard.snaptrade.com/connections' });
     }
 
     if (body.mode === 'portfolio') {
-      if (!row) return json({ error: 'not_connected' });
-      const creds = { userId: uid, userSecret: row.st_user_secret };
-      const accounts = await stRequest(auth, 'GET', '/api/v1/accounts', null, creds);
+      const accounts = await stRequest(auth, 'GET', '/api/v1/accounts', null);
       if (!Array.isArray(accounts) || accounts.length === 0) return json({ error: 'not_connected' });
 
       const summaries = [];
@@ -153,7 +132,7 @@ Deno.serve(async (req) => {
           value: typeof value === 'number' ? value : 0,
         });
         try {
-          const positions = await stRequest(auth, 'GET', `/api/v1/accounts/${acct.id}/positions`, null, creds);
+          const positions = await stRequest(auth, 'GET', `/api/v1/accounts/${acct.id}/positions`, null);
           for (const p of positions ?? []) {
             const units = p?.units ?? 0;
             const price = p?.price ?? 0;

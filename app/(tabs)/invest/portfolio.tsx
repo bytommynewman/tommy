@@ -66,9 +66,9 @@ export default function PortfolioScreen() {
                 marginTop: 8,
               }}
             >
-              one-time secure login on snaptrade's page — your password never
-              touches this app. after connecting, come back and pull down to
-              load holdings.
+              opens snaptrade in safari — log in there and connect wealthsimple
+              (look for connections). your password never touches this app.
+              then come back here and pull down to load holdings.
             </Text>
             <Pressable
               onPress={onConnect}
