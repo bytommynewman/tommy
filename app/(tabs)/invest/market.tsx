@@ -190,7 +190,8 @@ function FeaturedChart({ tracker }: { tracker: MarketTracker }) {
 }
 
 // Big-board card: two-up grid, chunky name, serif price, badge pill.
-function StockCard({ stock }: { stock: MarketStock }) {
+// Memoized so a one-stock quote tick doesn't redraw the whole grid.
+const StockCard = React.memo(function StockCard({ stock }: { stock: MarketStock }) {
   return (
     <View
       style={{
@@ -220,7 +221,7 @@ function StockCard({ stock }: { stock: MarketStock }) {
       </View>
     </View>
   );
-}
+});
 
 export default function MarketScreen() {
   const { data, isLoading, isError, isRefetching, refetch, dataUpdatedAt } = useMarketOverview();

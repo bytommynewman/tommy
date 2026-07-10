@@ -32,7 +32,7 @@ function statusColor(status: ReelIdeaStatus): string {
   return HUD_COLORS.mintSoft;
 }
 
-function IdeaCard({ idea }: { idea: ReelIdea }) {
+const IdeaCard = React.memo(function IdeaCard({ idea }: { idea: ReelIdea }) {
   const setStatus = useSetIdeaStatus();
   const remove = useDeleteIdea();
   const isNew = idea.status === 'new';
@@ -156,7 +156,7 @@ function IdeaCard({ idea }: { idea: ReelIdea }) {
       ) : null}
     </HoloCard>
   );
-}
+});
 
 export default function IdeasScreen() {
   const { data: ideas = [], isLoading, isRefetching, refetch } = useIdeas();

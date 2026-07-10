@@ -100,7 +100,7 @@ function SignalBars({ media }: { media: IgMediaStat[] }) {
   );
 }
 
-function ReelRow({ media, rank }: { media: IgMediaStat; rank?: number }) {
+const ReelRow = React.memo(function ReelRow({ media, rank }: { media: IgMediaStat; rank?: number }) {
   const caption = (media.caption ?? '').split('\n')[0] || 'untitled reel';
   const posted = media.posted_at
     ? new Date(media.posted_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
@@ -201,7 +201,7 @@ function ReelRow({ media, rank }: { media: IgMediaStat; rank?: number }) {
       </View>
     </Pressable>
   );
-}
+});
 
 export default function StatsScreen() {
   const snapshots = useSnapshots();

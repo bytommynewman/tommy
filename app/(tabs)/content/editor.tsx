@@ -3,8 +3,17 @@ import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 're
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import {
+  currentUserId,
+  fetchRenderStatus,
+  startRender,
+  uploadClip,
+  type RenderStyleInput,
+} from '../../../lib/api/content';
 import { ContentHeader } from '../../../components/content/ContentHeader';
 import { GlowBox } from '../../../components/hud/GlowBox';
 import { SkeletonCard } from '../../../components/hud/SkeletonCard';
@@ -103,7 +112,235 @@ function Label({ text, color = HUD_COLORS.line }: { text: string; color?: string
   );
 }
 
-function PlanCard({ plan, idea }: { plan: EditPlan; idea: ReelIdea | undefined }) {
+function TogglePill({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Toggle ${label}`}
+      style={{
+        borderWidth: 0.75,
+        borderColor: active ? HUD_COLORS.lineBright : HUD_COLORS.line,
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        backgroundColor: active ? HUD_COLORS.panelDeep : 'transparent',
+      }}
+    >
+      <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: active ? HUD_COLORS.mint : HUD_COLORS.mintSoft }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+// The drone crew: pick raw clips, ship them to the cloud, get back a cut
+// reel — captions burned in, zooms, transitions — sized 9:16 for posting.
+function AutoCut({ plan }: { plan: EditPlan }) {
+  const [clips, setClips] = useState<string[]>([]);
+  const [phase, setPhase] = useState<'idle' | 'uploading' | 'rendering' | 'done' | 'error'>('idle');
+  const [note, setNote] = useState<string | null>(null);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [pace, setPace] = useState<RenderStyleInput['pace']>('chill');
+  const [captions, setCaptions] = useState(true);
+  const [zoom, setZoom] = useState(true);
+  const [filter, setFilter] = useState<RenderStyleInput['filter']>('none');
+  const player = useVideoPlayer(null);
+  const busy = phase === 'uploading' || phase === 'rendering';
+
+  const pickClips = async () => {
+    if (busy) return;
+    await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['videos'],
+      allowsMultipleSelection: true,
+      selectionLimit: 6,
+    });
+    if (!result.canceled) setClips((result.assets ?? []).map((a) => a.uri));
+  };
+
+  const render = async () => {
+    if (busy || clips.length === 0) return;
+    try {
+      setPhase('uploading');
+      setResultUrl(null);
+      setSaved(false);
+      const uid = await currentUserId();
+      const paths: string[] = [];
+      for (let i = 0; i < clips.length; i++) {
+        setNote(`uploading clip ${i + 1}/${clips.length}…`);
+        const path = `${uid}/${plan.id}/${Date.now()}-${i}.mp4`;
+        await uploadClip(path, clips[i]);
+        paths.push(path);
+      }
+      setPhase('rendering');
+      setNote('the cloud is cutting — usually under a minute…');
+      const started = await startRender(plan.id, paths, { pace, captions, zoom, filter });
+      if ('error' in started) throw new Error(started.detail ?? started.error);
+      for (let tries = 0; tries < 60; tries++) {
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+        const status = await fetchRenderStatus(started.renderId);
+        if ('error' in status) throw new Error(status.detail ?? status.error);
+        if (status.status === 'done' && status.url) {
+          setResultUrl(status.url);
+          setPhase('done');
+          setNote(null);
+          try {
+            await player.replaceAsync(status.url);
+            player.play();
+          } catch {
+            // preview failing shouldn't hide the save button
+          }
+          return;
+        }
+        if (status.status === 'failed') throw new Error(status.detail ?? 'render failed');
+      }
+      throw new Error('render timed out — try again');
+    } catch (err) {
+      setPhase('error');
+      const message = err instanceof Error ? err.message : 'render failed';
+      setNote(
+        message === 'not_configured'
+          ? 'render engine not hooked up yet — ask claude for the one-time shotstack setup.'
+          : `shanked it: ${message}`
+      );
+    }
+  };
+
+  const save = async () => {
+    if (!resultUrl) return;
+    try {
+      setNote('saving to camera roll…');
+      const dir = new Directory(Paths.cache, 'renders');
+      try {
+        dir.create();
+      } catch {
+        // already exists
+      }
+      const file = await File.downloadFileAsync(resultUrl, dir);
+      await MediaLibrary.requestPermissionsAsync();
+      await MediaLibrary.saveToLibraryAsync(file.uri);
+      setSaved(true);
+      setNote(null);
+    } catch {
+      setNote('save failed — try again');
+    }
+  };
+
+  return (
+    <>
+      <Label text="auto-cut · cloud render" color={MONEY_COLORS.brass} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+        <TogglePill label={pace === 'fast' ? 'pace: fast' : 'pace: chill'} active onPress={() => setPace(pace === 'fast' ? 'chill' : 'fast')} />
+        <TogglePill label="captions" active={captions} onPress={() => setCaptions(!captions)} />
+        <TogglePill label="zoom" active={zoom} onPress={() => setZoom(!zoom)} />
+        <TogglePill
+          label={`filter: ${filter}`}
+          active={filter !== 'none'}
+          onPress={() => setFilter(filter === 'none' ? 'boost' : filter === 'boost' ? 'muted' : 'none')}
+        />
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Pressable
+          onPress={pickClips}
+          accessibilityRole="button"
+          accessibilityLabel="Pick clips for the auto cut"
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            paddingVertical: 10,
+            borderWidth: 0.75,
+            borderColor: HUD_COLORS.line,
+            borderStyle: 'dashed',
+            borderRadius: HUD_RADIUS,
+          }}
+        >
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>
+            {clips.length > 0 ? `⊕ ${clips.length} clip${clips.length === 1 ? '' : 's'} loaded` : '⊕ load clips'}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={render}
+          accessibilityRole="button"
+          accessibilityLabel="Render the reel in the cloud"
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            paddingVertical: 10,
+            backgroundColor: clips.length > 0 && !busy ? HUD_COLORS.panelDeep : 'transparent',
+            borderWidth: 0.75,
+            borderColor: clips.length > 0 && !busy ? HUD_COLORS.lineBright : HUD_COLORS.line,
+            borderRadius: HUD_RADIUS,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: HUD_FONT_BOLD,
+              fontSize: 11,
+              color: clips.length > 0 && !busy ? HUD_COLORS.mint : HUD_COLORS.line,
+              letterSpacing: 1,
+            }}
+          >
+            {busy ? 'CUTTING…' : '► RENDER THE REEL_'}
+          </Text>
+        </Pressable>
+      </View>
+      {note ? (
+        <Text
+          style={{
+            fontFamily: HUD_FONT,
+            fontSize: 10,
+            lineHeight: 16,
+            color: phase === 'error' ? HUD_COLORS.amber : HUD_COLORS.mintSoft,
+            marginTop: 6,
+          }}
+        >
+          {note}
+        </Text>
+      ) : null}
+      {resultUrl ? (
+        <>
+          <VideoView
+            player={player}
+            style={{ width: '100%', height: 320, borderRadius: HUD_RADIUS, backgroundColor: '#000', marginTop: 10 }}
+            contentFit="contain"
+          />
+          <Pressable
+            onPress={save}
+            accessibilityRole="button"
+            accessibilityLabel="Save the rendered reel to your camera roll"
+            style={{
+              marginTop: 8,
+              alignItems: 'center',
+              paddingVertical: 10,
+              backgroundColor: HUD_COLORS.panelDeep,
+              borderWidth: 0.75,
+              borderColor: HUD_COLORS.lineBright,
+              borderRadius: HUD_RADIUS,
+            }}
+          >
+            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 11, color: HUD_COLORS.mint, letterSpacing: 1 }}>
+              {saved ? '✓ SAVED — POST IT FROM INSTAGRAM' : '⤓ SAVE TO CAMERA ROLL'}
+            </Text>
+          </Pressable>
+        </>
+      ) : null}
+    </>
+  );
+}
+
+// Memoized: plan cards are heavy (video player, timeline) — only re-render
+// when their own plan/idea rows actually change.
+const PlanCard = React.memo(function PlanCard({ plan, idea }: { plan: EditPlan; idea: ReelIdea | undefined }) {
   const updateShots = useUpdateEditPlanShots();
   const director = useDirectPlan();
   const [copied, setCopied] = useState(false);
@@ -350,6 +587,8 @@ function PlanCard({ plan, idea }: { plan: EditPlan; idea: ReelIdea | undefined }
         </View>
       ) : null}
 
+      <AutoCut plan={plan} />
+
       <Label text="caption + tags" />
       <Text style={{ fontFamily: HUD_FONT, fontSize: 12, lineHeight: 19, color: HUD_COLORS.text }}>
         {plan.caption}
@@ -382,11 +621,11 @@ function PlanCard({ plan, idea }: { plan: EditPlan; idea: ReelIdea | undefined }
         </Pressable>
       </View>
       <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 10 }}>
-        {`music: ${plan.music}`}
+        {`music: ${plan.music} — add trending audio in the instagram composer when you post (better reach than baked-in audio)`}
       </Text>
     </GlowBox>
   );
-}
+});
 
 export default function EditorScreen() {
   const { data: ideas = [], isLoading: ideasLoading, isRefetching: ideasRefetching, refetch: refetchIdeas } = useIdeas();
