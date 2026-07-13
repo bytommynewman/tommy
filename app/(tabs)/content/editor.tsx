@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,8 @@ import * as Clipboard from 'expo-clipboard';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
+import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import {
   currentUserId,
@@ -69,11 +71,23 @@ function QuickBay() {
             style={{ width: '100%', height: 240, borderRadius: HUD_RADIUS, backgroundColor: '#000', marginTop: 8 }}
             contentFit="contain"
           />
-          <Pressable onPress={load} accessibilityRole="button" accessibilityLabel="Swap clip" hitSlop={6}>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 6 }}>
-              ⇄ swap clip
-            </Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            <Pressable onPress={load} accessibilityRole="button" accessibilityLabel="Swap clip" hitSlop={6}>
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 6 }}>
+                ⇄ swap clip
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => Sharing.shareAsync(videoUri).catch(() => {})}
+              accessibilityRole="button"
+              accessibilityLabel="Send this clip to another editor app"
+              hitSlop={6}
+            >
+              <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 6 }}>
+                ⇪ send to capcut / another editor
+              </Text>
+            </Pressable>
+          </View>
         </>
       ) : (
         <Pressable
@@ -109,6 +123,81 @@ function Label({ text, color = HUD_COLORS.line }: { text: string; color?: string
     <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color, letterSpacing: 2, marginTop: 14, marginBottom: 6 }}>
       {text.toUpperCase()}
     </Text>
+  );
+}
+
+type Room = 'screening' | 'ready' | 'cutting' | 'proshop';
+
+const ROOMS: { key: Room; label: string; sub: string; x: string; y: string; w: string; h: string }[] = [
+  // Percent hotspots over the SVG below (viewBox 360x240).
+  { key: 'screening', label: 'SCREENING BAY', sub: 'watch your clips', x: '15%', y: '47%', w: '35%', h: '22%' },
+  { key: 'ready', label: 'READY ROOM', sub: 'ideas waiting on a cut', x: '50%', y: '47%', w: '35%', h: '22%' },
+  { key: 'cutting', label: 'CUTTING ROOM', sub: 'auto-cut + director ai', x: '15%', y: '70%', w: '35%', h: '21%' },
+  { key: 'proshop', label: 'PRO SHOP', sub: 'send-outs & tips', x: '50%', y: '70%', w: '35%', h: '21%' },
+];
+
+// The clubhouse: an original Nantucket-style cedar cottage drawn in HUD ink —
+// each lit room is a station of the edit flow. Tap a room, walk in.
+function ClubhouseMap({ onRoom }: { onRoom: (room: Room) => void }) {
+  return (
+    <View style={{ marginBottom: 12 }}>
+      <View style={{ width: '100%', aspectRatio: 360 / 240 }}>
+        <Svg width="100%" height="100%" viewBox="0 0 360 240">
+          {/* lawn + green */}
+          <Line x1={0} y1={228} x2={360} y2={228} stroke={HUD_COLORS.line} strokeWidth={1} />
+          <Circle cx={28} cy={228} r={14} fill={HUD_COLORS.panelDeep} stroke={HUD_COLORS.line} strokeWidth={0.75} />
+          <Line x1={28} y1={228} x2={28} y2={196} stroke={HUD_COLORS.mintSoft} strokeWidth={1.5} />
+          <Path d="M28,196 L44,201 L28,206 Z" fill={HUD_COLORS.amber} />
+          {/* house shell — gable + gambrel-ish shoulders, cedar-shingle grey */}
+          <Path
+            d="M54,112 L106,58 L254,58 L306,112 Z"
+            fill={HUD_COLORS.panelDeep}
+            stroke={HUD_COLORS.lineBright}
+            strokeWidth={1.25}
+          />
+          <Rect x={54} y={112} width={252} height={116} fill={HUD_COLORS.panel} stroke={HUD_COLORS.lineBright} strokeWidth={1.25} />
+          {/* chimney + flag */}
+          <Rect x={238} y={34} width={16} height={26} fill={HUD_COLORS.panelDeep} stroke={HUD_COLORS.lineBright} strokeWidth={1} />
+          <Line x1={246} y1={34} x2={246} y2={12} stroke={HUD_COLORS.mintSoft} strokeWidth={1.5} />
+          <Path d="M246,12 L264,17 L246,22 Z" fill={HUD_COLORS.mint} />
+          {/* attic dormer windows */}
+          <Rect x={150} y={74} width={22} height={16} fill="none" stroke={HUD_COLORS.line} strokeWidth={0.75} />
+          <Rect x={188} y={74} width={22} height={16} fill="none" stroke={HUD_COLORS.line} strokeWidth={0.75} />
+          {/* interior walls: two floors, two rooms each */}
+          <Line x1={54} y1={168} x2={306} y2={168} stroke={HUD_COLORS.line} strokeWidth={1} />
+          <Line x1={180} y1={112} x2={180} y2={228} stroke={HUD_COLORS.line} strokeWidth={1} />
+          {/* front door on the pro shop */}
+          <Rect x={236} y={196} width={18} height={32} fill={HUD_COLORS.panelDeep} stroke={HUD_COLORS.line} strokeWidth={0.75} />
+        </Svg>
+        {ROOMS.map((room) => (
+          <Pressable
+            key={room.key}
+            onPress={() => onRoom(room.key)}
+            accessibilityRole="button"
+            accessibilityLabel={`Enter the ${room.label}`}
+            style={{
+              position: 'absolute',
+              left: room.x as `${number}%`,
+              top: room.y as `${number}%`,
+              width: room.w as `${number}%`,
+              height: room.h as `${number}%`,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color: HUD_COLORS.mint, letterSpacing: 1 }}>
+              {room.label}
+            </Text>
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 7, color: HUD_COLORS.mintSoft, marginTop: 1 }}>
+              {room.sub}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={{ fontFamily: HUD_FONT, fontSize: 8, color: HUD_COLORS.line, textAlign: 'center', marginTop: 2 }}>
+        the clubhouse — tap a room to walk in
+      </Text>
+    </View>
   );
 }
 
@@ -216,23 +305,40 @@ function AutoCut({ plan }: { plan: EditPlan }) {
     }
   };
 
+  const downloadResult = async (): Promise<string> => {
+    const dir = new Directory(Paths.cache, 'renders');
+    try {
+      dir.create();
+    } catch {
+      // already exists
+    }
+    const file = await File.downloadFileAsync(resultUrl!, dir);
+    return file.uri;
+  };
+
   const save = async () => {
     if (!resultUrl) return;
     try {
       setNote('saving to camera roll…');
-      const dir = new Directory(Paths.cache, 'renders');
-      try {
-        dir.create();
-      } catch {
-        // already exists
-      }
-      const file = await File.downloadFileAsync(resultUrl, dir);
+      const uri = await downloadResult();
       await MediaLibrary.requestPermissionsAsync();
-      await MediaLibrary.saveToLibraryAsync(file.uri);
+      await MediaLibrary.saveToLibraryAsync(uri);
       setSaved(true);
       setNote(null);
     } catch {
       setNote('save failed — try again');
+    }
+  };
+
+  const sendElsewhere = async () => {
+    if (!resultUrl) return;
+    try {
+      setNote('handing the cut over…');
+      const uri = await downloadResult();
+      await Sharing.shareAsync(uri);
+      setNote(null);
+    } catch {
+      setNote('share failed — try again');
     }
   };
 
@@ -330,6 +436,23 @@ function AutoCut({ plan }: { plan: EditPlan }) {
           >
             <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 11, color: HUD_COLORS.mint, letterSpacing: 1 }}>
               {saved ? '✓ SAVED — POST IT FROM INSTAGRAM' : '⤓ SAVE TO CAMERA ROLL'}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={sendElsewhere}
+            accessibilityRole="button"
+            accessibilityLabel="Send the rendered reel to another editor app"
+            style={{
+              marginTop: 6,
+              alignItems: 'center',
+              paddingVertical: 9,
+              borderWidth: 0.75,
+              borderColor: HUD_COLORS.line,
+              borderRadius: HUD_RADIUS,
+            }}
+          >
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>
+              ⇪ send to capcut / another editor
             </Text>
           </Pressable>
         </>
@@ -663,10 +786,20 @@ export default function EditorScreen() {
     refetchPlans();
   };
 
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionY = useRef<Record<Room, number>>({ screening: 0, ready: 0, cutting: 0, proshop: 0 });
+  const markSection = (room: Room) => (e: { nativeEvent: { layout: { y: number } } }) => {
+    sectionY.current[room] = e.nativeEvent.layout.y;
+  };
+  const walkTo = (room: Room) => {
+    scrollRef.current?.scrollTo({ y: Math.max(sectionY.current[room] - 6, 0), animated: true });
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: HUD_COLORS.bg }}>
       <ContentHeader active="editor" />
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={HUD_COLORS.mint} />}
       >
@@ -685,7 +818,11 @@ export default function EditorScreen() {
           </Text>
         ) : null}
 
-        <QuickBay />
+        <ClubhouseMap onRoom={walkTo} />
+
+        <View onLayout={markSection('screening')}>
+          <QuickBay />
+        </View>
 
         {isLoading ? (
           <>
@@ -694,10 +831,11 @@ export default function EditorScreen() {
           </>
         ) : null}
 
+        <View onLayout={markSection('ready')} />
         {buildable.length > 0 ? (
           <>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.line, marginBottom: 8 }}>
-              {'// ready for the director'}
+            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginBottom: 8 }}>
+              READY ROOM · IDEAS WAITING ON A CUT
             </Text>
             {buildable.map((idea) => (
               <View
@@ -736,16 +874,45 @@ export default function EditorScreen() {
           </>
         ) : null}
 
+        <View onLayout={markSection('cutting')} />
         {plans.length > 0 ? (
           <>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.line, marginVertical: 8 }}>
-              {'// your edits'}
+            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginVertical: 8 }}>
+              CUTTING ROOM · YOUR EDITS
             </Text>
             {plans.map((plan) => (
               <PlanCard key={plan.id} plan={plan} idea={ideasById.get(plan.idea_id)} />
             ))}
           </>
         ) : null}
+
+        <View onLayout={markSection('proshop')}>
+          <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginTop: 12, marginBottom: 8 }}>
+            PRO SHOP
+          </Text>
+          <GlowBox style={{ padding: 14 }}>
+            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 12, color: HUD_COLORS.text }}>
+              how a reel gets made here
+            </Text>
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 11, lineHeight: 19, color: HUD_COLORS.mintSoft, marginTop: 6 }}>
+              1. ideas tab → radio scratch → KEEP one{'\n'}
+              2. ready room → build the edit{'\n'}
+              3. cutting room → load clips → RENDER — captions, zooms and
+              transitions get burned in by the cloud{'\n'}
+              4. save to camera roll → post from instagram, add trending audio
+              in their composer
+            </Text>
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 11, lineHeight: 19, color: HUD_COLORS.mintSoft, marginTop: 10 }}>
+              prefer cutting by hand? every clip and finished render has a
+              {' ⇪ '}button that sends it straight into capcut, canva, or any
+              editor on your phone — this clubhouse plays nice with them all.
+            </Text>
+            <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.line, marginTop: 10 }}>
+              free renders carry a small watermark · director ai can recut any
+              plan before you render
+            </Text>
+          </GlowBox>
+        </View>
 
         {!isLoading && buildable.length === 0 && plans.length === 0 ? (
           <View
