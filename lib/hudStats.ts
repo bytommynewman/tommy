@@ -51,10 +51,10 @@ export function recoveryStatus(
   relapses: RelapseIncident[],
   today: string
 ): { text: string; tone: HudTone } {
-  if (habits.length === 0) return { text: 'standby', tone: 'muted' };
+  if (habits.length === 0) return { text: 'open', tone: 'muted' };
   const { done, total } = todaysCard(habits, logs, today);
   const open = total - done;
-  if (open > 0) return { text: `attention · ${open} open`, tone: 'warn' };
+  if (open > 0) return { text: `${open} open today`, tone: 'warn' };
   const best = bestDaysClean(habits, relapses);
-  return { text: best !== null ? `secure · day ${best}` : 'secure', tone: 'good' };
+  return { text: best !== null ? `clean · day ${best}` : 'all clear', tone: 'good' };
 }

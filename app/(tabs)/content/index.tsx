@@ -58,7 +58,7 @@ export default function ContentHouse() {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const fade = useRef(new Animated.Value(0)).current;
   const scrollX = useRef(new Animated.Value(0)).current;
-  const panelW = size.w * 0.86;
+  const panelW = size.w;
 
   const enter = () => {
     setEntered(true);
@@ -130,13 +130,10 @@ export default function ContentHouse() {
           horizontal
           showsHorizontalScrollIndicator={false}
           decelerationRate="normal"
-          snapToInterval={panelW}
-          snapToAlignment="start"
           onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
             useNativeDriver: true,
           })}
           scrollEventThrottle={16}
-          contentContainerStyle={{ paddingRight: size.w - panelW }}
         >
           {ROOMS.map((room, i) => {
             const center = i * panelW;
@@ -147,7 +144,7 @@ export default function ContentHouse() {
             });
             const focus = scrollX.interpolate({
               inputRange: [center - panelW * 0.75, center, center + panelW * 0.75],
-              outputRange: [0.15, 1, 0.15],
+              outputRange: [0.3, 1, 0.3],
               extrapolate: 'clamp',
             });
             return (
@@ -168,7 +165,7 @@ export default function ContentHouse() {
                     position: 'absolute',
                     width: panelW,
                     height: '100%',
-                    backgroundColor: 'rgba(10, 25, 17, 0.28)',
+                    backgroundColor: 'rgba(10, 25, 17, 0.12)',
                   }}
                 />
                 <Animated.View
@@ -196,7 +193,7 @@ export default function ContentHouse() {
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 10,
-                        backgroundColor: 'rgba(16, 35, 23, 0.9)',
+                        backgroundColor: 'rgba(16, 35, 23, 0.78)',
                         borderRadius: HUD_RADIUS,
                         padding: 13,
                         marginBottom: 8,

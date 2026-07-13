@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { format } from 'date-fns';
-import { HUD_COLORS, HUD_FONT, HUD_RADIUS } from '../../constants/hud';
+import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD } from '../../constants/hud';
 import { GlowBox } from './GlowBox';
-import { Typewriter } from './Typewriter';
 import { ScratchMascot } from '../scratch/ScratchMascot';
 import { useHabits, useRecentLogs, useRelapses } from '../../lib/hooks/useHabits';
 import { useDailyRead } from '../../lib/hooks/useScratch';
@@ -42,32 +41,28 @@ export function BriefingCard() {
   }, [habits, logs, relapses]);
 
   const read = agentRead?.reply ? agentRead.reply.replace(/\n+/g, ' ') : null;
-  const body = isLoading && !read ? 'decrypting today’s read…' : `the read: ${read ?? fallback}`;
+  const body = isLoading && !read ? 'reading the course…' : (read ?? fallback);
 
   return (
-    <GlowBox glow style={{ padding: 12, marginBottom: 12 }}>
+    <GlowBox glow style={{ padding: 16, marginBottom: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
         {/* The character himself, full size — leaning on his driver, not
             cropped into a badge. He IS the home page. */}
         <ScratchMascot size={116} />
         <View style={{ flex: 1, paddingBottom: 8 }}>
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 15, color: HUD_COLORS.text }}>
-            agent scratch
+          <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 18, color: HUD_COLORS.text }}>
+            Scratch
           </Text>
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
-            caddie · field operative
-          </Text>
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint, marginTop: 6 }}>
-            on your bag · channel secure
+          <Text style={{ fontFamily: HUD_FONT, fontSize: 12, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
+            your caddie · on the bag
           </Text>
         </View>
       </View>
-      <Typewriter
-        text={body}
-        style={{ fontFamily: HUD_FONT, fontSize: 12, lineHeight: 20, color: HUD_COLORS.mintSoft, marginTop: 10 }}
-      />
-      <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.line, marginTop: 8 }}>
-        {read ? 'read by scratch · refreshes daily' : 'local read — scratch will take over when connected'}
+      <Text style={{ fontFamily: HUD_FONT, fontSize: 13, lineHeight: 21, color: HUD_COLORS.text, marginTop: 10 }}>
+        {body}
+      </Text>
+      <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 8, opacity: 0.7 }}>
+        {read ? 'fresh every morning' : 'scratch takes over once connected'}
       </Text>
     </GlowBox>
   );

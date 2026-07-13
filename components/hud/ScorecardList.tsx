@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { HUD_COLORS, HUD_FONT, HUD_RADIUS } from '../../constants/hud';
+import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS } from '../../constants/hud';
 import { STOPS } from '../../constants/hole';
 import { useHabits, useRecentLogs, useRelapses } from '../../lib/hooks/useHabits';
 import { recoveryStatus } from '../../lib/hudStats';
@@ -20,13 +20,13 @@ export function ScorecardList() {
 
   return (
     <View>
-      <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.line, marginBottom: 6 }}>
-        {`// the course — ${STOPS.length} holes`}
+      <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 15, color: HUD_COLORS.text, marginBottom: 8, marginTop: 4 }}>
+        The course
       </Text>
       <View style={{ gap: 6 }}>
         {STOPS.map((stop, i) => {
           const status =
-            stop.label === 'Recovery' ? recovery : ({ text: 'standby', tone: 'muted' } as const);
+            stop.label === 'Recovery' ? recovery : ({ text: 'open', tone: 'muted' } as const);
           const active = status.tone !== 'muted';
           return (
             <Pressable

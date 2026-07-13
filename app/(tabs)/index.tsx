@@ -7,7 +7,7 @@ import { BriefingCard } from '../../components/hud/BriefingCard';
 import { StatChips } from '../../components/hud/StatChips';
 import { ScorecardList } from '../../components/hud/ScorecardList';
 import { ChatSheet } from '../../components/scratch/ChatSheet';
-import { HUD_COLORS, HUD_FONT, HUD_RADIUS } from '../../constants/hud';
+import { HUD_COLORS, HUD_FONT, HUD_FONT_BOLD, HUD_RADIUS } from '../../constants/hud';
 
 export default function ScratchScreen() {
   const insets = useSafeAreaInsets();
@@ -24,30 +24,12 @@ export default function ScratchScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mint }}>
-            field unit SCR-16
-          </Text>
-          <Text style={{ fontFamily: HUD_FONT, fontSize: 11, color: HUD_COLORS.mintSoft }}>
-            {format(now, 'EEE MM.dd · HH:mm').toLowerCase()}
-          </Text>
-        </View>
-        <View style={{ alignItems: 'flex-end', marginTop: 2, marginBottom: 12 }}>
-          <Text
-            style={{
-              fontFamily: HUD_FONT,
-              fontSize: 10,
-              color: HUD_COLORS.mintSoft,
-              borderWidth: 0.75,
-              borderColor: HUD_COLORS.line,
-              borderRadius: 2,
-              paddingHorizontal: 6,
-              paddingVertical: 2,
-            }}
-          >
-            clearance: scratch
-          </Text>
-        </View>
+        <Text style={{ fontFamily: HUD_FONT, fontSize: 13, color: HUD_COLORS.mintSoft }}>
+          {format(now, 'EEEE, MMMM d')}
+        </Text>
+        <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 28, color: HUD_COLORS.text, marginTop: 2, marginBottom: 14 }}>
+          {now.getHours() < 12 ? 'Morning, Tommy' : now.getHours() < 17 ? 'Afternoon, Tommy' : 'Evening, Tommy'}
+        </Text>
         <BriefingCard />
         <StatChips />
         <ScorecardList />
@@ -69,8 +51,8 @@ export default function ScratchScreen() {
           paddingHorizontal: 12,
         }}
       >
-        <Text style={{ fontFamily: HUD_FONT, fontSize: 12, color: HUD_COLORS.mint }}>
-          {'> radio your caddie_'}
+        <Text style={{ fontFamily: HUD_FONT, fontSize: 13, color: HUD_COLORS.mintSoft }}>
+          Ask Scratch anything…
         </Text>
       </Pressable>
       <ChatSheet visible={chatOpen} onClose={() => setChatOpen(false)} />
