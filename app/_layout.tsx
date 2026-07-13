@@ -1,18 +1,20 @@
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useFonts, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
-import { queryClient } from '../lib/queryClient';
+import { SpaceGrotesk_400Regular, SpaceGrotesk_700Bold, useFonts } from '@expo-google-fonts/space-grotesk';
+import { persistOptions, queryClient } from '../lib/queryClient';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { ThemeProvider, useTheme } from '../lib/theme';
+import { useWarmCache } from '../lib/hooks/useWarmCache';
 
 function RootNavigator() {
   const { session, isLoading } = useAuth();
   const { colors, scheme } = useTheme();
+  useWarmCache(!!session && !isLoading);
 
   if (isLoading) {
     return (
@@ -46,20 +48,20 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  // HUD screens render in JetBrains Mono; block only until fonts are cached
-  // (first launch only) so no screen ever falls back to the system font.
-  const [fontsLoaded] = useFonts({ JetBrainsMono_400Regular, JetBrainsMono_700Bold });
+  // Whole app renders in Space Grotesk (modern geometric); block only until
+  // fonts are cached (first launch only) so nothing falls back mid-frame.
+  const [fontsLoaded] = useFonts({ SpaceGrotesk_400Regular, SpaceGrotesk_700Bold });
   if (!fontsLoaded) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
           <ThemeProvider>
             <AuthProvider>
               <RootNavigator />
             </AuthProvider>
           </ThemeProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

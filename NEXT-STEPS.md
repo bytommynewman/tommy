@@ -79,8 +79,43 @@ login token). Nothing for you to do here.
 
 ---
 
+## 5. Turn on the Content section (2 steps, ~3 minutes)
+
+The Ideas tab needs its database table and its brain deployed:
+
+1. **Database:** Supabase dashboard → SQL Editor → New query → paste all of
+   `supabase/migrations/0004_content.sql` → Run. Expect "Success. No rows returned".
+   (Claude can put it on your clipboard — just ask.)
+2. **Deploy the brain:** in Terminal:
+   ```
+   cd ~/Desktop/coding-projects/my-first-project
+   supabase functions deploy content-agent
+   ```
+
+Then in the app: course → hole 6 (content) → ideas → "radio scratch for ideas".
+
+## 6. Turn on the live market feed (1 step)
+
+Invest → Market pulls the five majors live. Deploy its function in Terminal:
+```
+cd ~/Desktop/coding-projects/my-first-project
+supabase functions deploy market-data
+```
+
+## 7. Turn on the Wealthsimple portfolio (SnapTrade keys already set ✓)
+
+1. **Database:** SQL Editor → New query → paste `supabase/migrations/0005_snaptrade.sql` → Run.
+2. **Deploy:** in Terminal:
+   ```
+   cd ~/Desktop/coding-projects/my-first-project
+   supabase functions deploy snaptrade-portfolio
+   ```
+3. In the app: Invest → Portfolio → **connect account** → log into
+   Wealthsimple on SnapTrade's page → come back → pull down to refresh.
+
 ## After that
 
-Next build phase whenever you want it: designing the individual sections —
-Recovery, Reflect, Plan, Life, Invest — each gets its own design pass.
-Just tell Claude which one to start with.
+- Content slice 3: Instagram stats — you'll get CONNECT-INSTAGRAM.md, a
+  click-by-click guide for the Meta/Instagram developer setup.
+- Then: individual section design passes (Recovery, Reflect, Plan, Life,
+  Invest) — tell Claude which one to start with.

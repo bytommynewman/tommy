@@ -62,6 +62,66 @@ export type ScratchMessageInsert = {
   content: string;
 };
 
+export type ReelIdeaStatus = 'new' | 'saved' | 'planned' | 'filmed' | 'posted';
+
+export type ReelIdea = {
+  id: string;
+  user_id: string;
+  title: string;
+  hook: string;
+  outline: string;
+  format: string;
+  status: ReelIdeaStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EditPlanShot = { shot: string; note: string; done?: boolean };
+export type EditPlanBeat = { start: number; end: number; description: string };
+
+export type EditPlan = {
+  id: string;
+  user_id: string;
+  idea_id: string;
+  shot_list: EditPlanShot[];
+  beats: EditPlanBeat[];
+  caption: string;
+  hashtags: string;
+  music: string;
+  created_at: string;
+};
+
+export type IgSnapshot = {
+  id: string;
+  user_id: string;
+  followers: number;
+  following: number;
+  media_count: number;
+  username: string | null; // added by migration 0007
+  profile_picture_url: string | null; // added by migration 0007
+  views_28d: number | null; // added by migration 0009
+  reach_28d: number | null; // added by migration 0009
+  engaged_28d: number | null; // added by migration 0009
+  captured_at: string;
+};
+
+export type IgMediaStat = {
+  id: string;
+  user_id: string;
+  media_id: string;
+  caption: string | null;
+  permalink: string | null;
+  thumbnail_url: string | null; // added by migration 0006
+  posted_at: string | null;
+  plays: number | null;
+  reach: number | null; // added by migration 0008
+  saves: number | null; // added by migration 0008
+  shares: number | null; // added by migration 0008
+  likes: number;
+  comments: number;
+  captured_at: string;
+};
+
 export type Profile = {
   user_id: string;
   display_name: string | null;

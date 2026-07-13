@@ -10,12 +10,11 @@ import {
   MipmapMode,
   Path as SkiaPath,
   Skia,
-  useImage,
 } from '@shopify/react-native-skia';
 import { useDerivedValue, type DerivedValue } from 'react-native-reanimated';
 import type { HolePath } from '../../lib/holePath';
+import { useHoleImage } from '../../lib/holeImage';
 import {
-  HOLE_IMAGE,
   SCENE,
   SCENE_COLORS,
   SHOW_PATH_DEBUG,
@@ -47,7 +46,7 @@ const TURF_SATURATION = [
 ];
 
 export function HoleScene({ width, height, tx, ty, scale, tilt, pivotY, path }: HoleSceneProps) {
-  const image = useImage(HOLE_IMAGE);
+  const image = useHoleImage();
 
   const transform = useDerivedValue(() => [
     { translateX: tx.value },

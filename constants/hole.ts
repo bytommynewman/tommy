@@ -45,10 +45,11 @@ export type HoleStop = {
 
 export const STOPS: HoleStop[] = [
   { frac: 0.0, route: '/recovery', label: 'Recovery', icon: 'shield-checkmark-outline', tagline: 'Habits, streaks, staying on track' },
-  { frac: 0.27, route: '/reflect', label: 'Reflect', icon: 'book-outline', tagline: 'Journal and therapist chat' },
-  { frac: 0.52, route: '/plan', label: 'Plan', icon: 'calendar-outline', tagline: 'Calendar, goals, and content' },
-  { frac: 0.78, route: '/life', label: 'Life', icon: 'body-outline', tagline: 'Fitness and people' },
-  { frac: 1.0, route: '/invest', label: 'Invest', icon: 'trending-up-outline', tagline: 'Portfolio, watchlist, markets' },
+  { frac: 0.2, route: '/reflect', label: 'Reflect', icon: 'book-outline', tagline: 'Journal and therapist chat' },
+  { frac: 0.4, route: '/plan', label: 'Plan', icon: 'calendar-outline', tagline: 'Calendar and goals' },
+  { frac: 0.6, route: '/life', label: 'Life', icon: 'body-outline', tagline: 'Fitness and people' },
+  { frac: 0.8, route: '/invest', label: 'Invest', icon: 'trending-up-outline', tagline: 'Portfolio, watchlist, markets' },
+  { frac: 1.0, route: '/content', label: 'Content', icon: 'videocam-outline', tagline: 'Reels: ideas, edits, stats' },
 ];
 
 export const STOP_NEAR_THRESHOLD = 90; // scene px along the path

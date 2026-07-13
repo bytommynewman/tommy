@@ -101,17 +101,17 @@ describe('formatVsPar', () => {
 });
 
 describe('recoveryStatus', () => {
-  it('is standby with no habits', () => {
-    expect(recoveryStatus([], [], [], TODAY)).toEqual({ text: 'standby', tone: 'muted' });
+  it('is open with no habits', () => {
+    expect(recoveryStatus([], [], [], TODAY)).toEqual({ text: 'open', tone: 'muted' });
   });
   it('flags open habits today', () => {
     const habits = [habit({ id: 'a' }), habit({ id: 'b' })];
     const logs = [log({ habit_id: 'a', log_date: TODAY, status: 'done' })];
-    expect(recoveryStatus(habits, logs, [], TODAY)).toEqual({ text: 'attention · 1 open', tone: 'warn' });
+    expect(recoveryStatus(habits, logs, [], TODAY)).toEqual({ text: '1 open today', tone: 'warn' });
   });
-  it('is secure with a day count when the card is clean', () => {
+  it('shows the clean-day count when the card is clean', () => {
     const habits = [habit({ id: 'a', kind: 'recovery' })];
     const logs = [log({ habit_id: 'a', log_date: TODAY, status: 'done' })];
-    expect(recoveryStatus(habits, logs, [], TODAY)).toEqual({ text: 'secure · day 30', tone: 'good' });
+    expect(recoveryStatus(habits, logs, [], TODAY)).toEqual({ text: 'clean · day 30', tone: 'good' });
   });
 });

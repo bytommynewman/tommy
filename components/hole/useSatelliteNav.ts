@@ -194,7 +194,9 @@ export function useSatelliteNav(
   // section. Never navigates — the target marker is the only "enter" button.
   const goToStop = useCallback(
     (index: number) => {
-      hapticsArmed.value = true;
+      // Programmatic flight: disarm haptics so the camera doesn't buzz at
+      // every hole it passes; the next real drag re-arms them.
+      hapticsArmed.value = false;
       const d = stopDists[index];
       const ease = { duration: 700, easing: Easing.inOut(Easing.cubic) };
       cameraDist.value = reduceMotion ? d : withTiming(d, ease);
