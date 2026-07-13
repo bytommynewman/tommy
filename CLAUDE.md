@@ -8,7 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Tommy" — a personal life OS built with Expo Router: planner, calendar, habit & recovery tracker, journal, goals, fitness, content pipeline, relationships, an AI therapist-mode chat, and an investing/portfolio section. Supabase (Postgres + Auth + Edge Functions) is the only backend; there is no separate server.
 
-The project is built in milestones (M1, M2, M9, M11, M12, ... referenced in migration/code comments); large parts of the tab structure under `app/(tabs)/` are currently placeholder screens (`components/ui/PlaceholderScreen.tsx`) waiting on later milestones. Only auth (M... profiles) and habits/recovery (M2) have real data layers as of now.
+The project is built in milestones (M1, M2, M9, M11, M12, ... referenced in migration/code comments). Live data layers as of 2026-07-13: auth/profiles, habits/recovery (M2), the invest section (live market quotes, Wealthsimple portfolio via SnapTrade, penny-stock watchlist), and the full content section (AI reel ideas, cloud video auto-cut, Instagram stats sync). Remaining `app/(tabs)/` groups (plan, reflect, life) are still `PlaceholderScreen` stubs.
+
+**Read `## Current state & handoff` at the bottom of this file first** — it carries the running status, pending actions, and the working agreements with Tommy.
 
 ## Commands
 
@@ -54,3 +56,28 @@ New domains (journal, goals, fitness, etc.) should follow this same `api/` → `
 **Scratch agent** — supabase/functions/scratch-agent is a Claude tool-use loop (model constant claude-opus-4-8) over the caller's own data: the client is constructed with the caller's JWT so every read/write is RLS-scoped. Tools: upsert_habit_log, create_habit, log_relapse, list_recent_logs. Chat history persists in scratch_messages (migration 0003). The app calls it only through lib/api/scratch.ts → lib/hooks/useScratch.ts; ANTHROPIC_API_KEY exists only as an edge-function secret, and every Scratch surface degrades gracefully when it's unset.
 
 **Business logic helpers** — pure functions like `lib/streaks.ts` (`buildStreak`, `daysClean`) take already-fetched data (habits/logs/relapses) and compute derived values; keep this kind of logic out of components and out of the query hooks so it stays testable in isolation.
+
+## Current state & handoff (2026-07-13)
+
+### What's live
+- **Design system**: "2126 country club" — Space Grotesk everywhere (loaded in `app/_layout.tsx`), soft 14px radii, deep-pine/fairway palette in `constants/hud.ts`. The spy-HUD era is retired: no mono font, no "intel/agent/clearance" copy anywhere. Serif (`MONEY_SERIF`) survives only for invest-money numerals.
+- **Home** (`app/(tabs)/index.tsx`): date + time-of-day greeting, Scratch the caddie card (plain text daily read), "The course" section list, "Ask Scratch anything…" chat bar.
+- **Content = the clubhouse** (`app/(tabs)/content/index.tsx`): course hole 6 routes here directly. Exterior: full-bleed pannable photo of a shingled cottage, zero text, tap anywhere to enter. Interior: **drag UP to walk forward through rooms** — each room photo scales up around the camera and dissolves into the next (native-driver interpolations on one vertical scroll; photos in `assets/clubhouse/`, Unsplash-licensed). Rooms: THE RANGE → ideas, THE STUDIO → editor, TROPHY ROOM → stats. Don't reintroduce sideways paging — Tommy explicitly rejected it.
+- **The Range** (ideas.tsx): "ASK SCRATCH FOR IDEAS" → content-agent generates 5 concepts incl. a "film it like:" reference line (parsed by `lib/contentLogic.ts splitOutline`); status filter chips.
+- **The Studio** (editor.tsx): screening room (expo-video preview of any clip), edit plans with tappable beat timeline (seeks the preview), director AI (content-agent mode `director`, rewrites plan fields from chat), and **AUTO-CUT**: multi-clip picker → upload to private `clips` storage bucket → `render-reel` edge function drives Shotstack (captions burned in, zooms, transitions, filters boost/muted/contrast/greyscale, chill/fast pace, optional music via document picker, 1080x1920 output) → poll → in-card preview → save to camera roll or share out to CapCut (expo-sharing). Real on-device video export is impossible in Expo Go — the cloud render IS the editor; don't promise otherwise.
+- **Trophy Room** (stats.tsx): @bytommynewman live Instagram stats via `ig-sync` — avatar, followers + delta + sparkline, 28-day REACH REPORT (whole-account views incl. FB-crosspost/boosts — per-post API views CANNOT include those; footnote on page explains), per-reel thumbnails/views/likes/comments/reach/saves/shares, views-by-reel bars, TOP REEL badge.
+- **Invest**: portfolio re-prices SnapTrade holdings live (Yahoo quotes + FX) to match the Wealthsimple app; market tab has the 5 majors + 10-stock big board + computed "caddie's read" notes; watchlist = volatile penny stocks with company blurbs.
+
+### Edge functions (deploy with `supabase functions deploy <name>` — Tommy runs deploys; Claude's attempts get permission-blocked)
+scratch-agent (home caddie chat/read) · content-agent (ideas/edit_plan/director modes) · ig-sync (Instagram Graph API; secret IG_ACCESS_TOKEN) · market-data (keyless Yahoo proxy; overview + watchlist modes) · snaptrade-portfolio (SNAPTRADE_* secrets) · render-reel (Shotstack; SHOTSTACK_API_KEY, stage env = small watermark; logic in render-reel/logic.ts is pure + vitest'd). All deployed and current as of 2026-07-13. Migrations 0001–0010 all applied (0010 = clips storage bucket).
+
+### Known expirations / recurring issues
+- **IG_ACCESS_TOKEN expires ~mid-Sept 2026** (60-day token). When Trophy Room sync starts failing: regenerate on the Meta app token page (developers.facebook.com → tommy-life-app → Instagram use case), copy it, then double-click `~/Desktop/save-instagram-key.command` — it reads the clipboard and sets the secret itself.
+- Shotstack is on the free **stage** environment → renders carry a small watermark; a paid key + `SHOTSTACK_ENV=v1` removes it.
+- **32 commits of this work live on branch `content-creation`** — check `gh pr list` for the open PR to main.
+
+### Working with Tommy (important)
+- Non-technical. One step at a time, complete single-line commands, plain language, no jargon. Ask for screenshots early — they settle reality fast.
+- **Expo rituals**: exactly ONE `npx expo start` window ever (port must be 8081 — 8082 means a zombie window exists; `pkill -f "expo start"` clears them). Tommy must never press `i` in that window (triggers a 12GB Xcode install). Phone and Mac Wi-Fi drift apart constantly — `npx expo start --tunnel` (helper `@expo/ngrok` already a devDependency) works from any network; Expo Go then loads via `exp://<urlRandomness>-anonymous-8081.exp.direct` (urlRandomness in `.expo/settings.json`). **"Nothing changed" almost always means Expo Go is silently showing a cached bundle** — proof of a real load is an `iOS Bundled …` line in the server output; `curl -s localhost:8081/json/list` shows connected phones.
+- Secrets/clipboard: Tommy's manual copy-paste of tokens fails often (newlines, clipboard overwritten). Use the `"$(pbpaste | tr -d '[:space:]')"` pattern or the Desktop `.command` helper; verify with `supabase secrets list` (empty-string digest = e3b0c442…).
+- Deploys, PR merges, SQL-editor pastes are Tommy's to run; hand him the exact command/SQL and verify afterwards (`supabase functions list` timestamps, secrets digests).
