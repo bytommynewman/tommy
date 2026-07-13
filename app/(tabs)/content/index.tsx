@@ -121,102 +121,142 @@ export default function ContentHouse() {
     );
   }
 
-  // Inside: one continuous space — drag and the rooms slide past with
-  // parallax depth; a room's options fade up as it arrives.
+  // Inside: you WALK through the house. Dragging up pushes the camera
+  // forward — the current room grows around you and dissolves through the
+  // doorway into the next. One flick = one room deeper.
+  const H = size.h;
   return (
-    <Animated.View style={{ flex: 1, backgroundColor: HUD_COLORS.bg, opacity: fade }} onLayout={onLayout}>
-      {size.w > 0 ? (
-        <Animated.ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="normal"
-          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-            useNativeDriver: true,
-          })}
-          scrollEventThrottle={16}
-        >
-          {ROOMS.map((room, i) => {
-            const center = i * panelW;
-            const parallax = scrollX.interpolate({
-              inputRange: [center - panelW, center, center + panelW],
-              outputRange: [panelW * 0.26, 0, -panelW * 0.26],
+    <Animated.View style={{ flex: 1, backgroundColor: '#000', opacity: fade }} onLayout={onLayout}>
+      {H > 0
+        ? ROOMS.map((room, i) => {
+            const start = i * H;
+            const end = (i + 1) * H;
+            const scale = scrollX.interpolate({
+              inputRange: [start - H, start, end],
+              outputRange: [0.94, 1, 1.65],
               extrapolate: 'clamp',
             });
-            const focus = scrollX.interpolate({
-              inputRange: [center - panelW * 0.75, center, center + panelW * 0.75],
-              outputRange: [0.3, 1, 0.3],
+            const opacity = scrollX.interpolate({
+              inputRange: [start - H * 0.55, start, end - H * 0.2, end],
+              outputRange: [0, 1, 1, 0],
               extrapolate: 'clamp',
             });
             return (
-              <View key={room.key} style={{ width: panelW, overflow: 'hidden' }}>
-                <Animated.Image
-                  source={room.image}
-                  style={{
-                    position: 'absolute',
-                    width: panelW * 1.6,
-                    height: '100%',
-                    left: -panelW * 0.3,
-                    transform: [{ translateX: parallax }],
-                  }}
-                  resizeMode="cover"
-                />
+              <Animated.View
+                key={room.key}
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  opacity,
+                  transform: [{ scale }],
+                }}
+              >
+                <Image source={room.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                 <View
                   style={{
                     position: 'absolute',
-                    width: panelW,
+                    width: '100%',
                     height: '100%',
-                    backgroundColor: 'rgba(10, 25, 17, 0.12)',
+                    backgroundColor: 'rgba(10, 25, 17, 0.08)',
                   }}
                 />
-                <Animated.View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'flex-end',
-                    padding: 14,
-                    paddingBottom: insets.bottom + 24,
-                    opacity: focus,
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                    <Ionicons name="golf-outline" size={13} color={MONEY_COLORS.brass} />
-                    <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 15, color: HUD_COLORS.text, letterSpacing: 1 }}>
-                      {room.name}
-                    </Text>
-                  </View>
-                  {room.options.map((option) => (
-                    <Pressable
-                      key={option.label}
-                      onPress={() => router.replace(room.route)}
-                      accessibilityRole="button"
-                      accessibilityLabel={option.label}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 10,
-                        backgroundColor: 'rgba(16, 35, 23, 0.78)',
-                        borderRadius: HUD_RADIUS,
-                        padding: 13,
-                        marginBottom: 8,
-                      }}
-                    >
-                      <Ionicons name={option.icon} size={18} color={HUD_COLORS.mint} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 13, color: HUD_COLORS.text }}>
-                          {option.label}
-                        </Text>
-                        <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
-                          {option.sub}
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={14} color={HUD_COLORS.mintSoft} />
-                    </Pressable>
-                  ))}
-                </Animated.View>
-              </View>
+              </Animated.View>
+            );
+          })
+        : null}
+
+      {H > 0 ? (
+        <Animated.ScrollView
+          style={{ position: 'absolute', width: '100%', height: '100%' }}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={H}
+          disableIntervalMomentum
+          decelerationRate="fast"
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollX } } }], {
+            useNativeDriver: true,
+          })}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ height: H * ROOMS.length }}
+        >
+          {ROOMS.map((room, i) => {
+            const start = i * H;
+            const cardOpacity = scrollX.interpolate({
+              inputRange: [start - H * 0.35, start, start + H * 0.5, start + H * 0.85],
+              outputRange: [0, 1, 1, 0],
+              extrapolate: 'clamp',
+            });
+            return (
+              <Animated.View
+                key={room.key}
+                style={{
+                  position: 'absolute',
+                  top: start,
+                  width: '100%',
+                  height: H,
+                  justifyContent: 'flex-end',
+                  padding: 16,
+                  paddingBottom: insets.bottom + 30,
+                  opacity: cardOpacity,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <Ionicons name="golf-outline" size={13} color={MONEY_COLORS.brass} />
+                  <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 16, color: '#FFFFFF', letterSpacing: 1 }}>
+                    {room.name}
+                  </Text>
+                </View>
+                {room.options.map((option) => (
+                  <Pressable
+                    key={option.label}
+                    onPress={() => router.replace(room.route)}
+                    accessibilityRole="button"
+                    accessibilityLabel={option.label}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                      backgroundColor: 'rgba(12, 26, 18, 0.72)',
+                      borderRadius: HUD_RADIUS,
+                      padding: 13,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Ionicons name={option.icon} size={18} color={HUD_COLORS.mint} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 13, color: '#FFFFFF' }}>
+                        {option.label}
+                      </Text>
+                      <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
+                        {option.sub}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={14} color={HUD_COLORS.mintSoft} />
+                  </Pressable>
+                ))}
+              </Animated.View>
             );
           })}
         </Animated.ScrollView>
       ) : null}
+
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          bottom: insets.bottom + 8,
+          width: '100%',
+          alignItems: 'center',
+          opacity: scrollX.interpolate({ inputRange: [0, H * 0.25 || 1], outputRange: [1, 0], extrapolate: 'clamp' }),
+        }}
+      >
+        <Ionicons name="chevron-up" size={16} color="#FFFFFF" />
+        <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: '#FFFFFF', opacity: 0.85 }}>
+          drag up — walk through the house
+        </Text>
+      </Animated.View>
+
       {backButton}
     </Animated.View>
   );
