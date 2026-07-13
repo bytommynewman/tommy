@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import { Image as RNImage, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -7,7 +7,6 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
-import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import {
   currentUserId,
@@ -128,75 +127,113 @@ function Label({ text, color = HUD_COLORS.line }: { text: string; color?: string
 
 type Room = 'screening' | 'ready' | 'cutting' | 'proshop';
 
-const ROOMS: { key: Room; label: string; sub: string; x: string; y: string; w: string; h: string }[] = [
-  // Percent hotspots over the SVG below (viewBox 360x240).
-  { key: 'screening', label: 'SCREENING BAY', sub: 'watch your clips', x: '15%', y: '47%', w: '35%', h: '22%' },
-  { key: 'ready', label: 'READY ROOM', sub: 'ideas waiting on a cut', x: '50%', y: '47%', w: '35%', h: '22%' },
-  { key: 'cutting', label: 'CUTTING ROOM', sub: 'auto-cut + director ai', x: '15%', y: '70%', w: '35%', h: '21%' },
-  { key: 'proshop', label: 'PRO SHOP', sub: 'send-outs & tips', x: '50%', y: '70%', w: '35%', h: '21%' },
+// Real photography (Unsplash license — free to use), one panel per station.
+const PANELS: { key: Room; label: string; sub: string; image: number }[] = [
+  {
+    key: 'proshop',
+    label: 'THE CLUBHOUSE',
+    sub: 'drag to walk through → · tap to enter the pro shop',
+    image: require('../../../assets/clubhouse/exterior.jpg'),
+  },
+  {
+    key: 'screening',
+    label: 'SCREENING BAY',
+    sub: 'watch your raw clips',
+    image: require('../../../assets/clubhouse/screening.jpg'),
+  },
+  {
+    key: 'ready',
+    label: 'READY ROOM',
+    sub: 'ideas waiting on a cut',
+    image: require('../../../assets/clubhouse/ready.jpg'),
+  },
+  {
+    key: 'cutting',
+    label: 'CUTTING ROOM',
+    sub: 'auto-cut · director ai · timeline',
+    image: require('../../../assets/clubhouse/cutting.jpg'),
+  },
 ];
 
-// The clubhouse: an original Nantucket-style cedar cottage drawn in HUD ink —
-// each lit room is a station of the edit flow. Tap a room, walk in.
+// The clubhouse: drag room to room like walking the house; tapping a panel
+// (or its ENTER pill) glides the page down to that station.
 function ClubhouseMap({ onRoom }: { onRoom: (room: Room) => void }) {
+  const [width, setWidth] = useState(0);
+  const [page, setPage] = useState(0);
   return (
-    <View style={{ marginBottom: 12 }}>
-      <View style={{ width: '100%', aspectRatio: 360 / 240 }}>
-        <Svg width="100%" height="100%" viewBox="0 0 360 240">
-          {/* lawn + green */}
-          <Line x1={0} y1={228} x2={360} y2={228} stroke={HUD_COLORS.line} strokeWidth={1} />
-          <Circle cx={28} cy={228} r={14} fill={HUD_COLORS.panelDeep} stroke={HUD_COLORS.line} strokeWidth={0.75} />
-          <Line x1={28} y1={228} x2={28} y2={196} stroke={HUD_COLORS.mintSoft} strokeWidth={1.5} />
-          <Path d="M28,196 L44,201 L28,206 Z" fill={HUD_COLORS.amber} />
-          {/* house shell — gable + gambrel-ish shoulders, cedar-shingle grey */}
-          <Path
-            d="M54,112 L106,58 L254,58 L306,112 Z"
-            fill={HUD_COLORS.panelDeep}
-            stroke={HUD_COLORS.lineBright}
-            strokeWidth={1.25}
-          />
-          <Rect x={54} y={112} width={252} height={116} fill={HUD_COLORS.panel} stroke={HUD_COLORS.lineBright} strokeWidth={1.25} />
-          {/* chimney + flag */}
-          <Rect x={238} y={34} width={16} height={26} fill={HUD_COLORS.panelDeep} stroke={HUD_COLORS.lineBright} strokeWidth={1} />
-          <Line x1={246} y1={34} x2={246} y2={12} stroke={HUD_COLORS.mintSoft} strokeWidth={1.5} />
-          <Path d="M246,12 L264,17 L246,22 Z" fill={HUD_COLORS.mint} />
-          {/* attic dormer windows */}
-          <Rect x={150} y={74} width={22} height={16} fill="none" stroke={HUD_COLORS.line} strokeWidth={0.75} />
-          <Rect x={188} y={74} width={22} height={16} fill="none" stroke={HUD_COLORS.line} strokeWidth={0.75} />
-          {/* interior walls: two floors, two rooms each */}
-          <Line x1={54} y1={168} x2={306} y2={168} stroke={HUD_COLORS.line} strokeWidth={1} />
-          <Line x1={180} y1={112} x2={180} y2={228} stroke={HUD_COLORS.line} strokeWidth={1} />
-          {/* front door on the pro shop */}
-          <Rect x={236} y={196} width={18} height={32} fill={HUD_COLORS.panelDeep} stroke={HUD_COLORS.line} strokeWidth={0.75} />
-        </Svg>
-        {ROOMS.map((room) => (
-          <Pressable
-            key={room.key}
-            onPress={() => onRoom(room.key)}
-            accessibilityRole="button"
-            accessibilityLabel={`Enter the ${room.label}`}
+    <View style={{ marginBottom: 14 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      {width > 0 ? (
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width))}
+          style={{ borderRadius: HUD_RADIUS, borderWidth: 0.75, borderColor: HUD_COLORS.lineBright }}
+        >
+          {PANELS.map((panel) => (
+            <Pressable
+              key={panel.key}
+              onPress={() => onRoom(panel.key)}
+              accessibilityRole="button"
+              accessibilityLabel={`Enter the ${panel.label}`}
+              style={{ width, height: 210 }}
+            >
+              <RNImage source={panel.image} style={{ width, height: 210 }} resizeMode="cover" />
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(4, 20, 16, 0.78)',
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="golf-outline" size={11} color={MONEY_COLORS.brass} />
+                    <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 11, color: HUD_COLORS.text, letterSpacing: 1.5 }}>
+                      {panel.label}
+                    </Text>
+                  </View>
+                  <Text style={{ fontFamily: HUD_FONT, fontSize: 8.5, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
+                    {panel.sub}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    borderWidth: 0.75,
+                    borderColor: HUD_COLORS.mint,
+                    borderRadius: 999,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                  }}
+                >
+                  <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color: HUD_COLORS.mint }}>ENTER ▸</Text>
+                </View>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
+      ) : null}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 6 }}>
+        {PANELS.map((panel, i) => (
+          <View
+            key={panel.key}
             style={{
-              position: 'absolute',
-              left: room.x as `${number}%`,
-              top: room.y as `${number}%`,
-              width: room.w as `${number}%`,
-              height: room.h as `${number}%`,
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: i === page ? 14 : 5,
+              height: 5,
+              borderRadius: 999,
+              backgroundColor: i === page ? HUD_COLORS.mint : HUD_COLORS.line,
             }}
-          >
-            <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color: HUD_COLORS.mint, letterSpacing: 1 }}>
-              {room.label}
-            </Text>
-            <Text style={{ fontFamily: HUD_FONT, fontSize: 7, color: HUD_COLORS.mintSoft, marginTop: 1 }}>
-              {room.sub}
-            </Text>
-          </Pressable>
+          />
         ))}
       </View>
-      <Text style={{ fontFamily: HUD_FONT, fontSize: 8, color: HUD_COLORS.line, textAlign: 'center', marginTop: 2 }}>
-        the clubhouse — tap a room to walk in
-      </Text>
     </View>
   );
 }
