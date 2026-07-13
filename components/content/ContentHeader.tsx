@@ -12,15 +12,15 @@ const TABS = [
 ] as const;
 
 const TITLES = {
-  ideas: 'content · ideas',
-  editor: 'content · editor',
+  ideas: 'The Range',
+  editor: 'The Studio',
   stats: '@bytommynewman',
 } as const;
 
 const SUBTITLES = {
   ideas: 'reel concepts, tuned to your come-up',
-  editor: 'cutting room · director ai on set',
-  stats: 'live intel on the account',
+  editor: 'the studio · director ai on set',
+  stats: 'live stats on the account',
 } as const;
 
 function backToCourse() {

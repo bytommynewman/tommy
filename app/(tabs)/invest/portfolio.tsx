@@ -33,7 +33,7 @@ function shares(units: number): string {
 function SectionHead({ label }: { label: string }) {
   return (
     <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.line, marginTop: 16, marginBottom: 8 }}>
-      {`// ${label}`}
+      {label.toUpperCase()}
     </Text>
   );
 }

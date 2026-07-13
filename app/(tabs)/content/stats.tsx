@@ -65,7 +65,7 @@ function SignalBars({ media }: { media: IgMediaStat[] }) {
   const max = Math.max(...ranked.map((m) => m.plays ?? 0));
   return (
     <>
-      <SectionHead label="signal by reel" />
+      <SectionHead label="views by reel" />
       <GlowBox style={{ padding: 12 }}>
         {ranked.map((m, i) => {
           const pct = Math.max(((m.plays ?? 0) / max) * 100, 4);
@@ -163,7 +163,7 @@ const ReelRow = React.memo(function ReelRow({ media, rank }: { media: IgMediaSta
                     marginTop: 2,
                   }}
                 >
-                  {rank === 1 ? '▲ TOP SIGNAL' : `#${rank}`}
+                  {rank === 1 ? '★ TOP REEL' : `#${rank}`}
                 </Text>
               ) : null}
             </View>
@@ -306,11 +306,11 @@ export default function StatsScreen() {
                 {`@${latest?.username ?? 'bytommynewman'}`}
               </Text>
               <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
-                instagram · creator intel
+                instagram · creator hq
               </Text>
             </View>
             <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mint, letterSpacing: 1.5 }}>
-              {connected ? '● LIVE' : '○ STANDBY'}
+              {connected ? 'live' : 'standby'}
             </Text>
           </View>
 
@@ -376,7 +376,7 @@ export default function StatsScreen() {
             }}
           >
             <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 12, color: HUD_COLORS.mint, letterSpacing: 1 }}>
-              {sync.isPending ? 'PULLING THE NUMBERS…' : '> SYNC FROM INSTAGRAM_'}
+              {sync.isPending ? 'PULLING THE NUMBERS…' : 'SYNC FROM INSTAGRAM'}
             </Text>
           </Pressable>
           {syncError ? (
@@ -420,7 +420,7 @@ export default function StatsScreen() {
 
         {connected ? (
           <>
-            <SectionHead label="account telemetry" />
+            <SectionHead label="account" />
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
               <StatChip label="posts" value={n(latest.media_count)} />
               <StatChip label="following" value={n(latest.following)} />
@@ -444,7 +444,7 @@ export default function StatsScreen() {
 
         {media.length > 0 ? (
           <>
-            <SectionHead label="recent transmissions · tap to open" />
+            <SectionHead label="recent reels · tap to open" />
             {media.map((m) => (
               <ReelRow key={m.media_id} media={m} rank={rankByViews.get(m.media_id)} />
             ))}

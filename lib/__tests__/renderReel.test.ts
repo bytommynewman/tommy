@@ -44,10 +44,18 @@ describe('buildShotstackEdit', () => {
     expect(video.length).toBeCloseTo(2.0);
   });
 
-  it('outputs a 9:16 reel and throws without clips', () => {
+  it('outputs a 1080x1920 reel and throws without clips', () => {
     const edit = buildShotstackEdit(plan, ['u1'], style) as Edit;
-    expect(edit.output.aspectRatio).toBe('9:16');
+    expect(edit.output.size).toEqual({ width: 1080, height: 1920 });
     expect(() => buildShotstackEdit(plan, [], style)).toThrow('no_clips');
+  });
+
+  it('mixes a soundtrack under the cut when music is given', () => {
+    const edit = buildShotstackEdit(plan, ['u1'], style, 'music-url') as unknown as {
+      timeline: { soundtrack?: { src: string; volume: number } };
+    };
+    expect(edit.timeline.soundtrack?.src).toBe('music-url');
+    expect(edit.timeline.soundtrack?.volume).toBeLessThan(1);
   });
 
   it('gives clip-per-3s slots when the plan has no beats', () => {

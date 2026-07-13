@@ -21,7 +21,7 @@ const ROOMS: RoomPanel[] = [
   {
     key: 'ideas',
     image: require('../../../assets/clubhouse/ready.jpg'),
-    name: 'IDEA ENGINE',
+    name: 'THE RANGE',
     route: '/content/ideas',
     options: [
       { icon: 'radio-outline', label: 'radio scratch for ideas', sub: '5 fresh reel concepts, tuned to your niche' },
@@ -31,7 +31,7 @@ const ROOMS: RoomPanel[] = [
   {
     key: 'editor',
     image: require('../../../assets/clubhouse/screening.jpg'),
-    name: 'CUTTING ROOM',
+    name: 'THE STUDIO',
     route: '/content/editor',
     options: [
       { icon: 'flash-outline', label: 'auto-cut a reel', sub: 'clips in → captions, zooms, transitions burned in' },
@@ -43,10 +43,10 @@ const ROOMS: RoomPanel[] = [
   {
     key: 'stats',
     image: require('../../../assets/clubhouse/cutting.jpg'),
-    name: 'INTEL STUDY',
+    name: 'TROPHY ROOM',
     route: '/content/stats',
     options: [
-      { icon: 'stats-chart-outline', label: '@bytommynewman live intel', sub: 'followers, views, reach — synced from instagram' },
+      { icon: 'stats-chart-outline', label: '@bytommynewman live stats', sub: 'followers, views, reach — synced from instagram' },
       { icon: 'trophy-outline', label: 'signal by reel', sub: 'which posts are hitting, ranked' },
     ],
   },
@@ -55,9 +55,10 @@ const ROOMS: RoomPanel[] = [
 export default function ContentHouse() {
   const insets = useSafeAreaInsets();
   const [entered, setEntered] = useState(false);
-  const [width, setWidth] = useState(0);
-  const [page, setPage] = useState(0);
+  const [size, setSize] = useState({ w: 0, h: 0 });
   const fade = useRef(new Animated.Value(0)).current;
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const panelW = size.w * 0.86;
 
   const enter = () => {
     setEntered(true);
@@ -69,147 +70,157 @@ export default function ContentHouse() {
     else router.replace('/course');
   };
 
+  const onLayout = (e: { nativeEvent: { layout: { width: number; height: number } } }) =>
+    setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
+
+  const backButton = (
+    <Pressable
+      onPress={backToCourse}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel="Back to the course"
+      style={{
+        position: 'absolute',
+        top: insets.top + 8,
+        left: 14,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(10, 25, 17, 0.65)',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Ionicons name="arrow-back" size={18} color={HUD_COLORS.text} />
+    </Pressable>
+  );
+
+  // Outside: just the house on its lawn — pannable, no writing. Tap to enter.
   if (!entered) {
+    const imgW = Math.max(size.h * (1200 / 900), size.w);
     return (
-      <Pressable
-        onPress={enter}
-        accessibilityRole="button"
-        accessibilityLabel="Enter the clubhouse"
-        style={{ flex: 1, backgroundColor: HUD_COLORS.bg }}
-      >
-        <Image
-          source={require('../../../assets/clubhouse/exterior.jpg')}
-          style={{ flex: 1, width: '100%' }}
-          resizeMode="cover"
-        />
-        <Pressable
-          onPress={backToCourse}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel="Back to the course"
-          style={{
-            position: 'absolute',
-            top: insets.top + 8,
-            left: 14,
-            width: 34,
-            height: 34,
-            borderRadius: HUD_RADIUS,
-            borderWidth: 0.75,
-            borderColor: HUD_COLORS.lineBright,
-            backgroundColor: 'rgba(4, 20, 16, 0.7)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Ionicons name="arrow-back" size={18} color={HUD_COLORS.mint} />
-        </Pressable>
-      </Pressable>
+      <View style={{ flex: 1, backgroundColor: HUD_COLORS.bg }} onLayout={onLayout}>
+        {size.h > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+            contentOffset={{ x: Math.max((imgW - size.w) / 2, 0), y: 0 }}
+          >
+            <Pressable onPress={enter} accessibilityRole="button" accessibilityLabel="Enter the clubhouse">
+              <Image
+                source={require('../../../assets/clubhouse/exterior.jpg')}
+                style={{ width: imgW, height: size.h }}
+                resizeMode="cover"
+              />
+            </Pressable>
+          </ScrollView>
+        ) : null}
+        {backButton}
+      </View>
     );
   }
 
+  // Inside: one continuous space — drag and the rooms slide past with
+  // parallax depth; a room's options fade up as it arrives.
   return (
-    <Animated.View
-      style={{ flex: 1, backgroundColor: HUD_COLORS.bg, opacity: fade }}
-      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-    >
-      {width > 0 ? (
-        <ScrollView
+    <Animated.View style={{ flex: 1, backgroundColor: HUD_COLORS.bg, opacity: fade }} onLayout={onLayout}>
+      {size.w > 0 ? (
+        <Animated.ScrollView
           horizontal
-          pagingEnabled
           showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width))}
+          decelerationRate="normal"
+          snapToInterval={panelW}
+          snapToAlignment="start"
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+            useNativeDriver: true,
+          })}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ paddingRight: size.w - panelW }}
         >
-          {ROOMS.map((room) => (
-            <View key={room.key} style={{ width, flex: 1 }}>
-              <Image source={room.image} style={{ position: 'absolute', width, height: '100%' }} resizeMode="cover" />
-              <View style={{ position: 'absolute', width, height: '100%', backgroundColor: 'rgba(4, 20, 16, 0.35)' }} />
-              <View style={{ flex: 1, justifyContent: 'flex-end', padding: 16, paddingBottom: insets.bottom + 24 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                  <Ionicons name="golf-outline" size={13} color={MONEY_COLORS.brass} />
-                  <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 14, color: HUD_COLORS.text, letterSpacing: 2 }}>
-                    {room.name}
-                  </Text>
-                </View>
-                {room.options.map((option) => (
-                  <Pressable
-                    key={option.label}
-                    onPress={() => router.replace(room.route)}
-                    accessibilityRole="button"
-                    accessibilityLabel={option.label}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                      backgroundColor: 'rgba(4, 36, 27, 0.88)',
-                      borderWidth: 0.75,
-                      borderColor: HUD_COLORS.lineBright,
-                      borderRadius: HUD_RADIUS,
-                      padding: 12,
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Ionicons name={option.icon} size={18} color={HUD_COLORS.mint} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 12, color: HUD_COLORS.text }}>
-                        {option.label}
-                      </Text>
-                      <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
-                        {option.sub}
-                      </Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={14} color={HUD_COLORS.mintSoft} />
-                  </Pressable>
-                ))}
+          {ROOMS.map((room, i) => {
+            const center = i * panelW;
+            const parallax = scrollX.interpolate({
+              inputRange: [center - panelW, center, center + panelW],
+              outputRange: [panelW * 0.26, 0, -panelW * 0.26],
+              extrapolate: 'clamp',
+            });
+            const focus = scrollX.interpolate({
+              inputRange: [center - panelW * 0.75, center, center + panelW * 0.75],
+              outputRange: [0.15, 1, 0.15],
+              extrapolate: 'clamp',
+            });
+            return (
+              <View key={room.key} style={{ width: panelW, overflow: 'hidden' }}>
+                <Animated.Image
+                  source={room.image}
+                  style={{
+                    position: 'absolute',
+                    width: panelW * 1.6,
+                    height: '100%',
+                    left: -panelW * 0.3,
+                    transform: [{ translateX: parallax }],
+                  }}
+                  resizeMode="cover"
+                />
+                <View
+                  style={{
+                    position: 'absolute',
+                    width: panelW,
+                    height: '100%',
+                    backgroundColor: 'rgba(10, 25, 17, 0.28)',
+                  }}
+                />
+                <Animated.View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'flex-end',
+                    padding: 14,
+                    paddingBottom: insets.bottom + 24,
+                    opacity: focus,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <Ionicons name="golf-outline" size={13} color={MONEY_COLORS.brass} />
+                    <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 15, color: HUD_COLORS.text, letterSpacing: 1 }}>
+                      {room.name}
+                    </Text>
+                  </View>
+                  {room.options.map((option) => (
+                    <Pressable
+                      key={option.label}
+                      onPress={() => router.replace(room.route)}
+                      accessibilityRole="button"
+                      accessibilityLabel={option.label}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 10,
+                        backgroundColor: 'rgba(16, 35, 23, 0.9)',
+                        borderRadius: HUD_RADIUS,
+                        padding: 13,
+                        marginBottom: 8,
+                      }}
+                    >
+                      <Ionicons name={option.icon} size={18} color={HUD_COLORS.mint} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 13, color: HUD_COLORS.text }}>
+                          {option.label}
+                        </Text>
+                        <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
+                          {option.sub}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={14} color={HUD_COLORS.mintSoft} />
+                    </Pressable>
+                  ))}
+                </Animated.View>
               </View>
-            </View>
-          ))}
-        </ScrollView>
+            );
+          })}
+        </Animated.ScrollView>
       ) : null}
-
-      <Pressable
-        onPress={backToCourse}
-        hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel="Back to the course"
-        style={{
-          position: 'absolute',
-          top: insets.top + 8,
-          left: 14,
-          width: 34,
-          height: 34,
-          borderRadius: HUD_RADIUS,
-          borderWidth: 0.75,
-          borderColor: HUD_COLORS.lineBright,
-          backgroundColor: 'rgba(4, 20, 16, 0.7)',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Ionicons name="arrow-back" size={18} color={HUD_COLORS.mint} />
-      </Pressable>
-
-      <View
-        style={{
-          position: 'absolute',
-          top: insets.top + 16,
-          right: 16,
-          flexDirection: 'row',
-          gap: 5,
-        }}
-      >
-        {ROOMS.map((room, i) => (
-          <View
-            key={room.key}
-            style={{
-              width: i === page ? 14 : 5,
-              height: 5,
-              borderRadius: 999,
-              backgroundColor: i === page ? HUD_COLORS.mint : 'rgba(225, 245, 238, 0.4)',
-            }}
-          />
-        ))}
-      </View>
+      {backButton}
     </Animated.View>
   );
 }

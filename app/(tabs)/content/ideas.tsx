@@ -75,7 +75,7 @@ const IdeaCard = React.memo(function IdeaCard({ idea }: { idea: ReelIdea }) {
           </Pressable>
         ) : (
           <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mint, letterSpacing: 1.5 }}>
-            ● INCOMING
+            NEW
           </Text>
         )}
       </View>
@@ -188,10 +188,10 @@ export default function IdeasScreen() {
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5 }}>
-            IDEA ENGINE
+            THE RANGE
           </Text>
           <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mint }}>
-            {generate.isPending ? '◉ GENERATING' : `● ONLINE · ${ideas.length} CONCEPTS`}
+            {generate.isPending ? 'generating…' : `${ideas.length} concepts on the board`}
           </Text>
         </View>
 
@@ -210,7 +210,7 @@ export default function IdeasScreen() {
           }}
         >
           <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 13, color: HUD_COLORS.mint, letterSpacing: 1 }}>
-            {generate.isPending ? 'SCRATCH IS SCOUTING ANGLES…' : '> RADIO SCRATCH FOR IDEAS_'}
+            {generate.isPending ? 'SCRATCH IS SCOUTING ANGLES…' : 'ASK SCRATCH FOR IDEAS'}
           </Text>
           <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mintSoft, marginTop: 3 }}>
             5 fresh concepts · tuned to your niche, habits and follower count

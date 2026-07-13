@@ -62,7 +62,7 @@ function QuickBay() {
   return (
     <GlowBox glow style={{ padding: 14, marginBottom: 14 }}>
       <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color: MONEY_COLORS.brass, letterSpacing: 2 }}>
-        SCREENING BAY
+        SCREENING ROOM
       </Text>
       {videoUri ? (
         <>
@@ -351,7 +351,7 @@ function AutoCut({ plan }: { plan: EditPlan }) {
               letterSpacing: 1,
             }}
           >
-            {busy ? 'CUTTING…' : '► RENDER THE REEL_'}
+            {busy ? 'CUTTING…' : 'RENDER THE REEL'}
           </Text>
         </Pressable>
       </View>
@@ -750,10 +750,10 @@ export default function EditorScreen() {
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5 }}>
-            CUTTING ROOM
+            THE STUDIO
           </Text>
           <Text style={{ fontFamily: HUD_FONT, fontSize: 9, color: HUD_COLORS.mint }}>
-            {`● ${plans.length} EDIT${plans.length === 1 ? '' : 'S'} ON THE BOARD`}
+            {`${plans.length} edit${plans.length === 1 ? '' : 's'} on the board`}
           </Text>
         </View>
 
@@ -817,7 +817,7 @@ export default function EditorScreen() {
         {plans.length > 0 ? (
           <>
             <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginVertical: 8 }}>
-              CUTTING ROOM · YOUR EDITS
+              THE STUDIO · YOUR EDITS
             </Text>
             {plans.map((plan) => (
               <PlanCard key={plan.id} plan={plan} idea={ideasById.get(plan.idea_id)} />

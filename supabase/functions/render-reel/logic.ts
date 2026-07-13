@@ -101,7 +101,8 @@ export function buildShotstackEdit(
 
   return {
     timeline,
-    output: { format: 'mp4', resolution: 'hd', aspectRatio: '9:16', fps: 30 },
+    // Full reel resolution — what Instagram actually serves.
+    output: { format: 'mp4', size: { width: 1080, height: 1920 }, fps: 30 },
   };
 }
 
