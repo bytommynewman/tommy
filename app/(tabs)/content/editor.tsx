@@ -3,6 +3,7 @@ import { Image as RNImage, Pressable, RefreshControl, ScrollView, Text, TextInpu
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
@@ -280,8 +281,27 @@ function AutoCut({ plan }: { plan: EditPlan }) {
   const [captions, setCaptions] = useState(true);
   const [zoom, setZoom] = useState(true);
   const [filter, setFilter] = useState<RenderStyleInput['filter']>('none');
+  const [musicUri, setMusicUri] = useState<string | null>(null);
+  const [musicName, setMusicName] = useState<string | null>(null);
   const player = useVideoPlayer(null);
   const busy = phase === 'uploading' || phase === 'rendering';
+  const FILTER_CYCLE: RenderStyleInput['filter'][] = ['none', 'boost', 'muted', 'contrast', 'greyscale'];
+
+  const pickMusic = async () => {
+    if (busy) return;
+    if (musicUri) {
+      // Tap again to clear.
+      setMusicUri(null);
+      setMusicName(null);
+      return;
+    }
+    const result = await DocumentPicker.getDocumentAsync({ type: 'audio/*', copyToCacheDirectory: true });
+    const asset = result.canceled ? null : (result.assets?.[0] ?? null);
+    if (asset) {
+      setMusicUri(asset.uri);
+      setMusicName(asset.name ?? 'track');
+    }
+  };
 
   const pickClips = async () => {
     if (busy) return;
@@ -308,9 +328,15 @@ function AutoCut({ plan }: { plan: EditPlan }) {
         await uploadClip(path, clips[i]);
         paths.push(path);
       }
+      let musicPath: string | null = null;
+      if (musicUri) {
+        setNote('uploading the track…');
+        musicPath = `${uid}/${plan.id}/music-${Date.now()}.mp3`;
+        await uploadClip(musicPath, musicUri);
+      }
       setPhase('rendering');
       setNote('the cloud is cutting — usually under a minute…');
-      const started = await startRender(plan.id, paths, { pace, captions, zoom, filter });
+      const started = await startRender(plan.id, paths, { pace, captions, zoom, filter }, musicPath);
       if ('error' in started) throw new Error(started.detail ?? started.error);
       for (let tries = 0; tries < 60; tries++) {
         await new Promise((resolve) => setTimeout(resolve, 4000));
@@ -389,7 +415,12 @@ function AutoCut({ plan }: { plan: EditPlan }) {
         <TogglePill
           label={`filter: ${filter}`}
           active={filter !== 'none'}
-          onPress={() => setFilter(filter === 'none' ? 'boost' : filter === 'boost' ? 'muted' : 'none')}
+          onPress={() => setFilter(FILTER_CYCLE[(FILTER_CYCLE.indexOf(filter) + 1) % FILTER_CYCLE.length])}
+        />
+        <TogglePill
+          label={musicName ? `♫ ${musicName.slice(0, 14)} ✕` : '♫ add music'}
+          active={!!musicUri}
+          onPress={pickMusic}
         />
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>

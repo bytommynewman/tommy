@@ -18,13 +18,15 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+const FILTERS = ['boost', 'muted', 'greyscale', 'contrast'] as const;
+
 function validStyle(raw: unknown): RenderStyle {
   const r = (raw ?? {}) as Record<string, unknown>;
   return {
     pace: r.pace === 'fast' ? 'fast' : 'chill',
     captions: r.captions !== false,
     zoom: r.zoom !== false,
-    filter: r.filter === 'boost' || r.filter === 'muted' ? r.filter : 'none',
+    filter: FILTERS.includes(r.filter as (typeof FILTERS)[number]) ? (r.filter as RenderStyle['filter']) : 'none',
   };
 }
 
@@ -78,7 +80,13 @@ Deno.serve(async (req) => {
       const urls = signed.map((s) => s.data?.signedUrl).filter((u): u is string => typeof u === 'string');
       if (urls.length !== clipPaths.length) return json({ error: 'clips_unreadable' }, 400);
 
-      const edit = buildShotstackEdit({ hook, beats }, urls, validStyle(body.style));
+      let musicUrl: string | null = null;
+      if (typeof body.music_path === 'string' && body.music_path.startsWith(`${userData.user.id}/`)) {
+        const { data: signedMusic } = await supabase.storage.from('clips').createSignedUrl(body.music_path, 3600);
+        musicUrl = signedMusic?.signedUrl ?? null;
+      }
+
+      const edit = buildShotstackEdit({ hook, beats }, urls, validStyle(body.style), musicUrl);
       const res = await fetch(`${base}/render`, {
         method: 'POST',
         headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },

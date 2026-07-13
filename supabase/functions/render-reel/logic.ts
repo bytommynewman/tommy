@@ -7,7 +7,7 @@ export type RenderStyle = {
   pace: 'chill' | 'fast';
   captions: boolean;
   zoom: boolean;
-  filter: 'none' | 'boost' | 'muted';
+  filter: 'none' | 'boost' | 'muted' | 'greyscale' | 'contrast';
 };
 
 const MAX_REEL_SECONDS = 90;
@@ -24,7 +24,12 @@ function captionText(description: string): string {
 // Beats drive the cut: each beat plays one source clip (round-robin when
 // there are fewer clips than beats). Captions ride a second track, the hook
 // leads as a big title. Output is a 9:16 30fps reel.
-export function buildShotstackEdit(plan: RenderPlan, clipUrls: string[], style: RenderStyle): object {
+export function buildShotstackEdit(
+  plan: RenderPlan,
+  clipUrls: string[],
+  style: RenderStyle,
+  musicUrl: string | null = null
+): object {
   if (clipUrls.length === 0) throw new Error('no_clips');
   const beats =
     plan.beats.length > 0
@@ -88,8 +93,14 @@ export function buildShotstackEdit(plan: RenderPlan, clipUrls: string[], style: 
   if (titleClips.length > 0) tracks.push({ clips: titleClips });
   tracks.push({ clips: videoClips });
 
+  const timeline: Record<string, unknown> = { background: '#000000', tracks };
+  if (musicUrl) {
+    // Ducked under the clips' own audio, faded out at the end.
+    timeline.soundtrack = { src: musicUrl, effect: 'fadeOut', volume: 0.4 };
+  }
+
   return {
-    timeline: { background: '#000000', tracks },
+    timeline,
     output: { format: 'mp4', resolution: 'hd', aspectRatio: '9:16', fps: 30 },
   };
 }

@@ -85,7 +85,7 @@ export type RenderStyleInput = {
   pace: 'chill' | 'fast';
   captions: boolean;
   zoom: boolean;
-  filter: 'none' | 'boost' | 'muted';
+  filter: 'none' | 'boost' | 'muted' | 'greyscale' | 'contrast';
 };
 
 export async function currentUserId(): Promise<string> {
@@ -124,9 +124,16 @@ async function invokeRender(body: Record<string, unknown>): Promise<Record<strin
 export async function startRender(
   planId: string,
   clipPaths: string[],
-  style: RenderStyleInput
+  style: RenderStyleInput,
+  musicPath: string | null = null
 ): Promise<{ renderId: string } | ContentFailure> {
-  const data = await invokeRender({ mode: 'start', plan_id: planId, clip_paths: clipPaths, style });
+  const data = await invokeRender({
+    mode: 'start',
+    plan_id: planId,
+    clip_paths: clipPaths,
+    style,
+    music_path: musicPath ?? undefined,
+  });
   if (typeof (data as Record<string, unknown>).renderId === 'string') return data as { renderId: string };
   return data as ContentFailure;
 }

@@ -73,7 +73,23 @@ export function ContentHeader({ active }: { active: 'ideas' | 'editor' | 'stats'
             {SUBTITLES[active]}
           </Text>
         </View>
-        <Text style={{ fontFamily: HUD_FONT, fontSize: 10, color: HUD_COLORS.line }}>hole 6</Text>
+        <Pressable
+          onPress={() => router.replace('/content')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Back to the clubhouse"
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: HUD_RADIUS,
+            borderWidth: 0.75,
+            borderColor: HUD_COLORS.line,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name="home-outline" size={16} color={HUD_COLORS.mintSoft} />
+        </Pressable>
       </View>
       <View style={{ flexDirection: 'row', gap: 6, marginTop: 12 }}>
         {TABS.map((tab) => {
