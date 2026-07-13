@@ -62,13 +62,8 @@ export default function CourseScreen() {
   const focusStop = pendingStop ?? activeStop;
 
   const enterStop = (index: number) => {
-    if (STOPS[index].route === '/content') {
-      setSubOpen((open) => {
-        if (!open) subOpenedAt.current = Date.now();
-        return !open;
-      });
-      return;
-    }
+    // Content goes straight to the clubhouse front door — the house itself
+    // is the menu now, so the old fan-out panel never opens.
     setSubOpen(false);
     setCameraInstant(stopDists[index] / (path.total || 1));
     router.push(STOPS[index].route);

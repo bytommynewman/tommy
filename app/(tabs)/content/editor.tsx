@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Image as RNImage, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -123,119 +123,6 @@ function Label({ text, color = HUD_COLORS.line }: { text: string; color?: string
     <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color, letterSpacing: 2, marginTop: 14, marginBottom: 6 }}>
       {text.toUpperCase()}
     </Text>
-  );
-}
-
-type Room = 'screening' | 'ready' | 'cutting' | 'proshop';
-
-// Real photography (Unsplash license — free to use), one panel per station.
-const PANELS: { key: Room; label: string; sub: string; image: number }[] = [
-  {
-    key: 'proshop',
-    label: 'THE CLUBHOUSE',
-    sub: 'drag to walk through → · tap to enter the pro shop',
-    image: require('../../../assets/clubhouse/exterior.jpg'),
-  },
-  {
-    key: 'screening',
-    label: 'SCREENING BAY',
-    sub: 'watch your raw clips',
-    image: require('../../../assets/clubhouse/screening.jpg'),
-  },
-  {
-    key: 'ready',
-    label: 'READY ROOM',
-    sub: 'ideas waiting on a cut',
-    image: require('../../../assets/clubhouse/ready.jpg'),
-  },
-  {
-    key: 'cutting',
-    label: 'CUTTING ROOM',
-    sub: 'auto-cut · director ai · timeline',
-    image: require('../../../assets/clubhouse/cutting.jpg'),
-  },
-];
-
-// The clubhouse: drag room to room like walking the house; tapping a panel
-// (or its ENTER pill) glides the page down to that station.
-function ClubhouseMap({ onRoom }: { onRoom: (room: Room) => void }) {
-  const [width, setWidth] = useState(0);
-  const [page, setPage] = useState(0);
-  return (
-    <View style={{ marginBottom: 14 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      {width > 0 ? (
-        <ScrollView
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width))}
-          style={{ borderRadius: HUD_RADIUS, borderWidth: 0.75, borderColor: HUD_COLORS.lineBright }}
-        >
-          {PANELS.map((panel) => (
-            <Pressable
-              key={panel.key}
-              onPress={() => onRoom(panel.key)}
-              accessibilityRole="button"
-              accessibilityLabel={`Enter the ${panel.label}`}
-              style={{ width, height: 210 }}
-            >
-              <RNImage source={panel.image} style={{ width, height: 210 }} resizeMode="cover" />
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(4, 20, 16, 0.78)',
-                  paddingVertical: 8,
-                  paddingHorizontal: 12,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <View style={{ flex: 1, paddingRight: 8 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="golf-outline" size={11} color={MONEY_COLORS.brass} />
-                    <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 11, color: HUD_COLORS.text, letterSpacing: 1.5 }}>
-                      {panel.label}
-                    </Text>
-                  </View>
-                  <Text style={{ fontFamily: HUD_FONT, fontSize: 8.5, color: HUD_COLORS.mintSoft, marginTop: 2 }}>
-                    {panel.sub}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    borderWidth: 0.75,
-                    borderColor: HUD_COLORS.mint,
-                    borderRadius: 999,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                  }}
-                >
-                  <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 9, color: HUD_COLORS.mint }}>ENTER ▸</Text>
-                </View>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
-      ) : null}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 6 }}>
-        {PANELS.map((panel, i) => (
-          <View
-            key={panel.key}
-            style={{
-              width: i === page ? 14 : 5,
-              height: 5,
-              borderRadius: 999,
-              backgroundColor: i === page ? HUD_COLORS.mint : HUD_COLORS.line,
-            }}
-          />
-        ))}
-      </View>
-    </View>
   );
 }
 
@@ -854,20 +741,10 @@ export default function EditorScreen() {
     refetchPlans();
   };
 
-  const scrollRef = useRef<ScrollView>(null);
-  const sectionY = useRef<Record<Room, number>>({ screening: 0, ready: 0, cutting: 0, proshop: 0 });
-  const markSection = (room: Room) => (e: { nativeEvent: { layout: { y: number } } }) => {
-    sectionY.current[room] = e.nativeEvent.layout.y;
-  };
-  const walkTo = (room: Room) => {
-    scrollRef.current?.scrollTo({ y: Math.max(sectionY.current[room] - 6, 0), animated: true });
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: HUD_COLORS.bg }}>
       <ContentHeader active="editor" />
       <ScrollView
-        ref={scrollRef}
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={HUD_COLORS.mint} />}
       >
@@ -886,11 +763,7 @@ export default function EditorScreen() {
           </Text>
         ) : null}
 
-        <ClubhouseMap onRoom={walkTo} />
-
-        <View onLayout={markSection('screening')}>
-          <QuickBay />
-        </View>
+        <QuickBay />
 
         {isLoading ? (
           <>
@@ -899,7 +772,6 @@ export default function EditorScreen() {
           </>
         ) : null}
 
-        <View onLayout={markSection('ready')} />
         {buildable.length > 0 ? (
           <>
             <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginBottom: 8 }}>
@@ -942,7 +814,6 @@ export default function EditorScreen() {
           </>
         ) : null}
 
-        <View onLayout={markSection('cutting')} />
         {plans.length > 0 ? (
           <>
             <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginVertical: 8 }}>
@@ -954,7 +825,7 @@ export default function EditorScreen() {
           </>
         ) : null}
 
-        <View onLayout={markSection('proshop')}>
+        <View>
           <Text style={{ fontFamily: HUD_FONT_BOLD, fontSize: 10, color: MONEY_COLORS.brass, letterSpacing: 2.5, marginTop: 12, marginBottom: 8 }}>
             PRO SHOP
           </Text>
