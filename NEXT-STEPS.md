@@ -14,8 +14,8 @@ string → URI, with the password) and optionally `SUPABASE_ACCESS_TOKEN` +
 ```
 bash scripts/setup-quit.sh
 ```
-It applies migration 0011 (skips if already applied) and redeploys
-scratch-agent. To have Claude run it for you: add those as secrets in the
+It applies migration 0011 (skips if already applied), runs 0012 (drops the
+retired content/Instagram tables) and redeploys scratch-agent. To have Claude run it for you: add those as secrets in the
 cloud environment settings (Edit environment → API credentials / environment
 variables) and start a new session saying "run scripts/setup-quit.sh".
 
@@ -24,6 +24,8 @@ variables) and start a new session saying "run scripts/setup-quit.sh".
 2. Paste the entire contents of `supabase/migrations/0011_quit_cannabis.sql`
    and hit Run. (It creates `quit_attempts`, `withdrawal_checkins`, `cravings`,
    `coping_tools`, `if_then_plans`, `quit_milestones`, `support_contacts`.)
+   Then do the same with `supabase/migrations/0012_drop_content.sql` to remove
+   the old content/Instagram tables.
 3. Redeploy Scratch so he knows about the quit:
    ```
    cd ~/Desktop/coding-projects/my-first-project

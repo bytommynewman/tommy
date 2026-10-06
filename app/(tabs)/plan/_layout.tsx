@@ -4,11 +4,7 @@ import { SegmentedTabLayout } from '../../../components/ui/SegmentedTabLayout';
 
 export default function PlanLayout() {
   const pathname = usePathname();
-  const active = pathname.includes('/plan/goals')
-    ? 'goals'
-    : pathname.includes('/plan/content')
-      ? 'content'
-      : 'calendar';
+  const active = pathname.includes('/plan/goals') ? 'goals' : 'calendar';
 
   return (
     <SegmentedTabLayout
@@ -18,7 +14,6 @@ export default function PlanLayout() {
       segments={[
         { key: 'calendar', label: 'Calendar' },
         { key: 'goals', label: 'Goals' },
-        { key: 'content', label: 'Content' },
       ]}
     />
   );

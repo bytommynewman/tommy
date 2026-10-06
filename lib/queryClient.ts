@@ -20,10 +20,6 @@ export const queryClient = new QueryClient({
 // chat and profile stay memory-only on purpose: the session token lives in
 // the Keychain, and that content shouldn't outlive it in plaintext.
 const PERSISTED_KEYS = new Set([
-  'reel_ideas',
-  'edit_plans',
-  'ig_snapshots',
-  'ig_media_stats',
   'market_overview',
   'watchlist_quotes',
   'st_status',

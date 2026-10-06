@@ -24,7 +24,6 @@ export default function HomeShellLayout() {
       <Stack.Screen name="plan" options={section} />
       <Stack.Screen name="life" options={section} />
       <Stack.Screen name="invest" options={section} />
-      <Stack.Screen name="content" options={section} />
     </Stack>
   );
 }

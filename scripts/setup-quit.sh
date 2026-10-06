@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# One-shot setup for the quit tracker: applies migration 0011 and redeploys
-# the scratch-agent edge function. Safe to re-run.
+# One-shot setup for the quit tracker: applies migration 0011, drops the
+# retired content/Instagram tables (0012) and redeploys the scratch-agent edge
+# function. Safe to re-run.
 #
 # Needs, as environment variables (set them in the cloud environment's
 # settings, or export them in your terminal — never commit them):
@@ -19,6 +20,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 MIGRATION="supabase/migrations/0011_quit_cannabis.sql"
+DROP_CONTENT="supabase/migrations/0012_drop_content.sql"
 
 if [[ -z "${SUPABASE_DB_URL:-}" ]]; then
   echo "SUPABASE_DB_URL is not set. See the header of this script." >&2
@@ -38,6 +40,10 @@ else
   psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -f "$MIGRATION"
   echo "  done."
 fi
+
+echo "→ Removing the old content / Instagram tables (if any)…"
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -f "$DROP_CONTENT"
+echo "  done."
 
 echo "→ Verifying tables…"
 psql "$SUPABASE_DB_URL" -Atc "
