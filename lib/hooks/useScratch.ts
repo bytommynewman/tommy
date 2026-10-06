@@ -21,6 +21,9 @@ export function useSendToScratch() {
         queryClient.invalidateQueries({ queryKey: ['habits'] });
         queryClient.invalidateQueries({ queryKey: ['habit_logs'] });
         queryClient.invalidateQueries({ queryKey: ['relapses'] });
+        // Quit tracker (lib/hooks/useQuit.ts): log_craving / quick_checkin
+        queryClient.invalidateQueries({ queryKey: ['cravings'] });
+        queryClient.invalidateQueries({ queryKey: ['withdrawal_checkins'] });
       }
     },
   });

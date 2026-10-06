@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '../../../components/ui/Screen';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { QuitHeroCard } from '../../../components/quit/QuitHeroCard';
 import { useTheme } from '../../../lib/theme';
 import { useHabits, useRecentLogs, useRelapses, useUpsertLog } from '../../../lib/hooks/useHabits';
 import { buildStreak, daysClean } from '../../../lib/streaks';
@@ -102,6 +103,7 @@ export default function RecoveryScreen() {
   return (
     <Screen scroll padded={false}>
       <View style={{ padding: spacing.lg, paddingBottom: spacing.xl }}>
+        <QuitHeroCard />
         {(habits ?? []).length === 0 ? (
           <Card style={{ marginBottom: spacing.md }}>
             <Text style={[typography.heading, { color: colors.text, marginBottom: spacing.sm }]}>

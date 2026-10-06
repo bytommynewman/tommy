@@ -56,3 +56,46 @@ describe('SCRATCH_SYSTEM', () => {
     expect(SCRATCH_SYSTEM.toLowerCase()).toContain('not a therapist');
   });
 });
+
+import { quitPhaseLabel } from '../../supabase/functions/scratch-agent/logic';
+
+describe('quit context', () => {
+  const base = { firstName: 'Tommy', today: '2026-10-09', habits: [], doneToday: [], remainingToday: [] };
+  it('adds a QUITTING WEED block with day, phase, check-in status and reasons', () => {
+    const block = buildContextBlock({
+      ...base,
+      quit: {
+        attemptId: 'a1',
+        habitId: 'h9',
+        day: 3,
+        phase: quitPhaseLabel(3),
+        checkedInToday: false,
+        cravingsToday: 2,
+        cravingsPassedTotal: 5,
+        cravingsTotal: 6,
+        reasons: ['appetite back', 'actually sleep'],
+      },
+    });
+    expect(block).toContain('QUITTING WEED');
+    expect(block).toContain('attempt id a1');
+    expect(block).toContain('habit id h9');
+    expect(block).toContain('Day 3');
+    expect(block).toContain('Onset');
+    expect(block).toContain('NOT done yet');
+    expect(block).toContain('5 of 6');
+    expect(block).toContain('appetite back; actually sleep');
+  });
+  it('omits the block when there is no active quit', () => {
+    expect(buildContextBlock({ ...base, quit: null })).not.toContain('QUITTING WEED');
+  });
+  it('labels phases by day', () => {
+    expect(quitPhaseLabel(0)).toContain('Quit day');
+    expect(quitPhaseLabel(5)).toContain('Peak');
+    expect(quitPhaseLabel(12)).toContain('Clearing');
+    expect(quitPhaseLabel(200)).toContain('Clear');
+  });
+  it('tells Scratch about the craving and check-in tools', () => {
+    expect(SCRATCH_SYSTEM).toContain('log_craving');
+    expect(SCRATCH_SYSTEM).toContain('quick_checkin');
+  });
+});
