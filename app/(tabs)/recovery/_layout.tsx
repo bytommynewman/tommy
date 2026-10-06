@@ -33,6 +33,10 @@ export default function RecoveryLayout() {
       />
       <Stack.Screen name="new-habit" options={{ title: 'New habit', presentation: 'modal' }} />
       <Stack.Screen name="relapse" options={{ title: 'Log a slip', presentation: 'modal' }} />
+      <Stack.Screen name="quit" options={{ title: 'Off weed' }} />
+      <Stack.Screen name="quit-setup" options={{ title: 'Start the quit', presentation: 'modal' }} />
+      <Stack.Screen name="craving" options={{ title: 'Craving', presentation: 'modal' }} />
+      <Stack.Screen name="checkin" options={{ title: 'Daily check-in', presentation: 'modal' }} />
     </Stack>
   );
 }

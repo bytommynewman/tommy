@@ -5,6 +5,50 @@ says how to check it worked.
 
 ---
 
+## 0. Turn on the quit tracker (~5 minutes) — do this first
+
+### a. Either: one command
+Set `SUPABASE_DB_URL` (Dashboard → Project Settings → Database → Connection
+string → URI, with the password) and optionally `SUPABASE_ACCESS_TOKEN` +
+`SUPABASE_PROJECT_REF`, then:
+```
+bash scripts/setup-quit.sh
+```
+It applies migration 0011 (skips if already applied), runs 0012 (drops the
+retired content/Instagram tables) and redeploys scratch-agent. To have Claude run it for you: add those as secrets in the
+cloud environment settings (Edit environment → API credentials / environment
+variables) and start a new session saying "run scripts/setup-quit.sh".
+
+### a. Or: by hand
+1. https://supabase.com/dashboard → your project → SQL Editor → New query.
+2. Paste the entire contents of `supabase/migrations/0011_quit_cannabis.sql`
+   and hit Run. (It creates `quit_attempts`, `withdrawal_checkins`, `cravings`,
+   `coping_tools`, `if_then_plans`, `quit_milestones`, `support_contacts`.)
+   Then do the same with `supabase/migrations/0012_drop_content.sql` to remove
+   the old content/Instagram tables.
+3. Redeploy Scratch so he knows about the quit:
+   ```
+   cd ~/Desktop/coding-projects/my-first-project
+   supabase functions deploy scratch-agent
+   ```
+   (Only needed if Scratch is already set up from step 1 below. Scratch gets
+   two new tools, `log_craving` and `quick_checkin`, and sees your day number.)
+
+### c. Use it
+- App → Recovery → **Start the quit**. Set "last hit", pick your reasons, decide
+  the day 3 and day 7 rewards.
+- **Craving now** when it hits. **Check in** every night, under a minute.
+- The plan itself is `docs/quit/PLAN.md`. Read it on the train Thursday.
+- Fill in Mom's, Dad's and Sunil's numbers under *People & lines* so the call
+  button works at 1 am.
+
+### d. Check it worked
+- Recovery shows a green "off weed · N days" card with the two buttons.
+- Say "craving, 7 out of 10, bored" to Scratch → a craving row appears on the
+  quit dashboard.
+
+---
+
 ## 1. Turn on Scratch's brain (~10 minutes)
 
 ### a. Get your Anthropic API key

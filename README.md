@@ -1,6 +1,6 @@
 # Tommy
 
-A personal life OS: planner, calendar, habit & recovery tracker, journal, goals, fitness, content pipeline, relationships, an AI therapist-mode chat, and an investing/portfolio section.
+A personal life OS: planner, calendar, habit & recovery tracker (with a cannabis quit tracker), journal, goals, fitness, relationships, an AI therapist-mode chat, and an investing/portfolio section.
 
 Full architecture and build order: see the plan this was built from, or `PROGRESS.md` (added as milestones complete).
 

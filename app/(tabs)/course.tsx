@@ -8,7 +8,6 @@ import { useSatelliteNav } from '../../components/hole/useSatelliteNav';
 import { TargetMarker } from '../../components/hole/TargetMarker';
 import { FeedChrome } from '../../components/hole/FeedChrome';
 import { HintOverlay } from '../../components/hole/HintOverlay';
-import { SubPanel } from '../../components/hole/SubPanel';
 import { ToggleBar } from '../../components/ui/ToggleBar';
 import { pointAtDistance } from '../../lib/holePath';
 import { HINT_DISMISSED_KEY, STOPS } from '../../constants/hole';
@@ -34,11 +33,6 @@ export default function CourseScreen() {
     setHintVisible(false);
   }, []);
 
-  // Content (hole 6) fans open a sub-panel instead of navigating directly.
-  const [subOpen, setSubOpen] = useState(false);
-  const subOpenedAt = useRef(0);
-  const closeSub = useCallback(() => setSubOpen(false), []);
-
   // While the camera flies to a tapped section, keep THAT section selected
   // instead of flickering through every hole it passes.
   const [pendingStop, setPendingStop] = useState<number | null>(null);
@@ -46,9 +40,6 @@ export default function CourseScreen() {
   const onInteract = useCallback(() => {
     dismissHint();
     setPendingStop(null);
-    // The tap that opens the panel also twitches the pan gesture — ignore
-    // gesture noise for a beat after opening so the panel doesn't flicker.
-    if (Date.now() - subOpenedAt.current > 400) setSubOpen(false);
   }, [dismissHint]);
 
   // Every visit starts at hole 1 — the tee — and you walk up from there.
@@ -62,17 +53,8 @@ export default function CourseScreen() {
   const focusStop = pendingStop ?? activeStop;
 
   const enterStop = (index: number) => {
-    // Content goes straight to the clubhouse front door — the house itself
-    // is the menu now, so the old fan-out panel never opens.
-    setSubOpen(false);
     setCameraInstant(stopDists[index] / (path.total || 1));
     router.push(STOPS[index].route);
-  };
-
-  const openContent = (key: 'ideas' | 'editor' | 'stats') => {
-    setSubOpen(false);
-    setCameraInstant(stopDists[STOPS.length - 1] / (path.total || 1));
-    router.push(`/content/${key}`);
   };
 
   const stopScenePos = useMemo(() => stopDists.map((d) => pointAtDistance(path, d)), [path, stopDists]);
@@ -104,16 +86,11 @@ export default function CourseScreen() {
         isOverview={isOverview}
         activeStop={focusStop}
         onLegendPress={(i) => {
-          closeSub();
           setPendingStop(i);
           goToStop(i);
         }}
-        onToggleOverview={() => {
-          closeSub();
-          toggleOverview();
-        }}
+        onToggleOverview={toggleOverview}
       />
-      {subOpen ? <SubPanel onSelect={openContent} onClose={closeSub} /> : null}
       <HintOverlay visible={hintVisible && !isOverview} />
       <ToggleBar active="course" />
     </View>

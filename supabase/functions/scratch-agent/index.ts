@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
-import { buildContextBlock, daysCleanFrom, SCRATCH_SYSTEM, type ScratchContext } from './logic.ts';
+import { buildContextBlock, daysCleanFrom, quitPhaseLabel, SCRATCH_SYSTEM, type QuitContext, type ScratchContext } from './logic.ts';
 
 const MODEL = 'claude-sonnet-5'; // the one sanctioned cost/quality knob
 const MAX_TOOL_ITERATIONS = 6;
@@ -138,6 +138,39 @@ async function loadContext(supabase: any, todayOverride?: string, tzOffsetMinute
     habits: habitList,
     doneToday: habitList.filter((h: { id: string }) => doneIds.has(h.id)).map((h: { name: string }) => h.name),
     remainingToday: habitList.filter((h: { id: string }) => !doneIds.has(h.id)).map((h: { name: string }) => h.name),
+    quit: await loadQuitContext(supabase, today, tzOffsetMinutes),
+  };
+}
+
+// deno-lint-ignore no-explicit-any
+async function loadQuitContext(supabase: any, today: string, tzOffsetMinutes: number): Promise<QuitContext | null> {
+  const { data: attempt } = await supabase
+    .from('quit_attempts')
+    .select('id, habit_id, started_at, reasons')
+    .eq('status', 'active')
+    .eq('substance', 'cannabis')
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!attempt) return null;
+
+  const dayStartLocal = new Date(`${today}T00:00:00Z`).getTime() + tzOffsetMinutes * 60_000;
+  const [{ data: checkin }, { data: cravings }] = await Promise.all([
+    supabase.from('withdrawal_checkins').select('id').eq('attempt_id', attempt.id).eq('checkin_date', today).maybeSingle(),
+    supabase.from('cravings').select('occurred_at, outcome').eq('attempt_id', attempt.id),
+  ]);
+  const all = (cravings ?? []) as { occurred_at: string; outcome: string | null }[];
+  return {
+    attemptId: attempt.id,
+    habitId: attempt.habit_id ?? null,
+    // Day 0 = quit day, counted in local calendar days like lib/quitLogic.ts.
+    day: daysCleanFrom(attempt.started_at, [], tzOffsetMinutes),
+    phase: quitPhaseLabel(daysCleanFrom(attempt.started_at, [], tzOffsetMinutes)),
+    checkedInToday: !!checkin,
+    cravingsToday: all.filter((c) => new Date(c.occurred_at).getTime() >= dayStartLocal).length,
+    cravingsPassedTotal: all.filter((c) => c.outcome === 'passed').length,
+    cravingsTotal: all.length,
+    reasons: Array.isArray(attempt.reasons) ? attempt.reasons : [],
   };
 }
 
@@ -180,6 +213,53 @@ const TOOLS: Anthropic.Tool[] = [
         note: { type: 'string', description: 'Optional short note the user gave about the slip' },
       },
       required: ['habit_id'],
+    },
+  },
+  {
+    name: 'log_craving',
+    description:
+      'Log a weed craving for the active quit (attempt id from the QUITTING WEED context block). Use when the user says they are craving right now, or reports one they just rode out. outcome: "passed" if it is over and they did not use, "used" if they took a hit (ALSO call log_relapse on the quit habit id), omit if still live.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        attempt_id: { type: 'string' },
+        intensity: { type: 'integer', description: '0-10' },
+        trigger_tags: { type: 'array', items: { type: 'string' }, description: 'short tags, e.g. ["bored","late night alone"]' },
+        context: { type: 'string', description: 'where/who/what, in a few words' },
+        coping_action: { type: 'string', description: 'what they did instead, if anything' },
+        outcome: { type: 'string', enum: ['passed', 'used', 'partial'] },
+        intensity_after: { type: 'integer', description: '0-10, if the craving is over' },
+        duration_minutes: { type: 'integer' },
+      },
+      required: ['attempt_id', 'intensity'],
+    },
+  },
+  {
+    name: 'quick_checkin',
+    description:
+      "Save or update today's quit check-in from what the user tells you (attempt id from the QUITTING WEED block). Only fill fields they actually reported; 0-10 scales. used_cannabis true means they used today (ALSO call log_relapse unless they said a slip is already logged).",
+    input_schema: {
+      type: 'object',
+      properties: {
+        attempt_id: { type: 'string' },
+        checkin_date: { type: 'string', description: 'YYYY-MM-DD, today unless they name another day' },
+        sleep_quality: { type: 'integer' },
+        sleep_hours: { type: 'number' },
+        appetite: { type: 'integer' },
+        mood: { type: 'integer' },
+        anxiety: { type: 'integer' },
+        irritability: { type: 'integer' },
+        energy: { type: 'integer' },
+        craving_peak: { type: 'integer' },
+        meals_count: { type: 'integer' },
+        drinks_count: { type: 'integer' },
+        nicotine_level: { type: 'integer', description: '0 none, 1 light, 2 usual, 3 heavy' },
+        used_cannabis: { type: 'boolean' },
+        worked_out: { type: 'boolean' },
+        win: { type: 'string' },
+        notes: { type: 'string' },
+      },
+      required: ['attempt_id', 'checkin_date'],
     },
   },
   {
@@ -278,6 +358,42 @@ async function runTool(
         .insert({ habit_id: input.habit_id, notes: (input.note as string) ?? null });
       if (error) throw new Error(error.message);
       return { result: 'Slip logged. Streak resets from now.', summary: 'Logged a slip' };
+    }
+    case 'log_craving': {
+      const { attempt_id, intensity, trigger_tags, context, coping_action, outcome, intensity_after, duration_minutes } = input as {
+        attempt_id: string; intensity: number; trigger_tags?: string[]; context?: string; coping_action?: string;
+        outcome?: string; intensity_after?: number; duration_minutes?: number;
+      };
+      const row: Record<string, unknown> = {
+        attempt_id,
+        intensity: Math.min(10, Math.max(0, Math.round(intensity))),
+        trigger_tags: Array.isArray(trigger_tags) ? trigger_tags.slice(0, 8) : [],
+        context: context ?? null,
+        coping_action: coping_action ?? null,
+      };
+      if (outcome) row.outcome = outcome;
+      if (typeof intensity_after === 'number') row.intensity_after = Math.min(10, Math.max(0, Math.round(intensity_after)));
+      if (typeof duration_minutes === 'number') row.duration_minutes = Math.min(600, Math.max(0, Math.round(duration_minutes)));
+      const { error } = await supabase.from('cravings').insert(row);
+      if (error) throw new Error(error.message);
+      return {
+        result: `Craving logged (intensity ${row.intensity}${outcome ? `, ${outcome}` : ''}).`,
+        summary: outcome === 'passed' ? 'Logged a craving — ridden out' : 'Logged a craving',
+      };
+    }
+    case 'quick_checkin': {
+      const { attempt_id, checkin_date, ...fields } = input as { attempt_id: string; checkin_date: string } & Record<string, unknown>;
+      const allowed = [
+        'sleep_quality', 'sleep_hours', 'appetite', 'mood', 'anxiety', 'irritability', 'energy', 'craving_peak',
+        'meals_count', 'drinks_count', 'nicotine_level', 'used_cannabis', 'worked_out', 'win', 'notes',
+      ];
+      const row: Record<string, unknown> = { attempt_id, checkin_date };
+      for (const k of allowed) if (fields[k] !== undefined && fields[k] !== null) row[k] = fields[k];
+      const { error } = await supabase
+        .from('withdrawal_checkins')
+        .upsert(row, { onConflict: 'attempt_id,checkin_date' });
+      if (error) throw new Error(error.message);
+      return { result: `Check-in saved for ${checkin_date}.`, summary: `Saved the quit check-in for ${checkin_date}` };
     }
     case 'list_recent_logs': {
       const days = Math.min(Math.max(Number(input.days) || 7, 1), 60);

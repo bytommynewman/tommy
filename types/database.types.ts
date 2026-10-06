@@ -62,66 +62,6 @@ export type ScratchMessageInsert = {
   content: string;
 };
 
-export type ReelIdeaStatus = 'new' | 'saved' | 'planned' | 'filmed' | 'posted';
-
-export type ReelIdea = {
-  id: string;
-  user_id: string;
-  title: string;
-  hook: string;
-  outline: string;
-  format: string;
-  status: ReelIdeaStatus;
-  created_at: string;
-  updated_at: string;
-};
-
-export type EditPlanShot = { shot: string; note: string; done?: boolean };
-export type EditPlanBeat = { start: number; end: number; description: string };
-
-export type EditPlan = {
-  id: string;
-  user_id: string;
-  idea_id: string;
-  shot_list: EditPlanShot[];
-  beats: EditPlanBeat[];
-  caption: string;
-  hashtags: string;
-  music: string;
-  created_at: string;
-};
-
-export type IgSnapshot = {
-  id: string;
-  user_id: string;
-  followers: number;
-  following: number;
-  media_count: number;
-  username: string | null; // added by migration 0007
-  profile_picture_url: string | null; // added by migration 0007
-  views_28d: number | null; // added by migration 0009
-  reach_28d: number | null; // added by migration 0009
-  engaged_28d: number | null; // added by migration 0009
-  captured_at: string;
-};
-
-export type IgMediaStat = {
-  id: string;
-  user_id: string;
-  media_id: string;
-  caption: string | null;
-  permalink: string | null;
-  thumbnail_url: string | null; // added by migration 0006
-  posted_at: string | null;
-  plays: number | null;
-  reach: number | null; // added by migration 0008
-  saves: number | null; // added by migration 0008
-  shares: number | null; // added by migration 0008
-  likes: number;
-  comments: number;
-  captured_at: string;
-};
-
 export type Profile = {
   user_id: string;
   display_name: string | null;
@@ -129,6 +69,152 @@ export type Profile = {
   birthdate: string | null;
   context_summary: string | null;
   crisis_resources_ack: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+// --- Quit tracker (migration 0011) -------------------------------------------
+
+export type QuitSubstance = 'cannabis' | 'nicotine' | 'alcohol' | 'other';
+export type QuitMethod = 'cold_turkey' | 'taper';
+export type QuitStatus = 'active' | 'completed' | 'abandoned';
+export type CravingOutcome = 'passed' | 'used' | 'partial';
+export type CopingToolKind = 'move' | 'body' | 'mind' | 'social' | 'swap' | 'build';
+export type CopingToolSetting = 'anywhere' | 'home' | 'out';
+export type IfThenCategory =
+  | 'general' | 'night_out' | 'home' | 'sleep' | 'food' | 'social' | 'mood' | 'nicotine' | 'alcohol' | 'ex';
+export type SupportRole = 'parent' | 'family' | 'therapist' | 'doctor' | 'friend' | 'crisis_line' | 'other';
+export type SupportKnows = 'full' | 'partial' | 'none';
+
+export type QuitAttempt = {
+  id: string;
+  user_id: string;
+  habit_id: string | null;
+  substance: QuitSubstance;
+  method: QuitMethod;
+  started_at: string;
+  ended_at: string | null;
+  status: QuitStatus;
+  baseline_use: string | null;
+  baseline_cost_cents_per_week: number;
+  reasons: string[];
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WithdrawalCheckin = {
+  id: string;
+  user_id: string;
+  attempt_id: string;
+  checkin_date: string;
+  sleep_hours: number | null;
+  sleep_quality: number | null;
+  appetite: number | null;
+  mood: number | null;
+  anxiety: number | null;
+  irritability: number | null;
+  energy: number | null;
+  craving_peak: number | null;
+  vivid_dreams: boolean;
+  night_sweats: boolean;
+  headache: boolean;
+  nausea: boolean;
+  meals_count: number | null;
+  ate_breakfast: boolean;
+  worked_out: boolean;
+  got_outside: boolean;
+  used_cannabis: boolean;
+  nicotine_level: number | null;
+  drinks_count: number | null;
+  cws_items: Record<string, number> | null;
+  cws_total: number | null;
+  cws_interference: number | null;
+  win: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Craving = {
+  id: string;
+  user_id: string;
+  attempt_id: string;
+  occurred_at: string;
+  intensity: number;
+  hungry: boolean;
+  angry: boolean;
+  lonely: boolean;
+  tired: boolean;
+  trigger_tags: string[];
+  context: string | null;
+  coping_action: string | null;
+  coping_tool_id: string | null;
+  duration_minutes: number | null;
+  outcome: CravingOutcome | null;
+  intensity_after: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CopingTool = {
+  id: string;
+  user_id: string;
+  name: string;
+  kind: CopingToolKind;
+  instructions: string;
+  minutes: number;
+  setting: CopingToolSetting;
+  sort_order: number;
+  is_active: boolean;
+  times_used: number;
+  helpful_votes: number;
+  last_used_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type IfThenPlan = {
+  id: string;
+  user_id: string;
+  attempt_id: string | null;
+  situation: string;
+  response: string;
+  category: IfThenCategory;
+  sort_order: number;
+  is_active: boolean;
+  times_triggered: number;
+  times_held: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type QuitMilestone = {
+  id: string;
+  user_id: string;
+  attempt_id: string;
+  day_number: number;
+  title: string;
+  what_to_expect: string | null;
+  reward: string | null;
+  reached_at: string | null;
+  reward_claimed: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SupportContact = {
+  id: string;
+  user_id: string;
+  name: string;
+  role: SupportRole;
+  phone: string | null;
+  text_ok: boolean;
+  late_night_ok: boolean;
+  knows: SupportKnows;
+  notes: string | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 };
@@ -163,6 +249,43 @@ export type Database = {
         Row: Profile;
         Insert: Omit<Profile, 'created_at' | 'updated_at'>;
         Update: Partial<Omit<Profile, 'created_at' | 'updated_at'>>;
+      };
+      quit_attempts: {
+        Row: QuitAttempt;
+        Insert: Partial<Omit<QuitAttempt, 'id' | 'created_at' | 'updated_at'>>;
+        Update: Partial<Omit<QuitAttempt, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      withdrawal_checkins: {
+        Row: WithdrawalCheckin;
+        Insert: Partial<Omit<WithdrawalCheckin, 'id' | 'created_at' | 'updated_at'>> &
+          Pick<WithdrawalCheckin, 'attempt_id' | 'checkin_date'>;
+        Update: Partial<Omit<WithdrawalCheckin, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      cravings: {
+        Row: Craving;
+        Insert: Partial<Omit<Craving, 'id' | 'created_at' | 'updated_at'>> & Pick<Craving, 'attempt_id' | 'intensity'>;
+        Update: Partial<Omit<Craving, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      coping_tools: {
+        Row: CopingTool;
+        Insert: Partial<Omit<CopingTool, 'id' | 'created_at' | 'updated_at'>> & Pick<CopingTool, 'name' | 'kind'>;
+        Update: Partial<Omit<CopingTool, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      if_then_plans: {
+        Row: IfThenPlan;
+        Insert: Partial<Omit<IfThenPlan, 'id' | 'created_at' | 'updated_at'>> & Pick<IfThenPlan, 'situation' | 'response'>;
+        Update: Partial<Omit<IfThenPlan, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      quit_milestones: {
+        Row: QuitMilestone;
+        Insert: Partial<Omit<QuitMilestone, 'id' | 'created_at' | 'updated_at'>> &
+          Pick<QuitMilestone, 'attempt_id' | 'day_number' | 'title'>;
+        Update: Partial<Omit<QuitMilestone, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      support_contacts: {
+        Row: SupportContact;
+        Insert: Partial<Omit<SupportContact, 'id' | 'created_at' | 'updated_at'>> & Pick<SupportContact, 'name' | 'role'>;
+        Update: Partial<Omit<SupportContact, 'id' | 'created_at' | 'updated_at'>>;
       };
     };
   };
