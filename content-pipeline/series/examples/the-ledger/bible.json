@@ -1,0 +1,51 @@
+{
+  "name": "The Ledger",
+  "tagline": "Money and tech, one mechanism a day",
+  "premise": "Every short opens on the desk, picks one mechanism (how compound interest works, what an index fund holds, what a GPU does) and shows it with cinematic visual metaphors while a calm voice explains it with sourced numbers. The viewer leaves understanding one thing, never told what to buy.",
+  "audience": "18 to 30 year olds with their first real paycheck, and curious people who like knowing how things work. They scroll at lunch and before bed; they distrust finance bros.",
+  "anchor": {
+    "description": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade; on it an open cloth-bound ledger with ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, and a small glowing screen casting a faint cool light; a rain-streaked window behind over a dim city; moody, tactile, slightly worn",
+    "never": "no people, no hands, no readable text or numbers on the ledger or screen, no stock tickers, no cash piles, no gold bars, no Lamborghinis, no neon, never bright daylight"
+  },
+  "look": {
+    "palette": "near-black backgrounds, warm brass and amber from the lamp, cool teal from the screen, deep green, worn wood and paper",
+    "lighting": "single warm key light, soft cool fill, lots of shadow, subtle haze; metaphor scenes keep the same amber-and-teal split",
+    "lens": "50mm, shallow depth of field, slow deliberate moves: push-ins, slides, one orbit; nothing handheld",
+    "setting": "the desk, plus one visual-metaphor location per short (a vault, a greenhouse, a train yard, a server hall, a market at dawn) rendered in the same palette",
+    "text_style": "clean white mono-spaced numerals and short labels, centred, with a thin amber underline; one line at a time"
+  },
+  "formats": [
+    { "name": "How It Actually Works", "runtime_s": 35, "structure": [
+      "Hook (5s): the desk; on-screen question 'How does X actually work?'",
+      "Mechanism (8s + 8s + 7s): three visual metaphors, one step each, voiceover carries the facts",
+      "Land it (7s): back to the desk, the one-line takeaway, source on screen" ] },
+    { "name": "The Number", "runtime_s": 30, "structure": [
+      "Hook (5s): one big number on screen over the desk",
+      "What it means (8s + 8s): two scenes that make the number physical",
+      "Where it's from (7s): the desk, source on screen" ] },
+    { "name": "Build Log", "runtime_s": 40, "structure": [
+      "Hook (5s): the screen on the desk glows; 'Today I built X' on screen",
+      "What happened (8s + 8s + 8s): the problem, the thing that broke, the fix",
+      "Lesson (8s): the desk, one honest line" ] }
+  ],
+  "pillars": [
+    { "name": "Money mechanics", "topics": ["compound interest and the rule of 72", "what an index fund holds", "how an expense ratio eats returns", "what inflation does to cash", "how a credit score is calculated"] },
+    { "name": "Tech under the hood", "topics": ["what a GPU does that a CPU can't", "how a password hash works", "what an API is", "why phones throttle when hot", "how a QR code encodes data"] },
+    { "name": "Big numbers made physical", "topics": ["the S&P 500's long-run average return", "how much a 1% fee costs over 30 years", "how long it takes inflation to halve cash", "how many transistors are in a phone chip", "how much data the world makes per day"] },
+    { "name": "Build log", "topics": ["wiring a brokerage sync into my app", "the first time the AI agent wrote to my database", "how I track habits and streaks", "what broke when I added market data", "shipping a feature with Claude in an evening"] },
+    { "name": "Myths and traps", "topics": ["buy now pay later is not free", "why 'free' apps cost money", "the gambler's fallacy in markets", "what a bank actually does with deposits", "why lottery odds are what they are"] },
+    { "name": "History", "topics": ["where the 50/30/20 rule came from", "the first index fund", "the dot-com bubble in 30 seconds", "why the transistor mattered", "the origin of credit scores"] }
+  ],
+  "hooks": [
+    "How does {thing} actually work?",
+    "{number}. That's {what}.",
+    "Nobody explained {thing} to me. So.",
+    "Today I built {thing}. It broke.",
+    "{thing} is not free. Here's the maths.",
+    "Where did {thing} come from?",
+    "What a {thing} does in 30 seconds.",
+    "The boring reason {thing} works."
+  ],
+  "cta": "That's one. Follow for one a day.",
+  "posting": { "cadence": "one short a day at the same time; Sunday 'the week in one' compilation on YouTube", "best_times": "12:00 to 13:00 and 20:00 to 21:00 local" }
+}

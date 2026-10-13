@@ -1,0 +1,13 @@
+{
+  "name": "The Ledger",
+  "slug": "the-ledger",
+  "bible": "../examples/the-ledger/bible.json",
+  "premise": "Money and tech, one mechanism per short. The Ledger explains how a thing actually works (compound interest, index funds, credit scores, GPUs) in 30 to 40 seconds of cinematic AI visuals over a plain, sourced voiceover. No hype, no tickers, no 'buy this'.",
+  "audience": "18 to 30 year olds earning their first real money who want to understand it, and anyone curious how the tech behind it works",
+  "promise": "One thing about money or tech you'll actually understand, every day",
+  "anchor": "A dark wooden desk at night under a single brass lamp: an open cloth-bound ledger, a mechanical calculator, a cold coffee, and a small glowing screen; the camera always starts or ends here",
+  "material": "Tommy's own build-in-public work: an AI life-OS app with a portfolio tracker, Wealthsimple sync and a Claude-powered agent; his first investing moves; habit tracking",
+  "tone": "plain, calm, a smart friend explaining at the kitchen table; a little dry humour",
+  "earn_tag": "",
+  "channel_tag": "#theledger"
+}

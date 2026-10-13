@@ -1,0 +1,304 @@
+{
+  "clips": [
+    {
+      "day": 1,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the lamp flicks on over the open ledger. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 1,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A single seed in dark soil in a glasshouse at night, amber lamp light; a sprout rises and a second sprout grows off the first. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow tilt up, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 1,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "The sprouts become a branching plant, each branch splitting again, the glasshouse filling. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow pull back, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 1,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "The plant fills the glasshouse to the roof, branches pressed against the glass, lamp light through the leaves. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow orbit, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 1,
+      "n": 5,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the mechanical calculator's handle turns once on its own and stops. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, static, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 2,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the screen glows and a faint cool light spreads over the ledger. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 2,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A vast dark warehouse of identical wooden crates in rows, amber lamps overhead, the camera gliding along an aisle. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow lateral tracking, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 2,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A few crates near the front are much larger than the rest, the rows shrinking into the dark behind them. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 2,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the ledger page turns itself once. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, static, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 3,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the lamp dims slightly and the calculator's dials rotate. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 3,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A brass balance scale on a dark counter; small weights are added to one pan one at a time, the largest first. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow orbit, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 3,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "Three smaller weights are placed on the pan; the scale settles level. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 3,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the ledger closes gently. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, static, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 4,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the small screen brightens and the cool light pulses once. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 4,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A dark library where a brass pneumatic tube carries a sealed capsule from a reading desk up into a wall of drawers. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow tilt up following the tube, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 4,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A second capsule jams in the tube; drawers rattle; one drawer opens on its own. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 4,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A small brass key on a chain is swapped for a different one; only one drawer glows now. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow orbit, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 4,
+      "n": 5,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the screen settles to a steady glow. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, static, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 5,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; a single coin on the ledger spins slowly and falls. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 5,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "Two identical glass jars on a dark shelf fill slowly with sand from above; a small hole in the second jar lets a thin stream out. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow lateral slide, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 5,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "The first jar is visibly fuller; a pile of leaked sand sits under the second. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in on the gap, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 5,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the calculator handle cranks once. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, static, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 6,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the screen's cool light brightens and faint fan noise lines ripple the coffee. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 6,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A single master clockmaker's bench with one brilliant worker at one brass lamp, working fast on one intricate piece. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 6,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A vast dark hall of thousands of identical small benches, each with a tiny lamp, all stamping the same simple shape in unison. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow pull back revealing the scale, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 6,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the screen glow steadies. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, static, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 7,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the ledger page shows three ruled columns of different widths (no legible text). near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 7,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "A 2000s-era kitchen table at night with a stack of hardback books and a reading lamp; one book lies open. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow push-in, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 7,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "Three glass jars on the table filling from a single jug: a large one, a medium one, a small one. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, slow lateral slide, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    },
+    {
+      "day": 7,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "a dark wooden desk at night lit by a single warm brass banker's lamp with a green glass shade, an open cloth-bound ledger with blank ruled pages, a vintage hand-crank mechanical calculator, a white ceramic mug of cold coffee, a small glowing screen casting faint cool light, a rain-streaked window behind over a dim city, moody and tactile; the three ledger columns catch the lamp light. near-black background, warm amber key light and cool teal fill, deep shadow, subtle haze, 50mm lens, shallow depth of field, cinematic and still, static, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "people, hands, faces, readable text, numbers, letters, logos, stock tickers, charts, cash, gold bars, neon, daylight, fast motion, shaky camera"
+    }
+  ]
+}

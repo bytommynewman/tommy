@@ -30,6 +30,10 @@ RULES
   creator or a cloned voice. It carries the idea; visuals carry the mood.
 - End every short on the bible's CTA (word it the same every time).
 - Make day 1 the strongest; it is the one that gets submitted to Higgsfield Earn.
+- Facts: every number or claim in a voiceover must be checkable. Put the source
+  (publisher and page title, URL if known) in "sources". Never tell viewers what to
+  buy, sell or invest in; explain how things work and let them decide. If a figure
+  varies by country, say which country it is for.
 
 Reply with STRICT JSON only, no markdown, no fences:
 {
@@ -45,7 +49,8 @@ Reply with STRICT JSON only, no markdown, no fences:
         { "n": number, "seconds": number, "visual": string, "camera": string,
           "on_screen_text": string, "voiceover": string }
       ],
-      "cta": string
+      "cta": string,
+      "sources": [string]                  // one per factual claim; [] if none
     }
   ]
 }
