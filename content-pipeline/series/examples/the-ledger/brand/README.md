@@ -13,7 +13,36 @@ money, promises a mechanism, and works as a handle.
 | Decoded Daily | Catchy, generic; could be any niche |
 | Follow the Cents | Fun pun, reads as frugality content, which this isn't |
 
-## Assets (generated on Higgsfield, gpt_image_2_5, 0.25 credits each)
+## Visual identity (round 2)
+
+- **Motif:** a gold coin opened like a car hood, gears showing underneath. Money on the outside, mechanism inside. Every asset carries it or its gear fragment.
+- **Palette:** near-black `#0B0F14`, amber `#F2A33A` (the glow, the word HOOD), teal `#2FD1C4` (one thin accent line, never a fill), cream `#F3EEE4` (type).
+- **Type:** heavy geometric grotesk capitals for titles (Space Grotesk Bold, the same family the app uses), small caps for taglines, one thin teal underline under the title.
+- **Rules:** one light source, lots of black, no gradients on type, no stock-chart clichés, the gear never spins in logos.
+
+## Round 2 options (pick one icon and one banner)
+
+Icons from Recraft V4.1 come as SVG: open the link in a browser, or import into Canva, and export a 800×800 PNG for upload. The gpt_image icon is already a PNG.
+
+| # | Asset | Model | Credits | Job id | Link |
+|---|---|---|---|---|---|
+| I1 | Icon: coin opened like a hood, gears inside (flat vector) | Recraft vector | 2.5 | `892d582f-5152-4e89-a7f0-03af050ee5d5` | https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261013_014849_892d582f-5152-4e89-a7f0-03af050ee5d5.svg |
+| I2 | Icon: MUH monogram with a gear in the U | Recraft vector | 2.5 | `8406e87d-38fb-4d0b-b820-362b51525795` | https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261013_014848_8406e87d-38fb-4d0b-b820-362b51525795.svg |
+| I3 | Icon: dollar sign built from a piston and gear teeth | Recraft vector | 2.5 | `1205d280-aecd-48d8-b277-1f6ea33fbeaf` | https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261013_014849_1205d280-aecd-48d8-b277-1f6ea33fbeaf.svg |
+| I4 | Icon: photoreal coin split open like a watch (PNG) | gpt_image_2_5 | 0.25 | `901d2d0a-c5d1-4489-b6df-b54ddaba1101` | https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261013_014848_901d2d0a-c5d1-4489-b6df-b54ddaba1101.png |
+| B1 | Banner: flat vector coin-hood + title (SVG) | Recraft utility vector | 1.25 | `15c74780-6643-4864-8a60-fe6b2938df2c` | https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261013_014848_15c74780-6643-4864-8a60-fe6b2938df2c.svg |
+| B2 | Banner: cinematic workshop, open car hood full of gears and coins + title | Recraft standard | 1.25 | `0097aa3f-c307-47c9-9d18-dedb0c0d6542` | https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261013_014849_0097aa3f-c307-47c9-9d18-dedb0c0d6542.png |
+| B3 | Banner: minimal Swiss typographic, HOOD in amber | gpt_image_2_5 | 0.25 | `9230e126-4099-4bfe-a052-01d5ef047046` | https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261013_014850_9230e126-4099-4bfe-a052-01d5ef047046.png |
+| B4 | Banner: photoreal macro coin split open + title | gpt_image_2_5 | 0.25 | `6398ab23-72ec-47fe-807f-0c4e3301cff2` | https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261013_014849_6398ab23-72ec-47fe-807f-0c4e3301cff2.png |
+
+Banners have the title baked in. Before uploading, check the spelling of every
+word (AI text can still slip) and that the title sits inside YouTube's
+1546×423 centre safe area; export at 2560×1440. If the text is wrong, re-render
+that one option at 2k (Recraft 2k is 8 to 10 credits) or fix it in Canva.
+
+## Round 1 (superseded, kept for reference)
+
+### Assets (generated on Higgsfield, gpt_image_2_5, 0.25 credits each)
 
 | Asset | Use | Job id | Link |
 |---|---|---|---|
