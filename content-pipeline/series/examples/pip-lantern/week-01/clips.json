@@ -1,0 +1,284 @@
+{
+  "clips": [
+    {
+      "day": 1,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A small fox cub sits yawning on a mossy path under early stars; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) bobs into frame and its glow brightens. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow push-in, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 1,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) walks ahead along the path, the cub padding behind, the glow catching ferns and a toadstool. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tracking from the side, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 1,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "They cross a small wooden bridge over a dark stream; two tiny moths circle Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently)'s glow. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow dolly following, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 1,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "The cub curls into a den under tree roots; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently)'s glow softens to an ember. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow pull back, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 2,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A dark meadow; one firefly blinks on beside Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently), whose glow brightens in reply. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, static, slight drift, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 2,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A second, third and fourth firefly blink on one at a time around Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently), Pip bobbing once for each. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow push-in, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 2,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A fifth firefly lands on Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently)'s tin cap; all five glow together. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow orbit, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 2,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "The fireflies drift up into the stars; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) dims. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tilt up, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 3,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) walks a meadow path and keeps glancing up at a big soft moon that seems to move with it; Pip tilts its cap. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tracking, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 3,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) passes a close toadstool and a near tree; they slide by quickly while the moon stays still. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow lateral tracking, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 3,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A far hill with a single tree barely moves as Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) walks on; the moon above it stays put. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tracking, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 3,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) stops, looks straight up at the moon, glow softening. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tilt up to the moon, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 4,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A felt bear, a wooden boat and a ball lie scattered on a mossy clearing; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) bobs in and glows. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow push-in, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 4,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) nudges the ball with its glow and it rolls gently into a hollow log; the bear is tucked under a big leaf. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tracking, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 4,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "The little boat floats to the edge of a still pond and rests against a stone. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow dolly, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 4,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "The clearing is neat; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) sits in the middle and dims. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow pull back, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 5,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "One red toadstool with white spots at the foot of a tree; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) glows beside it. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow push-in, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 5,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) walks on; a second and third red toadstool appear along the roots. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tracking, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 5,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "All three toadstools in a row, Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) bobbing happily between them. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow orbit, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 5,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) dims under the tree; the red caps fade into the dusk. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, static, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 6,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A tiny hedgehog curled tight under a bush in deep dusk; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently)'s glow arrives slowly. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow push-in, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 6,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently)'s glow swells slowly and shrinks slowly, like breathing; the hedgehog uncurls a little. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, static, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 6,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "In the glow, the bush becomes friendly: a snail, a leaf, a drop of dew. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow pan, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 6,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "The hedgehog settles, Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) stays close and dims to an ember. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow pull back, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 7,
+      "n": 1,
+      "model": "kling3_0",
+      "duration": 5,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "A single golden leaf lets go of a branch and drifts down; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) looks up and glows. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tilt down following the leaf, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 7,
+      "n": 2,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "The leaf floats down the stream; Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) walks the bank beside it. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow tracking, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 7,
+      "n": 3,
+      "model": "kling3_0",
+      "duration": 8,
+      "aspect_ratio": "9:16",
+      "uses_anchor": false,
+      "prompt": "The leaf comes to rest on a soft pile of other leaves under a round-topped tree. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow dolly in, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    },
+    {
+      "day": 7,
+      "n": 4,
+      "model": "kling3_0",
+      "duration": 7,
+      "aspect_ratio": "9:16",
+      "uses_anchor": true,
+      "prompt": "Pip (a round hand-sized paper lantern glowing soft warm orange from inside, cream washi paper with faint fibres over a thin bamboo ribcage, two small dark dot eyes, stubby mustard felt legs, a tiny dented tin cap with a loop handle, bobbing gently) sits on the leaf pile and dims; a few more leaves drift down. painterly storybook woodland at blue hour with stop-motion felt-and-paper texture, Pip the only warm light source, deep indigo and teal dusk with amber glow and moss green, soft volumetric haze, 35mm framing, shallow depth of field, slow pull back, calm and gentle mood, vertical 9:16 composition, no text, no captions, no watermark",
+      "negative": "text, letters, numbers, logos, people, hands, mouth on the lantern, arms, fire, smoke, red or blue glow, fast motion, photoreal, scary, harsh light"
+    }
+  ]
+}

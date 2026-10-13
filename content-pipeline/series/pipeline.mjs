@@ -40,7 +40,8 @@ for (const k of ['name', 'premise', 'audience', 'promise', 'anchor']) {
 }
 const slug = concept.slug || concept.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 const outDir = path.join(here, 'out', slug);
-const biblePath = path.join(outDir, 'bible.json');
+// A concept can point at a hand-written bible (e.g. one of the examples/) instead of a generated one.
+const biblePath = concept.bible ? path.resolve(path.dirname(conceptPath), concept.bible) : path.join(outDir, 'bible.json');
 const madePath = path.join(outDir, 'made.json');
 
 function template(name) {

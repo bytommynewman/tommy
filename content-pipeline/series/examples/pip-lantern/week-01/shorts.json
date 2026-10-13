@@ -1,0 +1,54 @@
+{
+  "week": 1,
+  "shorts": [
+    { "day": 1, "format": "One Little Light", "pillar": "Bedtime and calm", "title": "The sleepy fox finds its den", "hook_text": "Somebody is still awake…",
+      "shots": [
+        { "n": 1, "seconds": 5, "visual": "A small fox cub sits yawning on a mossy path under early stars; Pip bobs into frame and its glow brightens.", "camera": "slow push-in", "on_screen_text": "Somebody is still awake…", "voiceover": "Little fox, it's late. Pip will light the way." },
+        { "n": 2, "seconds": 8, "visual": "Pip walks ahead along the path, the cub padding behind, the glow catching ferns and a toadstool.", "camera": "slow tracking from the side", "on_screen_text": "", "voiceover": "Past the ferns. Past the toadstool. Nearly there." },
+        { "n": 3, "seconds": 8, "visual": "They cross a small wooden bridge over a dark stream; two tiny moths circle Pip's glow.", "camera": "slow dolly following", "on_screen_text": "", "voiceover": "Over the bridge. The moths say hello." },
+        { "n": 4, "seconds": 7, "visual": "The cub curls into a den under tree roots; Pip's glow softens to an ember.", "camera": "slow pull back", "on_screen_text": "Goodnight, little fox.", "voiceover": "Home. Goodnight, little fox." }
+      ], "cta": "Goodnight from Pip. One little light every day." },
+    { "day": 2, "format": "Pip Counts", "pillar": "Counting and colours", "title": "Five fireflies", "hook_text": "Can you count the fireflies?",
+      "shots": [
+        { "n": 1, "seconds": 5, "visual": "A dark meadow; one firefly blinks on beside Pip, whose glow brightens in reply.", "camera": "static, slight drift", "on_screen_text": "Can you count the fireflies?", "voiceover": "One firefly. Can you see it?" },
+        { "n": 2, "seconds": 8, "visual": "A second, third and fourth firefly blink on one at a time around Pip, Pip bobbing once for each.", "camera": "slow push-in", "on_screen_text": "2 … 3 … 4", "voiceover": "Two. Three. Four." },
+        { "n": 3, "seconds": 7, "visual": "A fifth firefly lands on Pip's tin cap; all five glow together.", "camera": "slow orbit", "on_screen_text": "5", "voiceover": "Five! Five fireflies." },
+        { "n": 4, "seconds": 5, "visual": "The fireflies drift up into the stars; Pip dims.", "camera": "slow tilt up", "on_screen_text": "Five fireflies.", "voiceover": "Five fireflies, off to bed." }
+      ], "cta": "Goodnight from Pip. One little light every day." },
+    { "day": 3, "format": "Pip Wonders", "pillar": "Nature wonders", "title": "Why does the moon follow you?", "hook_text": "Why does the moon follow you?",
+      "shots": [
+        { "n": 1, "seconds": 5, "visual": "Pip walks a meadow path and keeps glancing up at a big soft moon that seems to move with it; Pip tilts its cap.", "camera": "slow tracking", "on_screen_text": "Why does the moon follow you?", "voiceover": "Pip walks. The moon walks too. Why?" },
+        { "n": 2, "seconds": 8, "visual": "Pip passes a close toadstool and a near tree; they slide by quickly while the moon stays still.", "camera": "slow lateral tracking", "on_screen_text": "", "voiceover": "Close things slide past fast." },
+        { "n": 3, "seconds": 8, "visual": "A far hill with a single tree barely moves as Pip walks on; the moon above it stays put.", "camera": "slow tracking", "on_screen_text": "", "voiceover": "Far things hardly move at all." },
+        { "n": 4, "seconds": 7, "visual": "Pip stops, looks straight up at the moon, glow softening.", "camera": "slow tilt up to the moon", "on_screen_text": "The moon is very, very far.", "voiceover": "The moon is so far, it looks like it follows. Now you know." }
+      ], "cta": "Goodnight from Pip. One little light every day." },
+    { "day": 4, "format": "One Little Light", "pillar": "Kind habits", "title": "Putting the toys to bed", "hook_text": "Time to say goodnight to the toys.",
+      "shots": [
+        { "n": 1, "seconds": 5, "visual": "A felt bear, a wooden boat and a ball lie scattered on a mossy clearing; Pip bobs in and glows.", "camera": "slow push-in", "on_screen_text": "Time to say goodnight to the toys.", "voiceover": "The toys are tired too." },
+        { "n": 2, "seconds": 8, "visual": "Pip nudges the ball with its glow and it rolls gently into a hollow log; the bear is tucked under a big leaf.", "camera": "slow tracking", "on_screen_text": "", "voiceover": "Ball in the log. Bear under the leaf." },
+        { "n": 3, "seconds": 8, "visual": "The little boat floats to the edge of a still pond and rests against a stone.", "camera": "slow dolly", "on_screen_text": "", "voiceover": "Boat by the stone. All tidy." },
+        { "n": 4, "seconds": 7, "visual": "The clearing is neat; Pip sits in the middle and dims.", "camera": "slow pull back", "on_screen_text": "Goodnight, toys.", "voiceover": "Goodnight, toys. Goodnight, you." }
+      ], "cta": "Goodnight from Pip. One little light every day." },
+    { "day": 5, "format": "Pip Counts", "pillar": "Counting and colours", "title": "Three red toadstools", "hook_text": "What colour is the toadstool?",
+      "shots": [
+        { "n": 1, "seconds": 5, "visual": "One red toadstool with white spots at the foot of a tree; Pip glows beside it.", "camera": "slow push-in", "on_screen_text": "What colour is the toadstool?", "voiceover": "One red toadstool." },
+        { "n": 2, "seconds": 8, "visual": "Pip walks on; a second and third red toadstool appear along the roots.", "camera": "slow tracking", "on_screen_text": "2 … 3", "voiceover": "Two red. Three red." },
+        { "n": 3, "seconds": 7, "visual": "All three toadstools in a row, Pip bobbing happily between them.", "camera": "slow orbit", "on_screen_text": "3 red toadstools", "voiceover": "Three red toadstools." },
+        { "n": 4, "seconds": 5, "visual": "Pip dims under the tree; the red caps fade into the dusk.", "camera": "static", "on_screen_text": "Red.", "voiceover": "Red. Goodnight, toadstools." }
+      ], "cta": "Goodnight from Pip. One little light every day." },
+    { "day": 6, "format": "Pip Wonders", "pillar": "Feelings", "title": "When the dark feels big", "hook_text": "Shh. Look who Pip found.",
+      "shots": [
+        { "n": 1, "seconds": 5, "visual": "A tiny hedgehog curled tight under a bush in deep dusk; Pip's glow arrives slowly.", "camera": "slow push-in", "on_screen_text": "Shh. Look who Pip found.", "voiceover": "The dark felt big. Pip came close." },
+        { "n": 2, "seconds": 8, "visual": "Pip's glow swells slowly and shrinks slowly, like breathing; the hedgehog uncurls a little.", "camera": "static", "on_screen_text": "Breathe in … and out.", "voiceover": "Breathe in with the light. And out." },
+        { "n": 3, "seconds": 8, "visual": "In the glow, the bush becomes friendly: a snail, a leaf, a drop of dew.", "camera": "slow pan", "on_screen_text": "", "voiceover": "See? A snail. A leaf. A drop of dew." },
+        { "n": 4, "seconds": 7, "visual": "The hedgehog settles, Pip stays close and dims to an ember.", "camera": "slow pull back", "on_screen_text": "The dark is just the day resting.", "voiceover": "The dark is just the day resting. Pip stays." }
+      ], "cta": "Goodnight from Pip. One little light every day." },
+    { "day": 7, "format": "One Little Light", "pillar": "Seasons and weather", "title": "The first autumn leaf", "hook_text": "One little light for a leaf.",
+      "shots": [
+        { "n": 1, "seconds": 5, "visual": "A single golden leaf lets go of a branch and drifts down; Pip looks up and glows.", "camera": "slow tilt down following the leaf", "on_screen_text": "One little light for a leaf.", "voiceover": "The first leaf of autumn. Pip will walk it home." },
+        { "n": 2, "seconds": 8, "visual": "The leaf floats down the stream; Pip walks the bank beside it.", "camera": "slow tracking", "on_screen_text": "", "voiceover": "Down the stream, round the bend." },
+        { "n": 3, "seconds": 8, "visual": "The leaf comes to rest on a soft pile of other leaves under a round-topped tree.", "camera": "slow dolly in", "on_screen_text": "", "voiceover": "There. With all the others." },
+        { "n": 4, "seconds": 7, "visual": "Pip sits on the leaf pile and dims; a few more leaves drift down.", "camera": "slow pull back", "on_screen_text": "Goodnight, little leaf.", "voiceover": "Goodnight, little leaf. Goodnight, autumn." }
+      ], "cta": "Goodnight from Pip. One little light every day." }
+  ]
+}

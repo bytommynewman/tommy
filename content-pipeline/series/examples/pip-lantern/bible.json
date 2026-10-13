@@ -1,0 +1,69 @@
+{
+  "name": "Pip the Little Lantern",
+  "tagline": "One little light before bed",
+  "premise": "Pip is a small paper lantern who glows a soft warm orange and walks through a storybook woodland at dusk. Each short, Pip lights up one little thing for a child to notice before sleep: an animal going home, something to count, a gentle why. Thirty seconds, one idea, no shouting.",
+  "audience": "Children 2 to 6 watching with a parent, usually at wind-down time. The parent is the real viewer: it has to be calm enough to play twice and pretty enough to keep on.",
+  "anchor": {
+    "description": "Pip, a round hand-sized paper lantern glowing soft warm orange from inside, made of cream washi paper with faint visible fibres and a thin bamboo ribcage; two small dark dot eyes; stubby felt legs in mustard yellow; a tiny dented tin cap on top with a loop handle; Pip bobs gently as it walks and its glow brightens when it is happy; always seen in a storybook woodland at dusk with soft painterly textures",
+    "never": "no mouth, no arms, no speech, no sharp edges, never scared or angry, never fast or frantic, never fire or smoke, glow never turns red or blue, never photoreal"
+  },
+  "look": {
+    "palette": "deep indigo and teal dusk, warm amber glow, moss green, cream paper; soft and low-contrast",
+    "lighting": "blue hour with Pip as the only warm light source; soft rim light on leaves and fur; gentle volumetric haze",
+    "lens": "35mm storybook framing, shallow depth of field, slow camera moves only",
+    "setting": "a painterly storybook woodland: mossy path, round-topped trees, a stream, toadstools, a wooden bridge, a meadow under early stars; stop-motion felt-and-paper texture",
+    "text_style": "rounded chunky white sans with a soft amber outline, one line, lower third, fades in and out"
+  },
+  "formats": [
+    {
+      "name": "One Little Light",
+      "runtime_s": 30,
+      "structure": [
+        "Hook (5s): a small animal is out late and sleepy; Pip appears and glows",
+        "Journey (8s + 8s): Pip walks the animal home along one path, passing one lovely thing",
+        "Goodnight (7s): the animal settles, Pip dims, on-screen 'goodnight'"
+      ]
+    },
+    {
+      "name": "Pip Counts",
+      "runtime_s": 25,
+      "structure": [
+        "Hook (5s): Pip spots the first of something and glows brighter",
+        "Count (8s + 7s): more appear one at a time, Pip bobs once per item, numbers on screen",
+        "Settle (5s): all of them together, Pip dims, number repeated once"
+      ]
+    },
+    {
+      "name": "Pip Wonders",
+      "runtime_s": 35,
+      "structure": [
+        "Hook (5s): Pip notices something and tilts its cap: the why question on screen",
+        "Answer (8s + 8s + 7s): three simple pictures that answer it, Pip lighting each",
+        "Goodnight (7s): Pip looks up, dims, 'now you know'"
+      ]
+    }
+  ],
+  "pillars": [
+    { "name": "Bedtime and calm", "topics": ["the sleepy fox finds its den", "the owl who stays up", "where the sun goes at night", "the quiet after rain", "the moon keeps watch"] },
+    { "name": "Counting and colours", "topics": ["five fireflies", "three red toadstools", "four ducks on the stream", "two white moths", "counting stars up to five"] },
+    { "name": "Nature wonders", "topics": ["why leaves fall", "why the moon follows you", "where rain comes from", "why snails carry houses", "why bees go home at dusk"] },
+    { "name": "Kind habits", "topics": ["putting toys to bed", "brushing teeth before sleep", "saying goodnight to everyone", "sharing the bridge", "waiting your turn at the stream"] },
+    { "name": "Feelings", "topics": ["when the dark feels big", "missing someone at bedtime", "a happy tired", "being a little bit brave", "calm breathing with Pip's glow"] },
+    { "name": "Seasons and weather", "topics": ["first snow", "a warm summer night", "a windy evening", "fog on the meadow", "the first autumn leaf"] }
+  ],
+  "hooks": [
+    "Somebody is still awake…",
+    "Can you count the {thing}?",
+    "Why does the {thing} {do}?",
+    "Shh. Look who Pip found.",
+    "One little light for {name}.",
+    "What colour is the {thing}?",
+    "The {animal} can't find home.",
+    "Time to say goodnight to the {thing}."
+  ],
+  "cta": "Goodnight from Pip. One little light every day.",
+  "posting": {
+    "cadence": "one short a day, same time every evening; one 8 to 10 minute compilation of the week's shorts every Sunday on YouTube",
+    "best_times": "6:30pm to 7:30pm local, the wind-down hour"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Pip the Little Lantern",
+  "slug": "pip-lantern",
+  "bible": "../examples/pip-lantern/bible.json",
+  "premise": "Pip is a small paper-lantern creature who glows a soft warm orange. Every evening Pip lights up one little thing: a sleepy animal finding its way home, five fireflies to count, why the moon follows you. Thirty seconds, no shouting, no jump cuts, made to be played at bedtime.",
+  "audience": "children 2 to 6 and the parents holding the phone; parents must enjoy it enough to play it again",
+  "promise": "One little light before bed, every day",
+  "anchor": "Pip: a round, hand-sized paper lantern with a soft orange glow, stubby felt legs, two dot eyes and a tiny tin cap with a loop handle, bobbing gently as it walks through a storybook woodland at dusk",
+  "material": "Classic bedtime routines: counting, colours, animal homes, small kindnesses, gentle why-questions; nothing from the creator's own life is needed",
+  "tone": "gentle, slow, warm, a picture book read in a quiet voice",
+  "earn_tag": "",
+  "channel_tag": "#piplantern"
+}
