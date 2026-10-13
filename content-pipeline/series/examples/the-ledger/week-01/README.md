@@ -1,4 +1,4 @@
-# The Ledger — week 1
+# Money Under the Hood — week 1
 
 Render on Kling std (sound off) first; re-render day 1 on Seedance for an Earn submission. Verify every source link before posting; the voiceover numbers must match the source.
 
@@ -52,7 +52,7 @@ Sources: Investopedia, 'Rule of 72' https://www.investopedia.com/terms/r/ruleof7
 
 Caption: Compound interest isn't magic, it's one division. 72 ÷ your rate ≈ years to double. What rate are you actually getting?
 
-#compoundinterest #ruleof72 #personalfinance #moneytips #financialliteracy #investing101 #howitworks #explained #firstpaycheck #theledger
+#compoundinterest #ruleof72 #personalfinance #moneytips #financialliteracy #investing101 #howitworks #explained #firstpaycheck #moneyunderthehood
 
 Pin: Source: Investopedia, Rule of 72. Not advice, just the maths.
 
@@ -100,7 +100,7 @@ Sources: S&P Dow Jones Indices, 'S&P 500' factsheet https://www.spglobal.com/spd
 
 Caption: An S&P 500 fund is a list, not a bet. ~500 companies, weighted by size. Did you know what was in it?
 
-#indexfunds #sp500 #investing101 #personalfinance #financialliteracy #howitworks #moneyexplained #theledger
+#indexfunds #sp500 #investing101 #personalfinance #financialliteracy #howitworks #moneyexplained #moneyunderthehood
 
 Pin: Source: S&P Dow Jones Indices factsheet. Not advice.
 
@@ -146,7 +146,7 @@ Sources: myFICO, 'What's in my FICO Scores?' https://www.myfico.com/credit-educa
 
 Caption: Credit scores aren't mysterious: 35% is just paying on time. Which bit surprised you?
 
-#creditscore #fico #personalfinance #financialliteracy #creditcards #moneytips #howitworks #explained #theledger
+#creditscore #fico #personalfinance #financialliteracy #creditcards #moneytips #howitworks #explained #moneyunderthehood
 
 Pin: US FICO weights from myFICO. Canada and the UK use different models.
 
@@ -200,7 +200,7 @@ Sources: Creator's own project: scratch-agent edge function runs with the caller
 
 Caption: I gave an AI write access to my app's database. Lesson learned in one evening.
 
-#buildinpublic #indiedev #ai #claude #supabase #coding #softwareengineering #sideproject #techexplained #theledger
+#buildinpublic #indiedev #ai #claude #supabase #coding #softwareengineering #sideproject #techexplained #moneyunderthehood
 
 Pin: Building this app in public. Ask me anything about the stack.
 
@@ -246,7 +246,7 @@ Sources: US SEC Office of Investor Education, 'Updated Investor Bulletin: How Fe
 
 Caption: 1% doesn't sound like much until it's $28,000. The SEC's own example.
 
-#investingfees #expenseratio #personalfinance #investing101 #financialliteracy #moneytips #howitworks #theledger
+#investingfees #expenseratio #personalfinance #investing101 #financialliteracy #moneytips #howitworks #moneyunderthehood
 
 Pin: Source: SEC investor bulletin on fees and expenses. Not advice.
 
@@ -292,7 +292,7 @@ Sources: NVIDIA H100 datasheet: 16,896 FP32 CUDA cores (SXM) https://www.nvidia.
 
 Caption: Why every AI company wants graphics cards, explained with clockmakers.
 
-#gpu #cpu #howitworks #techexplained #ai #nvidia #computerscience #learnontiktok #theledger
+#gpu #cpu #howitworks #techexplained #ai #nvidia #computerscience #learnontiktok #moneyunderthehood
 
 Pin: Core count from NVIDIA's H100 datasheet.
 
@@ -338,6 +338,6 @@ Sources: Elizabeth Warren and Amelia Warren Tyagi, 'All Your Worth: The Ultimate
 
 Caption: 50/30/20 has an author and a year. Did you know who?
 
-#budgeting #503020 #personalfinance #financialliteracy #moneytips #history #explained #theledger
+#budgeting #503020 #personalfinance #financialliteracy #moneytips #history #explained #moneyunderthehood
 
 Pin: Source: All Your Worth (2005), Warren and Warren Tyagi. A guideline, not a law.

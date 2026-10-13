@@ -1,4 +1,4 @@
-# The Ledger — worked example (money and tech shorts)
+# Money Under the Hood (folder: the-ledger) — worked example
 
 `bible.json` is the series bible; `week-01/` is a full first week: seven
 shorts, 30 Higgsfield prompts, sources per short, captions and a run sheet.
