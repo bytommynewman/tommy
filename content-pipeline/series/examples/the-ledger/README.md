@@ -1,7 +1,7 @@
 # The Ledger — worked example (money and tech shorts)
 
 `bible.json` is the series bible; `week-01/` is a full first week: seven
-shorts, 32 Higgsfield prompts, sources per short, captions and a run sheet.
+shorts, 30 Higgsfield prompts, sources per short, captions and a run sheet.
 `concepts/the-ledger.json` points at this bible, so
 `pipeline.mjs concepts/the-ledger.json --week 2` writes the next week.
 
@@ -25,8 +25,8 @@ shorts, 32 Higgsfield prompts, sources per short, captions and a run sheet.
 1. The anchor is the desk, not a character, so no reference image is needed:
    the same desk paragraph is baked into every desk prompt. If renders drift,
    generate one desk image and attach it as `start_image` on the desk shots.
-2. Draft on Kling 3.0 std, sound off: 32 clips at about 7.5 credits each is
-   roughly 240 credits before regenerations. Render days 1, 4 and 5 first (the
+2. Draft on Kling 3.0 std, sound off: 30 clips at about 7.5 credits each is
+   roughly 225 credits before regenerations. Render days 1, 4 and 5 first (the
    strongest hooks) and post those while the rest render.
 3. Voiceover: your own voice, recorded on a phone in a quiet room, or cloned
    once with Higgsfield `create_voice`. Keep it unhurried.
