@@ -1,79 +1,85 @@
 # Content pipeline: Claude writes, Higgsfield renders
 
-A repeatable production line for short vertical ads. Claude turns a client
-brief into a script, shot list and one Higgsfield prompt per shot; Higgsfield
-renders each shot as a clip; you cut, caption and post (or deliver to the
-client). The same clips feed all three income routes in the "Income Routes
-Compared" doc: client ad work first, Higgsfield Earn and prompt packs ride along.
+Two production lines share one idea: Claude turns a concept into scripts and
+one Higgsfield prompt per shot, Higgsfield renders each shot, you cut, caption
+and post. Neither needs a camera.
 
-## Layout
+| Folder        | What it makes                                   | First income                         |
+|---------------|-------------------------------------------------|--------------------------------------|
+| `series/`     | A faceless brand channel: daily shorts in a recurring format with a consistent character or visual anchor | Higgsfield Earn on the best short each week, then sponsorships and your own products as the channel grows |
+| `client-ads/` | 15–30 s ads for a small business from a brief   | The client pays per ad               |
+
+`series/` is the default. `client-ads/` is kept for when a business asks.
+
+## Series: build a channel
 
 ```
-content-pipeline/
-  briefs/            one JSON per client or idea (input)
-  templates/         the three Claude prompts, in order
-  scripts/pipeline.mjs   fills the templates and calls Claude
-  out/<slug>/        generated script.json, clips.json, post.json, README.md
-  examples/sample-01/    a full worked run plus the rendered sample clip
+npm install
+export ANTHROPIC_API_KEY=sk-ant-...          # once per shell, never committed
+node content-pipeline/series/pipeline.mjs content-pipeline/series/concepts/<name>.json --init
+node content-pipeline/series/pipeline.mjs content-pipeline/series/concepts/<name>.json --week 1
 ```
 
-## Run it
+1. **Concept** (`series/concepts/*.json`): one paragraph each for premise,
+   audience, promise, anchor (the recurring character or visual), your real-life
+   material, and tone. Two drafts are in there to pick from.
+2. **`--init`** writes `series/out/<slug>/bible.json`: tagline, the anchor
+   described precisely enough to regenerate, the look (palette, lens, setting,
+   text style), three recurring formats, six pillars with topics, hook
+   patterns, the standing CTA and posting cadence. Edit it by hand; every week
+   is written from it.
+3. **`--week N`** writes seven shorts (`--count 3` for fewer), one Higgsfield
+   prompt per shot with the anchor description baked in, captions, hashtags and
+   Earn notes, plus a run sheet `week-NN/README.md`. Titles go into `made.json`
+   so later weeks never repeat. `--theme "..."` steers a week. `--dry-run`
+   prints the prompts for pasting into claude.ai instead of calling the API.
 
-1. Copy `briefs/example-brief.json`, fill it in for the client, save as
-   `briefs/<client>.json`. Only `business`, `product`, `audience`,
-   `differentiator`, `goal` and `tone` are required.
-2. Export your Anthropic key once per shell (never commit it):
-   `export ANTHROPIC_API_KEY=sk-ant-...`
-3. Run:
-   ```
-   npm install
-   node content-pipeline/scripts/pipeline.mjs content-pipeline/briefs/<client>.json
-   ```
-   Add `--dry-run` to print the filled prompts instead of calling Claude, which is
-   also how you paste them into claude.ai by hand.
-4. Open `out/<client>/README.md`. It lists one prompt per shot with the model,
-   duration and aspect ratio to use.
+### Render
 
-## Render the clips in Higgsfield
+- **From Claude Code with the Higgsfield MCP:** ask Claude to render
+  `week-NN/clips.json`. It calls `generate_video` per clip with the listed
+  model, `9:16` and duration, waits with `jobs_wait`, and reports the balance.
+- **On higgsfield.ai:** paste each prompt into the named model at 9:16.
 
-Two ways, same prompts:
+Make the anchor look the same every day: render one reference image of it
+(`generate_image`), save its job id in the concept file as `anchor_image_id`,
+and attach it as `image_references` (Seedance) or `start_image` (Kling) on
+every clip marked `uses_anchor`.
 
-- **From Claude Code with the Higgsfield MCP connected.** Ask Claude to render
-  `out/<client>/clips.json`. It calls `generate_video` once per clip with the
-  listed model, `aspect_ratio: "9:16"` and duration, then `jobs_wait`. Say
-  "drafts only" and it keeps everything on Kling std with sound off.
-- **On higgsfield.ai.** Paste each prompt into the model named in the run
-  sheet, set 9:16 and the duration, generate.
+Credits (MCP catalog, Oct 2026): Kling 3.0 std, 5 s, silent is about 7.5;
+Seedance 2.5 5 s about 35; Veo 3.1 about 40. Drafting a 4-shot short on Kling
+is roughly 30 credits, so a week of seven is 200–250 on Kling alone, more if you
+regenerate. On the Plus plan that means rendering 3–4 shorts a week at first and
+re-rendering only the Earn pick on Seedance. Check `balance` after every batch.
 
-Cost guide (Oct 2026, from the MCP catalog): Kling 3.0 std 5 s silent is about
-7.5 credits, Seedance 2.5 5 s about 35, Veo 3.1 about 40. Draft every shot on
-Kling, re-render only the keepers on Seedance or Veo. A finished three-variant
-ad lands at roughly 40 to 120 credits including regenerations. Check `balance`
-after every batch.
+### Cut and post
 
-## Cut and post
+- Stack the clips in CapCut, add on-screen text in the bible's text style, record
+  the voiceover (or clone a voice once with Higgsfield `create_voice` and use
+  `generate_audio`), drop in music.
+- Post the same file to Instagram Reels and YouTube Shorts daily. Day 1 of each
+  week is the Earn submission: verified account, campaign tag from `earn_tag`
+  in the concept, watermark kept, within the campaign's length cap. TikTok's
+  rewards program excludes mostly synthetic content, so it is for reach only.
+- Expect nothing from Earn until it is paid out; the terms let Higgsfield reject
+  or claw back. The channel is the asset.
 
-- Stack the clips in order in CapCut or the Reels editor, add the on-screen
-  text and CTA from `script.json`, drop in a track matching `music`.
-- `post.json` has the caption, hashtags and posting notes. For a Higgsfield
-  Earn campaign set `poster` to your creator account and `earn_tag` to the
-  campaign hashtag in the brief, keep the watermark, and post to Instagram or
-  YouTube (TikTok's rewards program excludes mostly synthetic content).
-- Deliver client work as three variants: swap the hook using `variants` in
-  `script.json` and re-render shot 1 only.
+## Client ads
 
-## Model and prompt rules the templates enforce
+See `client-ads/`: `briefs/example-brief.json` is the input,
+`pipeline.mjs <brief.json>` writes script, clips and post copy, and
+`examples/sample-01/` is a full run with one rendered clip.
 
-- One continuous camera move per shot, 3 to 6 seconds, no cuts inside a clip.
+## Prompt rules both lines enforce
+
+- One continuous camera move per shot, 3–8 s, no cuts inside a clip.
 - No brand names, logos, real people or readable text in generated video; text
   is added in the edit.
-- Every prompt ends with "no text, no captions, no watermark" and carries a
-  short negative list.
-- Vertical 9:16 always.
+- Every prompt ends with "vertical 9:16 composition, no text, no captions, no
+  watermark" and carries a short negative list.
 
-## Changing the templates
+## Changing templates
 
-Each template is a Markdown file; everything below the `---` rule is the prompt
-and `{{field}}` placeholders are filled from the brief. Keep the JSON shape at
-the bottom of each template in sync with `scripts/pipeline.mjs`, which reads
-`shots`, `clips`, `title`, `cta`, `variants`, `caption`, `hashtags`, `notes`.
+Each template is Markdown; everything below the `---` rule is the prompt and
+`{{field}}` placeholders are filled from the concept, bible or brief. Keep the
+JSON shape at the bottom of each template in sync with the runner that reads it.

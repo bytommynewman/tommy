@@ -60,7 +60,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "vitest run",
-    "pipeline": "node content-pipeline/scripts/pipeline.mjs"
+    "pipeline": "node content-pipeline/series/pipeline.mjs"
   },
   "private": true
 }

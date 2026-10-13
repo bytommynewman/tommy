@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Claude → Higgsfield content pipeline runner.
 //
-//   node content-pipeline/scripts/pipeline.mjs content-pipeline/briefs/example-brief.json
-//   node content-pipeline/scripts/pipeline.mjs <brief.json> --dry-run   # print filled prompts, no API call
+//   node content-pipeline/client-ads/pipeline.mjs content-pipeline/client-ads/briefs/example-brief.json
+//   node content-pipeline/client-ads/pipeline.mjs <brief.json> --dry-run   # print filled prompts, no API call
 //
 // Reads a brief, fills templates/01-script.md → 02-higgsfield-prompts.md →
 // 03-caption-and-post.md in order, calls Claude for each, and writes:
@@ -18,7 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(here, '..');
+const root = here;
 const MODEL = 'claude-opus-5-5';
 
 const args = process.argv.slice(2);
