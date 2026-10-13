@@ -1,0 +1,16 @@
+{
+  "clips": [
+    { "n": 1, "model": "kling3_0", "duration": 5, "aspect_ratio": "9:16",
+      "prompt": "A dark, blistered sourdough loaf resting on a flour-dusted wooden counter in a small neighbourhood bakery, a serrated knife slicing slowly through the crust, the open airy crumb revealed as the slice falls, fine flour drifting in soft morning daylight from a side window, warm film look with muted browns and cream, slow push-in on a 50mm lens, shallow depth of field, calm and inviting mood, vertical 9:16 composition, no text, no captions, no watermark, no people, no logos",
+      "negative": "hands, faces, text, logos, harsh light, fast motion" },
+    { "n": 2, "model": "kling3_0", "duration": 5, "aspect_ratio": "9:16",
+      "prompt": "Rows of golden butter croissants on a wire cooling rack in a small bakery, flaky layers catching low warm morning light from a side window, faint steam rising from the tray, flour-dusted wooden surfaces behind, warm film look with muted browns and cream, slow lateral slide along the rack, shallow depth of field, calm and inviting mood, vertical 9:16 composition, no text, no captions, no watermark, no people, no logos",
+      "negative": "hands, faces, text, logos, burnt pastry, plastic packaging" },
+    { "n": 3, "model": "kling3_0", "duration": 4, "aspect_ratio": "9:16",
+      "prompt": "A brown paper bag of warm bread set on a flour-dusted wooden bakery counter beside a paper takeaway coffee cup, faint flour fingerprints on the bag, soft diffused window light, warm film look with muted browns and cream, gentle tilt up from the counter to the bag, shallow depth of field, cosy early-morning mood, vertical 9:16 composition, no text, no captions, no watermark, no people, no logos",
+      "negative": "hands, faces, text, logos, branded cup, clutter" },
+    { "n": 4, "model": "kling3_0", "duration": 4, "aspect_ratio": "9:16",
+      "prompt": "The wooden front door of a small neighbourhood bakery swinging open onto a quiet empty morning street, warm golden light spilling out across the pavement, near-empty wooden shelves glimpsed inside, soft dawn sky, warm film look with muted browns and cream, slow dolly out from the doorway, calm and welcoming mood, vertical 9:16 composition, no text, no captions, no watermark, no people, no logos",
+      "negative": "people, faces, signage, text, logos, cars, rain" }
+  ]
+}

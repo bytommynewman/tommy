@@ -47,3 +47,4 @@ scripts/hole16-rotated.png
 
 # supabase CLI local state
 supabase/.temp/
+content-pipeline/out/

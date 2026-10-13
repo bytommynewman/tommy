@@ -1,0 +1,13 @@
+{
+  "title": "Gone by noon",
+  "hook_text": "Sold out by noon. Every day.",
+  "shots": [
+    { "n": 1, "seconds": 5, "purpose": "hook", "visual": "A dark blistered sourdough loaf on a flour-dusted wooden counter; a serrated knife slices through and the open crumb is revealed as the slice falls.", "camera": "slow push-in", "on_screen_text": "Sold out by noon. Every day.", "voiceover": "" },
+    { "n": 2, "seconds": 5, "purpose": "proof", "visual": "Rows of butter croissants on a cooling rack, layers catching low morning light, steam rising from the tray.", "camera": "slow lateral slide", "on_screen_text": "48-hour sourdough. Baked before 6am.", "voiceover": "" },
+    { "n": 3, "seconds": 4, "purpose": "desire", "visual": "A paper bag of warm bread being set down on the counter beside a takeaway coffee, flour prints on the bag, soft window light.", "camera": "gentle tilt up", "on_screen_text": "Grab it on the way in.", "voiceover": "" },
+    { "n": 4, "seconds": 4, "purpose": "cta", "visual": "The bakery's wooden front door opening onto a quiet morning street, warm light spilling out, empty shelves glimpsed inside.", "camera": "static, slow dolly out", "on_screen_text": "Open 6am. Northside.", "voiceover": "" }
+  ],
+  "cta": "Open 6am. Come early.",
+  "music": "warm acoustic guitar, unhurried, 85 bpm",
+  "variants": ["If you get here after 11, it's gone.", "This is what 48 hours tastes like."]
+}
