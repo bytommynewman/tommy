@@ -2,6 +2,7 @@ import type { DB, Prediction, Question } from "../domain";
 import { toPublic, type PublicUser } from "./auth";
 import { engagement } from "./services/social";
 import { optionLabel } from "./services/questions";
+import { subjectLite, type SubjectLite } from "../catalog/subjects";
 
 export interface PredictionView {
   p: Prediction;
@@ -11,6 +12,7 @@ export interface PredictionView {
   comments: number;
   likedByViewer: boolean;
   revisions: number;
+  subject: SubjectLite | null;
 }
 
 export function viewPrediction(d: DB, p: Prediction, viewerId: string | null): PredictionView {
@@ -23,6 +25,7 @@ export function viewPrediction(d: DB, p: Prediction, viewerId: string | null): P
     ...e,
     likedByViewer: !!viewerId && d.likes.some((l) => l.userId === viewerId && l.predictionId === p.id),
     revisions: d.predictions.filter((x) => x.chainId === p.chainId).length,
+    subject: subjectLite(p.subject),
   };
 }
 

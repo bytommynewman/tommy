@@ -1,14 +1,8 @@
 import Image from "next/image";
 
+/** Emblem cropped from the official logo artwork (receipt + balls), for small placements. */
 export function ReceiptMark({ className = "size-7" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden>
-      <path d="M18 10h28v40l-3.5-3-3.5 3-3.5-3-3.5 3-3.5-3-3.5 3-3.5-3-3.5 3z" fill="#e9ecee" />
-      <path d="M24 17l3 4 5-6 5 6 3-4v8H24z" fill="#050607" />
-      <rect x="23" y="30" width="18" height="3" rx="1.5" fill="#5d676f" />
-      <path d="M25 38.5l4.5 4.5L40 32.5" fill="none" stroke="#22e58a" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <Image src="/brand/emblem-128.webp" alt="" aria-hidden width={128} height={128} className={`${className} rounded-[22%] object-cover ring-1 ring-white/10`} />;
 }
 
 export function Wordmark({ size = "md" }: { size?: "sm" | "md" | "lg" | "xl" }) {

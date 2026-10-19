@@ -4,6 +4,8 @@ import { SectionTitle } from "@/components/ui/primitives";
 import { requireUser } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
 import { openQuestions, toLite } from "@/lib/server/services/questions";
+import { LEAGUE_NAME, LEAGUES } from "@/lib/catalog/teams";
+import { art, type ArtName } from "@/lib/server/art";
 
 export const metadata = { title: "Lock a take" };
 
@@ -14,10 +16,14 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
   const open = openQuestions(d).filter((x) => x.reviewStatus === "approved");
   const active = d.predictions.filter((p) => p.userId === me.id && p.status === "pending" && !p.supersededAt && !p.withdrawnAt && p.questionId).map((p) => p.questionId!);
   const favs = new Set(me.favoriteLeagues);
+  const ART: Record<string, ArtName> = { NFL: "league-nfl", NCAAF: "league-nfl", NBA: "league-nba", NCAAB: "league-nba", NHL: "league-nhl", MLB: "league-mlb" };
+  const leagueTiles = [...LEAGUES]
+    .sort((a, b) => Number(favs.has(b)) - Number(favs.has(a)))
+    .map((l) => ({ id: l, name: LEAGUE_NAME[l], art: art(ART[l]) }));
   const markets = [...open].sort((a, b) => Number(favs.has(b.league)) - Number(favs.has(a.league)));
   return (
     <div className="space-y-10">
-      <CreateFlow key={q ?? "free"} questions={open.map(toLite)} activeQuestionIds={active} initialQuestionId={q} first={first === "1"} />
+      <CreateFlow key={q ?? "free"} questions={open.map(toLite)} activeQuestionIds={active} initialQuestionId={q} first={first === "1"} leagueTiles={leagueTiles} />
       {!q && (
         <section>
           <SectionTitle>Or jump into a live market</SectionTitle>

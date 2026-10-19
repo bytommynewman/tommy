@@ -6,6 +6,7 @@ import { db } from "@/lib/server/db";
 import { feed, FEED_TABS, type FeedTab } from "@/lib/server/services/social";
 import { viewPrediction } from "@/lib/server/views";
 import { nowMs } from "@/lib/format";
+import { art } from "@/lib/server/art";
 
 export const metadata = { title: "Feed" };
 
@@ -31,7 +32,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
       <Tabs active={tab} items={FEED_TABS.map((t) => ({ id: t.id, label: t.label, href: `/feed?tab=${t.id}` }))} />
       <div className="mt-4 space-y-3">
         {items.length ? items.map((v) => <PredictionCard key={v.p.id} v={v} now={now} />) : (
-          <EmptyState title={EMPTY[tab][0]} body={EMPTY[tab][1]} action={<LinkButton href="/create">Lock a take</LinkButton>} />
+          <EmptyState art={art("empty-receipt")} title={EMPTY[tab][0]} body={EMPTY[tab][1]} action={<LinkButton href="/create">Lock a take</LinkButton>} />
         )}
       </div>
     </div>

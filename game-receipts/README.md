@@ -17,6 +17,8 @@ The first run creates `.data/db.json` with demo data. Demo login (dev only): `de
 | `npm test` | Vitest: scoring engine, integrity, services, AI structurer (32 tests) |
 | `npm run typecheck` / `npm run lint` | TypeScript strict and ESLint |
 | `npm run build` | Production build |
+| `npm run roster:sync` | Pull every team + athlete with photos into `lib/catalog/generated/rosters.json` (licensed SportsDataIO with `SPORTSDATAIO_KEY`; `-- --provider espn` for dev-only unofficial data) |
+| `npm run art:fetch` | Download the Higgsfield brand art listed in `scripts/art-manifest.json` into `public/art/` |
 | `npm run smoke` | Playwright end-to-end run against a running server on a **fresh** `.data/` (`BASE_URL=…`, `-- --shots <dir>` saves screenshots) |
 
 ## Architecture

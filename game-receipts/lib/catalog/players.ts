@@ -9,12 +9,14 @@ export interface Player {
   position: string;
   aliases: string[];
   rookie?: boolean;
+  /** Headshot from a licensed data provider (none in the mock catalog). */
+  imageUrl?: string;
 }
 
 const p = (league: League, name: string, teamId: string | null, position: string, aliases: string[] = [], rookie = false): Player => {
   const last = name.split(" ").slice(-1)[0].toLowerCase();
   return {
-    id: `${league}-${name}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-"),
+    id: `${league}-${name}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
     league, name, teamId, position, rookie,
     aliases: [name.toLowerCase(), name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(), last, ...aliases],
   };
@@ -49,9 +51,20 @@ export const PLAYERS: Player[] = [
   p("NHL", "Auston Matthews", "nhl-tor", "C", ["matthews", "auston"]), p("NHL", "Connor McDavid", "nhl-edm", "C", ["mcdavid", "mcjesus"]),
   p("NHL", "William Nylander", "nhl-tor", "RW", ["nylander", "willy"]), p("NHL", "Nathan MacKinnon", "nhl-col", "C", ["mackinnon"]),
   p("NHL", "Leon Draisaitl", "nhl-edm", "C", ["leon", "draisaitl"]), p("NHL", "Lane Hutson", "nhl-mtl", "D", ["hutson"]),
+  p("NHL", "Macklin Celebrini", "nhl-sjs", "C", ["celebrini", "macklin"]),
   // MLB
   p("MLB", "Shohei Ohtani", "mlb-lad", "DH/P", ["shohei", "ohtani"]), p("MLB", "Aaron Judge", "mlb-nyy", "RF", ["judge"]),
   p("MLB", "Vladimir Guerrero Jr.", "mlb-tor", "1B", ["vlad", "vladdy"]), p("MLB", "Cal Raleigh", "mlb-sea", "C", ["big dumper", "raleigh"]),
 ];
+
+// Roster sync output replaces/extends the mock list with every athlete (and headshots).
+import generated from "./generated/rosters.json";
+type GenPlayer = { league: League; name: string; teamId: string | null; position: string; imageUrl?: string };
+for (const g of generated.players as GenPlayer[]) {
+  const made = p(g.league, g.name, g.teamId, g.position);
+  const existing = PLAYERS.find((x) => x.id === made.id);
+  if (existing) Object.assign(existing, { teamId: g.teamId ?? existing.teamId, position: g.position || existing.position, imageUrl: g.imageUrl });
+  else PLAYERS.push({ ...made, imageUrl: g.imageUrl });
+}
 
 export const playerById = (id: string) => PLAYERS.find((x) => x.id === id);

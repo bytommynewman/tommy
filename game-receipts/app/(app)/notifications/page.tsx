@@ -7,6 +7,7 @@ import type { NotificationKind } from "@/lib/domain";
 import { requireUser } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
 import { MarkRead } from "./MarkRead";
+import { art } from "@/lib/server/art";
 
 export const metadata = { title: "Notifications" };
 const ICON: Record<NotificationKind, typeof Bell> = { follow: UserPlus, like: Heart, comment: MessageCircle, battle: Swords, resolved: Scale, receipt: Receipt, appeal: Gavel, development: Bell };
@@ -33,7 +34,7 @@ export default async function NotificationsPage() {
             );
           })}
         </ul>
-      ) : <EmptyState title="All quiet" body="You’ll hear about results, receipts, battles and new followers here." />}
+      ) : <EmptyState art={art("empty-bell")} title="All quiet" body="You’ll hear about results, receipts, battles and new followers here." />}
     </div>
   );
 }

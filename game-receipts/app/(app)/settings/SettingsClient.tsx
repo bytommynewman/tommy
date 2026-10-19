@@ -15,7 +15,7 @@ export function ProfileForm({ displayName, bio, leagues, isPrivate }: { displayN
       <Field label="Bio"><textarea name="bio" defaultValue={bio} maxLength={160} rows={2} className={`${inputCls} resize-none`} /></Field>
       <fieldset>
         <legend className="mb-1.5 text-sm font-semibold text-ink-200">Leagues</legend>
-        <div className="flex flex-wrap gap-2">{["NFL", "NBA", "NHL", "MLB"].map((l) => (
+        <div className="flex flex-wrap gap-2">{["NFL", "NBA", "NCAAF", "NCAAB", "NHL", "MLB"].map((l) => (
           <label key={l} className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink-900 px-3 py-1.5 text-sm ring-1 ring-ink-700 has-checked:bg-volt/10 has-checked:ring-volt">
             <input type="checkbox" name="leagues" value={l} defaultChecked={leagues.includes(l)} className="accent-[var(--color-volt)]" />{l}
           </label>

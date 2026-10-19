@@ -15,11 +15,14 @@ const opts = (pairs: [string, number][], field = 0): QuestionOption[] => {
   return o;
 };
 /** Championship market over every team in the league; baseline = softmax of mock ratings. */
-const titleOpts = (league: League): QuestionOption[] => {
+const titleOpts = (league: League, field = 0): QuestionOption[] => {
   const ts = TEAMS.filter((t) => t.league === league);
   const w = ts.map((t) => Math.exp(t.rating * 0.75));
-  const s = w.reduce((a, b) => a + b, 0);
-  return ts.map((t, i) => ({ id: t.id, label: teamLabel(t), baseline: Math.round((w[i] / s) * 10000) / 10000 }));
+  const s = w.reduce((a, b) => a + b, 0) / (1 - field);
+  const o = ts.map((t, i) => ({ id: t.id, label: teamLabel(t), baseline: Math.round((w[i] / s) * 10000) / 10000 }));
+  // College catalogs list top programs only, so the rest of the division is an explicit outcome.
+  if (field > 0) o.push({ id: "field", label: "Any other program", baseline: field });
+  return o;
 };
 
 const base = { status: "open" as const, createdBy: "system", createdAt: "2026-09-01T00:00:00.000Z", baselineSource: "mock-consensus" as const, reviewStatus: "approved" as const };
@@ -100,6 +103,16 @@ export const CATALOG_QUESTIONS: Question[] = [
     title: "San Antonio Spurs win 55+ games in 2026-27",
     criteria: "YES if the Spurs finish the 2026-27 regular season with at least 55 wins.",
     resolutionSource: OFFICIAL_SOURCE.NBA, specificity: 0.65, baselineYes: 0.35, resolvesBy: `${SEASON.NBA.regularSeasonEnd}T23:59:00.000Z`,
+  },
+  {
+    ...base, id: "ncaaf-cfp-2026", league: "NCAAF", category: "team", kind: "categorical", title: "2026 College Football Playoff champion",
+    criteria: "Resolves to the winner of the 2026-27 College Football Playoff National Championship game.", resolutionSource: OFFICIAL_SOURCE.NCAAF,
+    specificity: 0.85, resolvesBy: `${SEASON.NCAAF.titleDate}T23:59:00.000Z`, options: titleOpts("NCAAF", 0.12),
+  },
+  {
+    ...base, id: "ncaab-champ-2027", league: "NCAAB", category: "team", kind: "categorical", title: "2027 NCAA men's basketball champion",
+    criteria: "Resolves to the winner of the 2027 NCAA Division I men's basketball tournament.", resolutionSource: OFFICIAL_SOURCE.NCAAB,
+    specificity: 0.85, resolvesBy: `${SEASON.NCAAB.titleDate}T23:59:00.000Z`, options: titleOpts("NCAAB", 0.3),
   },
   // ---------- Resolved history (real outcomes, demo baselines) ----------
   {

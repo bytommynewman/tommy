@@ -5,6 +5,7 @@ import { Avatar, Card, Chip, EmptyState, Tabs } from "@/components/ui/primitives
 import { MIN_RESOLVED_ALL_TIME, MIN_RESOLVED_MONTHLY, periodKey } from "@/lib/scoring";
 import { requireUser } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
+import { art } from "@/lib/server/art";
 import { headToHeadBoard, leaderboard, periodsWithData, topCalls, type BoardKind } from "@/lib/server/services/reputation";
 
 export const metadata = { title: "Leaderboards" };
@@ -45,7 +46,7 @@ export default async function LeaderboardsPage({ searchParams }: { searchParams:
 
   function H2H() {
     const rows = headToHeadBoard(d);
-    if (!rows.length) return <EmptyState title="No battles settled yet" body="Challenge someone’s take to get on this board." />;
+    if (!rows.length) return <EmptyState art={art("empty-battle")} title="No battles settled yet" body="Challenge someone’s take to get on this board." />;
     return <Card className="divide-y divide-ink-700/60">{rows.map((r, i) => <Row key={r.user.id} rank={i + 1} u={r.user} me={r.user.id === me.id} right={<span className="font-display text-xl font-black italic tabular-nums text-white">{r.wins}-{r.losses}{r.pushes ? `-${r.pushes}` : ""}</span>} />)}</Card>;
   }
 
@@ -71,7 +72,7 @@ function Board({ kind, viewerId, period, cat }: { kind: BoardKind; viewerId: str
   const d = db();
   const rows = leaderboard(d, kind, viewerId, { period, category: cat || undefined });
   const min = kind === "all" ? MIN_RESOLVED_ALL_TIME : kind === "friends" ? 1 : MIN_RESOLVED_MONTHLY;
-  if (!rows.length) return <EmptyState title="No graded forecasters yet" body={kind === "friends" ? "Follow people to compare records." : "Resolved predictions will show up here."} />;
+  if (!rows.length) return <EmptyState art={art("empty-trophy")} title="No graded forecasters yet" body={kind === "friends" ? "Follow people to compare records." : "Resolved predictions will show up here."} />;
   let rank = 0;
   return (
     <>

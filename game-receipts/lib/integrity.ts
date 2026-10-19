@@ -21,14 +21,15 @@ export function canonicalJson(value: unknown): string {
 
 export type LockedFields = Pick<
   Prediction,
-  | "id" | "userId" | "kind" | "questionId" | "league" | "category" | "originalText" | "structuredText" | "criteria"
+  | "id" | "userId" | "kind" | "questionId" | "league" | "subject" | "category" | "originalText" | "structuredText" | "criteria"
   | "resolvesBy" | "forecast" | "baselineSnapshot" | "gradingVersion" | "lockedAt" | "chainId" | "revisionOf" | "revisionNumber" | "prevHash"
 >;
 
 export function lockedFields(p: LockedFields): LockedFields {
-  const { id, userId, kind, questionId, league, category, originalText, structuredText, criteria, resolvesBy, forecast,
+  const { id, userId, kind, questionId, league, subject, category, originalText, structuredText, criteria, resolvesBy, forecast,
     baselineSnapshot, gradingVersion, lockedAt, chainId, revisionOf, revisionNumber, prevHash } = p;
-  return { id, userId, kind, questionId, league, category, originalText, structuredText, criteria, resolvesBy, forecast,
+  // `subject` is optional: older receipts without it hash exactly as before (undefined keys are dropped).
+  return { id, userId, kind, questionId, league, subject: subject ?? undefined, category, originalText, structuredText, criteria, resolvesBy, forecast,
     baselineSnapshot, gradingVersion, lockedAt, chainId, revisionOf, revisionNumber, prevHash };
 }
 

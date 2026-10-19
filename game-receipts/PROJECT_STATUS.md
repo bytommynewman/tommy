@@ -13,7 +13,9 @@ _Last updated: 2026-10-19._ Location: `game-receipts/` inside the `bytommynewman
 - **Prod DB:** `supabase/migrations/0001_game_receipts.sql` (RLS, immutability trigger, `lock_prediction`/`withdraw_prediction`/`join_group` RPCs, indexes). It is verified on Postgres 16 by `supabase/tests/receipts_test.sql`.
 - **Tests:** 32 vitest tests, the SQL behavioral tests, and the Playwright E2E (`npm run smoke`), which passes the full flow including admin resolve and grade.
 
-- **Mobile/app (round 2):** fixed horizontal overflow that made iOS Safari zoom out and shrink the app. The E2E test now fails on any overflow. Added safe-area padding, crossfade route transitions (React `<ViewTransition>`), and an installable PWA: manifest, generated PNG icons at `/app-icon/[size]` and `/apple-icon`, a service worker with offline fallback (production only), and an install prompt. Added a Capacitor iOS/Android shell (`capacitor.config.ts`, see `NATIVE.md`).
+- **Mobile/app (round 2):** fixed horizontal overflow that made iOS Safari zoom out and shrink the app. The E2E test now fails on any overflow. Added safe-area padding, crossfade route transitions (React `<ViewTransition>`), and an installable PWA: manifest, app icons made from the official uploaded logo (`public/icons/`, `app/apple-icon.png`, emblem favicon `app/icon.png`), a service worker with offline fallback (production only), and an install prompt. Added a Capacitor iOS/Android shell (`capacitor.config.ts`, see `NATIVE.md`).
+
+- **Round 3:** the official uploaded logo is now the app icon, the home-screen icon, the PWA icons, the share images, and (as an emblem crop) the favicon and header mark. Leagues NCAAF and NCAAB were added, with CFP and NCAA tournament markets. The create flow opens with league tiles (title over art), each leading to a searchable list of every team and player. A take saves its `subject` (part of the sealed hash), and the subject's photo or logo shows on cards, detail pages and receipts, falling back to a team-colour monogram. The roster sync supports SportsDataIO (licensed) or ESPN (dev). 11 Higgsfield art assets are generated and wired in (`art()` returns null until `npm run art:fetch` has been run), covering heroes, league art, empty states and the story background.
 
 ## Key decisions
 - The local JSON store is a mock adapter, so the app runs with zero credentials. Supabase is the production target; the schema is written but **not wired into the app yet**.
@@ -27,7 +29,8 @@ _Last updated: 2026-10-19._ Location: `game-receipts/` inside the `bytommynewman
 2. **Licensed sports data adapter**, plus automated "possibly settled" detection queued for human review.
 3. Stripe subscriptions (Phase 6), creator-league branding, and embeddable cards.
 4. Run `npx cap add ios` on a Mac and commit `ios/`; App Store submission needs a deployed URL. Push notifications.
-7. Higgsfield art (stadium hero backgrounds, refined icon) is blocked: this cloud environment can't reach `upload.higgsfield.ai` or `d2ol7oe51mr4n9.cloudfront.net`, so allow those domains first.
+7. On the Mac mini, run `npm run art:fetch` (Higgsfield art; the cloud env can't reach its CDN) and `npm run roster:sync`, then commit `public/art/` and `lib/catalog/generated/rosters.json`.
+8. Licensed photos need a SportsDataIO subscription that includes headshots. Set `SPORTSDATAIO_KEY` and re-run the sync. The ESPN source is for dev only.
 5. Tune the letter-grade scale with real data. Today everyone sits near C because grades are shrunk toward consensus (36).
 6. Light mode, account deletion and export flow, rate limiting at the edge, and a proper admin role assignment UI.
 

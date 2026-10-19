@@ -7,14 +7,26 @@ import { currentUser } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
 import { topCalls } from "@/lib/server/services/reputation";
 import { viewPrediction } from "@/lib/server/views";
+import { art } from "@/lib/server/art";
 
 export default async function Landing() {
   const me = await currentUser();
   const d = db();
   const best = topCalls(d, 1)[0];
+  const wide = art("hero-wide"), tall = art("hero-tall");
   return (
-    <div className="min-h-dvh">
-      <header className="mx-auto flex h-16 max-w-6xl items-center px-5">
+    <div className="relative min-h-dvh">
+      {(wide || tall) && (
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[92dvh] overflow-hidden">
+          <picture>
+            {wide && <source media="(min-width: 768px)" srcSet={wide} />}
+            { }
+            <img src={tall ?? wide!} alt="" className="size-full object-cover opacity-55" />
+          </picture>
+          <div className="absolute inset-0 bg-gradient-to-b from-ink-950/30 via-ink-950/60 to-ink-950" />
+        </div>
+      )}
+      <header className="relative mx-auto flex h-16 max-w-6xl items-center px-5" style={{ marginTop: "var(--safe-top)" }}>
         <Lockup />
         <div className="ml-auto flex gap-2">
           {me ? <LinkButton href="/feed" size="sm">Open app</LinkButton> : <>
@@ -24,7 +36,7 @@ export default async function Landing() {
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-6 md:grid-cols-2 md:pt-14">
+      <section className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-6 md:grid-cols-2 md:pt-14">
         <div className="animate-rise">
           <HeroLogo className="mx-auto mb-6 w-56 drop-shadow-[0_0_40px_rgba(34,229,138,0.25)] md:hidden" />
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.3em] text-volt">Call it. Lock it. Prove it.</p>

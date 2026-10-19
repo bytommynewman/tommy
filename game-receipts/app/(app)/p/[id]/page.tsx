@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BadgeCheck, Clock, ExternalLink, Fingerprint, GitBranch, Lock, Newspaper, PartyPopper, ShieldCheck } from "lucide-react";
 import { AppealForm, ChallengeBox, CommentForm, OwnerActions, ReportButton } from "@/components/app/detail";
 import { DebateVote } from "@/components/app/interactive";
+import { SubjectAvatar } from "@/components/app/SubjectAvatar";
 import { ForecastBars, StatusPill } from "@/components/app/PredictionCard";
 import { CopyButton, ScoreRing } from "@/components/ui/client";
 import { Avatar, Card, Chip, LinkButton, SectionTitle } from "@/components/ui/primitives";
@@ -84,7 +85,13 @@ export default async function PredictionPage({ params, searchParams }: Props) {
           {q?.reviewStatus === "pending" && <Chip tone="gold">Question in review</Chip>}
           {awards.map((a) => <Chip key={a} tone="volt">🏆 {a}</Chip>)}
         </div>
-        <h1 className="mt-2 font-display text-2xl font-black italic leading-tight text-white">{p.structuredText}</h1>
+        {v.subject && (
+          <div className="mt-4 flex items-center gap-3">
+            <SubjectAvatar s={v.subject} size={64} />
+            <div><div className="font-display text-xl font-black italic text-white">{v.subject.name}</div><div className="text-xs text-ink-400">{v.subject.league} · {v.subject.type === "team" ? "Team" : v.subject.meta}</div></div>
+          </div>
+        )}
+        <h1 className="mt-3 font-display text-2xl font-black italic leading-tight text-white">{p.structuredText}</h1>
         {p.originalText !== p.structuredText && <p className="mt-2 border-l-2 border-ink-600 pl-3 text-sm italic text-ink-300">“{p.originalText}”<span className="ml-1 not-italic text-ink-500">— original words</span></p>}
         {p.kind === "graded" && <div className="mt-5"><ForecastBars v={v} /></div>}
         {p.kind === "debate" && (

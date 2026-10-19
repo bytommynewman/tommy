@@ -24,4 +24,4 @@ For a TestFlight or App Store build, deploy the web app first (e.g. Vercel). The
 
 Android works the same way: `npx cap add android`, then `npm run cap:android` (needs Android Studio).
 
-App icon: export a 1024×1024 PNG from `/app-icon/1024` while the server is running, then drop it into Xcode's AppIcon asset.
+App icon: drag `public/icons/icon-1024.png` (the official logo) into Xcode's AppIcon asset.

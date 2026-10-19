@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/server/db";
 import { outcomeLabel } from "@/lib/server/services/grading";
@@ -7,6 +9,19 @@ import { durationLabel, fmtDate } from "@/lib/format";
  * Shareable receipt PNG. ?format=story → 1080×1920 (Instagram/TikTok stories),
  * default → 1200×630 (X, iMessage, link previews).
  */
+// Official logo, embedded once per process as a data URI for the image renderer.
+let logoUri: string | null = null;
+const logo = () => (logoUri ??= `data:image/png;base64,${fs.readFileSync(path.join(process.cwd(), "public/brand/logo-360.png")).toString("base64")}`);
+
+let shareBg: string | null | undefined;
+const shareBackground = () => {
+  if (shareBg === undefined) {
+    const f = path.join(process.cwd(), "public/art/share-bg.png");
+    shareBg = fs.existsSync(f) ? `data:image/png;base64,${fs.readFileSync(f).toString("base64")}` : null;
+  }
+  return shareBg;
+};
+
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const story = new URL(req.url).searchParams.get("format") === "story";
@@ -47,8 +62,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
   return new ImageResponse(
     (
-      <div style={{ width: W, height: H, display: "flex", flexDirection: story ? "column" : "row", alignItems: "center", justifyContent: "center", gap: story ? 70 : 50, background: "radial-gradient(circle at 50% 0%, #0f3d27 0%, #050607 60%)", color: "#fff", fontFamily: "sans-serif" }}>
+      <div style={{ width: W, height: H, display: "flex", flexDirection: story ? "column" : "row", alignItems: "center", justifyContent: "center", gap: story ? 70 : 50, background: "radial-gradient(circle at 50% 0%, #0f3d27 0%, #050607 60%)", color: "#fff", fontFamily: "sans-serif", position: "relative" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- rendered by Satori */}
+        {story && shareBackground() && <img src={shareBackground()!} width={W} height={H} alt="" style={{ position: "absolute", top: 0, left: 0, objectFit: "cover" }} />}
         <div style={{ display: "flex", flexDirection: "column", alignItems: story ? "center" : "flex-start", maxWidth: story ? 900 : 420 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- rendered by Satori, not the browser */}
+          <img src={logo()} width={story ? 300 : 170} height={story ? 300 : 170} alt="" style={{ marginBottom: story ? 10 : 6 }} />
           <div style={{ display: "flex", fontSize: story ? 84 : 52, fontWeight: 900, fontStyle: "italic", letterSpacing: -2 }}>
             <span style={{ color: "#e9ecee" }}>GAME&nbsp;</span><span style={{ color: green }}>RECEIPTS</span>
           </div>

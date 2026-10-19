@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/app/Shell";
 import { Card, EmptyState, LinkButton, SectionTitle, Stat } from "@/components/ui/primitives";
 import { requireUser } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
+import { art } from "@/lib/server/art";
 import { battleRecord } from "@/lib/server/services/reputation";
 
 export const metadata = { title: "Battles" };
@@ -25,7 +26,7 @@ export default async function BattlesPage() {
       <section>
         <SectionTitle>Live</SectionTitle>
         {live.length ? <div className="space-y-2">{live.map((b) => <BattleRow key={b.id} d={d} b={b} meId={me.id} />)}</div>
-          : <EmptyState title="No live battles" body="Open any pending take in the feed and hit Battle to challenge it." action={<LinkButton href="/feed?tab=trending">Find a take to fade</LinkButton>} />}
+          : <EmptyState art={art("empty-battle")} title="No live battles" body="Open any pending take in the feed and hit Battle to challenge it." action={<LinkButton href="/feed?tab=trending">Find a take to fade</LinkButton>} />}
       </section>
       {done.length > 0 && <section><SectionTitle>History</SectionTitle><div className="space-y-2">{done.map((b) => <BattleRow key={b.id} d={d} b={b} meId={me.id} />)}</div></section>}
       {friends.length > 0 && <section><SectionTitle>Around your circle</SectionTitle><div className="space-y-2">{friends.map((b) => <BattleRow key={b.id} d={d} b={b} meId={me.id} />)}</div></section>}

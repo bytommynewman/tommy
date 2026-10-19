@@ -86,6 +86,21 @@ await page.getByRole("button", { name: "Review before locking" }).click();
 await page.getByRole("button", { name: /Lock it in/ }).click();
 await page.waitForURL(/\/p\/.+\?locked=1/);
 
+step("league picker: take about a player, saved with their avatar");
+await page.goto(`${BASE}/create`);
+await page.getByRole("tab", { name: /NHL/ }).click();
+await page.getByLabel("Search NHL").fill("celeb");
+await page.getByRole("button", { name: /Macklin Celebrini/ }).click();
+await page.getByText("Your take is about").waitFor();
+await page.fill("textarea", "Best young center in the league within two years");
+await shot("10b-subject");
+await page.getByRole("button", { name: /Make it measurable/ }).click();
+await page.getByRole("button", { name: /Hot take/ }).click();
+await page.getByRole("button", { name: /Lock it in/ }).click();
+await page.waitForURL(/\/p\/.+\?locked=1/);
+await page.getByRole("img", { name: "Macklin Celebrini" }).first().waitFor();
+await shot("10c-subject-locked");
+
 step("feed, receipt, profile, leaderboards");
 for (const [path, name] of [["/feed?tab=trending", "11-feed"], ["/leaderboards", "12-leaderboards"], [`/u/${u}`, "13-profile"], ["/u/darkhorse_dana", "14-profile-dana"], ["/u/darkhorse_dana/reputation", "15-reputation"], ["/battles", "16-battles"], ["/leagues/the-film-room", "17-league"], ["/notifications", "18-notifications"], ["/settings", "19-settings"], ["/how-scoring-works", "20-scoring"]]) {
   const res = await page.goto(BASE + path);

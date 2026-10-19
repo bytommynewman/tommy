@@ -53,7 +53,7 @@ create trigger on_auth_user_created after insert on auth.users for each row exec
 -- ---------- questions (markets) ----------
 create table public.questions (
   id text primary key,
-  league text not null check (league in ('NFL','NBA','NHL','MLB')),
+  league text not null check (league in ('NFL','NBA','NCAAF','NCAAB','NHL','MLB')),
   category text not null check (category in ('award','trade','breakout','team','comparison')),
   kind text not null check (kind in ('binary','categorical')),
   title text not null,
@@ -85,6 +85,7 @@ create table public.predictions (
   kind text not null check (kind in ('graded','debate')),
   question_id text references public.questions(id),
   league text,
+  subject jsonb,                 -- {type:'player'|'team', id} the take is about (shown as its avatar)
   category text not null,
   original_text text not null check (char_length(original_text) between 1 and 500),
   structured_text text not null,
@@ -122,11 +123,11 @@ begin
   if tg_op = 'DELETE' then raise exception 'predictions are permanent'; end if;
   if (new.id, new.user_id, new.kind, new.question_id, new.league, new.category, new.original_text, new.structured_text, new.criteria,
       new.resolves_by, new.forecast, new.baseline_snapshot, new.grading_version, new.locked_at, new.chain_id, new.revision_of,
-      new.revision_number, new.prev_hash, new.hash)
+      new.revision_number, new.prev_hash, new.hash, new.subject)
      is distinct from
      (old.id, old.user_id, old.kind, old.question_id, old.league, old.category, old.original_text, old.structured_text, old.criteria,
       old.resolves_by, old.forecast, old.baseline_snapshot, old.grading_version, old.locked_at, old.chain_id, old.revision_of,
-      old.revision_number, old.prev_hash, old.hash) then
+      old.revision_number, old.prev_hash, old.hash, old.subject) then
     raise exception 'locked prediction fields are immutable';
   end if;
   return new;
@@ -137,7 +138,7 @@ create trigger predictions_immutable before update or delete on public.predictio
 create or replace function public.prediction_payload(p public.predictions) returns jsonb language sql immutable as $$
   select jsonb_build_object(
     'id', p.id, 'userId', p.user_id, 'kind', p.kind, 'questionId', p.question_id, 'league', p.league, 'category', p.category,
-    'originalText', p.original_text, 'structuredText', p.structured_text, 'criteria', p.criteria, 'resolvesBy', p.resolves_by,
+    'subject', p.subject, 'originalText', p.original_text, 'structuredText', p.structured_text, 'criteria', p.criteria, 'resolvesBy', p.resolves_by,
     'forecast', p.forecast, 'baselineSnapshot', p.baseline_snapshot, 'gradingVersion', p.grading_version, 'lockedAt', p.locked_at,
     'chainId', p.chain_id, 'revisionOf', p.revision_of, 'revisionNumber', p.revision_number, 'prevHash', p.prev_hash)
 $$;
@@ -153,7 +154,7 @@ $$;
  */
 create or replace function public.lock_prediction(
   p_question_id text, p_original_text text, p_structured_text text, p_forecast jsonb,
-  p_debate_league text default null, p_revision_of uuid default null
+  p_debate_league text default null, p_revision_of uuid default null, p_subject jsonb default null
 ) returns public.predictions language plpgsql security definer set search_path = public as $$
 declare
   uid uuid := auth.uid();
@@ -171,6 +172,7 @@ begin
   rec.user_id := uid;
   rec.locked_at := now();
   rec.original_text := left(trim(p_original_text), 500);
+  rec.subject := p_subject;
   rec.grading_version := 'GR-2026.1';
   rec.prev_hash := prev;
   rec.revision_number := 1;

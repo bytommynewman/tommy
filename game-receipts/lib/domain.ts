@@ -6,6 +6,8 @@ export const CATEGORY_LABEL: Record<Category | "debate", string> = {
   award: "Award", trade: "Trade", breakout: "Breakout", team: "Team", comparison: "Head-to-head", debate: "Hot take",
 };
 
+export interface Subject { type: "player" | "team"; id: string }
+
 export interface QuestionOption { id: string; label: string; baseline: number }
 
 export interface Evidence { source: string; url: string; note: string }
@@ -56,6 +58,8 @@ export interface Prediction {
   kind: PredictionKind;
   questionId: string | null;
   league: League | null;
+  /** The player or team this take is about — rendered as its avatar. */
+  subject?: Subject | null;
   category: Category | "debate";
   originalText: string;
   structuredText: string;

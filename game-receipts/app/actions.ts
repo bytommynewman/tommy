@@ -114,6 +114,7 @@ const LockSchema = z.object({
   draft: DraftQuestionSchema.optional(),
   forecast: ForecastSchema.optional(),
   debate: z.object({ league: z.enum(LEAGUES as [string, ...string[]]).nullable() }).optional(),
+  subject: z.object({ type: z.enum(["player", "team"]), id: z.string().max(120) }).nullable().optional(),
 });
 
 export async function lock(input: unknown): Promise<ActionState> {

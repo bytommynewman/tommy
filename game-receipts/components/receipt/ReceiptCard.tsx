@@ -1,5 +1,6 @@
 import { BadgeCheck } from "lucide-react";
 import { ReceiptMark } from "../brand/Logo";
+import { SubjectAvatar } from "../app/SubjectAvatar";
 import { durationLabel, fmtDateTime, pct } from "@/lib/format";
 import type { PredictionView } from "@/lib/server/views";
 import { outcomeLabel } from "@/lib/server/services/grading";
@@ -21,7 +22,13 @@ export function ReceiptCard({ v, award }: { v: PredictionView; award?: string })
           <span className="font-mono text-[10px] text-ink-600">#{p.id.slice(0, 8).toUpperCase()}</span>
         </div>
         <div className="my-4 border-t-2 border-dashed border-ink-400/60" />
-        <div className="font-mono text-[11px] uppercase tracking-wider text-ink-600">@{author.username} called it</div>
+        <div className="flex items-center gap-3">
+          {v.subject && <SubjectAvatar s={v.subject} size={48} />}
+          <div className="min-w-0">
+            <div className="font-mono text-[11px] uppercase tracking-wider text-ink-600">@{author.username} called it</div>
+            {v.subject && <div className="truncate font-display text-base font-black italic">{v.subject.name}</div>}
+          </div>
+        </div>
         <p className="mt-1 font-display text-xl font-extrabold italic leading-tight">{p.structuredText}</p>
         {p.originalText !== p.structuredText && <p className="mt-2 text-sm italic text-ink-600">“{p.originalText}”</p>}
         <dl className="mt-4 space-y-1.5 font-mono text-[12px]">

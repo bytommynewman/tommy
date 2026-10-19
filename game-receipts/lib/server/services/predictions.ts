@@ -1,4 +1,5 @@
-import type { Category, DB, Prediction } from "../../domain";
+import type { Category, DB, Prediction, Subject } from "../../domain";
+import { inferSubject, isKnownSubject } from "../../catalog/subjects";
 import {
   DAILY_LOCK_LIMIT, ForecastError, GRADING_VERSION, validateForecast, WITHDRAW_GRACE_MINUTES, type Forecast,
 } from "../../scoring";
@@ -17,6 +18,8 @@ export interface LockInput {
   forecast?: Forecast;
   /** Free-form hot take: never graded. */
   debate?: { league: League | null };
+  /** Player or team the take is about (shown as its avatar). */
+  subject?: Subject | null;
 }
 
 export function describeForecastFor(d: DB, questionId: string, f: Forecast): string {
@@ -51,6 +54,7 @@ function seal(d: DB, p: Omit<Prediction, "hash" | "prevHash">): Prediction {
 export function lockPrediction(d: DB, userId: string, input: LockInput, now = new Date(), opts: { seed?: boolean } = {}): Prediction {
   const originalText = input.originalText.trim().slice(0, 500);
   if (!originalText) throw new UserError("Say what you're calling first");
+  if (input.subject && !isKnownSubject(input.subject)) throw new UserError("Unknown player or team");
   const id = newId();
   const lockedAt = now.toISOString();
   const lifecycle = {
@@ -60,7 +64,7 @@ export function lockPrediction(d: DB, userId: string, input: LockInput, now = ne
 
   if (input.debate) {
     const p = seal(d, {
-      id, userId, kind: "debate", questionId: null, league: input.debate.league, category: "debate",
+      id, userId, kind: "debate", questionId: null, league: input.debate.league, subject: input.subject ?? null, category: "debate",
       originalText, structuredText: originalText, criteria: "Debate — not objectively verifiable, so it is never graded.",
       resolvesBy: null, forecast: null, baselineSnapshot: null, gradingVersion: GRADING_VERSION, lockedAt,
       chainId: id, revisionOf: null, revisionNumber: 1, ...lifecycle,
@@ -83,8 +87,13 @@ export function lockPrediction(d: DB, userId: string, input: LockInput, now = ne
     if (e instanceof ForecastError) throw new UserError(e.message);
     throw e;
   }
+  // Ballot picks are the natural subject; otherwise use what the user picked, else whoever the question names.
+  const pick = input.forecast.type === "categorical" ? input.forecast.primary.optionId : null;
+  const subject: Subject | null = input.subject
+    ?? (pick && isKnownSubject({ type: "player", id: pick }) ? { type: "player", id: pick } : pick && isKnownSubject({ type: "team", id: pick }) ? { type: "team", id: pick } : null)
+    ?? inferSubject(q.title, q.league);
   const p = seal(d, {
-    id, userId, kind: "graded", questionId: q.id, league: q.league, category: q.category as Category,
+    id, userId, kind: "graded", questionId: q.id, league: q.league, subject, category: q.category as Category,
     originalText, structuredText: describeForecastFor(d, q.id, input.forecast), criteria: q.criteria, resolvesBy: q.resolvesBy,
     forecast: input.forecast, baselineSnapshot: shape, gradingVersion: GRADING_VERSION, lockedAt,
     chainId: id, revisionOf: null, revisionNumber: 1, ...lifecycle,
@@ -106,7 +115,7 @@ export function revisePrediction(d: DB, userId: string, predictionId: string, fo
   const lockedAt = now.toISOString();
   orig.supersededAt = lockedAt;
   const p = seal(d, {
-    id: newId(), userId, kind: "graded", questionId: q.id, league: q.league, category: orig.category,
+    id: newId(), userId, kind: "graded", questionId: q.id, league: q.league, subject: orig.subject ?? null, category: orig.category,
     originalText: note.trim().slice(0, 500) || orig.originalText, structuredText: describeForecastFor(d, q.id, forecast),
     criteria: q.criteria, resolvesBy: q.resolvesBy, forecast, baselineSnapshot: shape, gradingVersion: GRADING_VERSION,
     lockedAt, chainId: orig.chainId, revisionOf: orig.id, revisionNumber: orig.revisionNumber + 1,

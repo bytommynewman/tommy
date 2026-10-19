@@ -6,6 +6,7 @@ import type { PredictionView } from "@/lib/server/views";
 import { forecastRows } from "@/lib/server/views";
 import { Avatar, Card, Chip } from "../ui/primitives";
 import { LikeButton } from "./interactive";
+import { SubjectAvatar } from "./SubjectAvatar";
 import { outcomeLabel } from "@/lib/server/services/grading";
 
 export function StatusPill({ v }: { v: PredictionView }) {
@@ -72,7 +73,13 @@ export function PredictionCard({ v, now }: { v: PredictionView; now?: number }) 
             {p.revisionNumber > 1 && <Chip tone="muted">Rev {p.revisionNumber}</Chip>}
             {p.withdrawnAt && !p.withdrawnInGrace && <Chip tone="loss">Withdrawn — still graded</Chip>}
           </div>
-          <p className="text-[15px] font-semibold leading-snug text-white">{v.question?.title ?? p.structuredText}</p>
+          <div className="flex items-start gap-3">
+            {v.subject && <SubjectAvatar s={v.subject} size={48} />}
+            <div className="min-w-0 flex-1">
+              {v.subject && <div className="truncate text-xs font-semibold text-ink-300">{v.subject.name}</div>}
+              <p className="text-[15px] font-semibold leading-snug text-white">{v.question?.title ?? p.structuredText}</p>
+            </div>
+          </div>
           {p.kind === "graded" && p.originalText && p.originalText !== p.structuredText && (
             <p className="mt-1 line-clamp-2 text-sm italic text-ink-400">“{p.originalText}”</p>
           )}

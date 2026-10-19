@@ -10,6 +10,9 @@ import type { Forecast } from "@/lib/scoring";
 import { Spinner } from "../ui/client";
 import { btn, Chip, inputCls } from "../ui/primitives";
 import { defaultForecast, ForecastEditor } from "./ForecastEditor";
+import { SubjectPicker, type LeagueTile } from "./SubjectPicker";
+import { SubjectAvatar } from "../app/SubjectAvatar";
+import type { SubjectLite } from "@/lib/catalog/subjects";
 
 type Step = "say" | "pick" | "set" | "review";
 type Target = { suggestion: Suggestion; q: QuestionLite | null };
@@ -22,7 +25,7 @@ function draftToLite(s: Suggestion): QuestionLite {
   return { id: "draft", league: d.league, category: d.category, kind: "binary", title: d.title, criteria: d.criteria, resolutionSource: d.resolutionSource, resolvesBy: d.resolvesBy, baselineYes: 0.5, baselineSource: "none" };
 }
 
-export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, first }: { questions: QuestionLite[]; activeQuestionIds: string[]; initialQuestionId?: string; first?: boolean }) {
+export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, first, leagueTiles }: { questions: QuestionLite[]; activeQuestionIds: string[]; initialQuestionId?: string; first?: boolean; leagueTiles: LeagueTile[] }) {
   const initialQ = questions.find((q) => q.id === initialQuestionId) ?? null;
   const [step, setStep] = useState<Step>(initialQ ? "set" : "say");
   const [text, setText] = useState(initialQ ? "" : "");
@@ -31,11 +34,14 @@ export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, fi
   const [target, setTarget] = useState<Target | null>(initialQ ? { q: initialQ, suggestion: { key: initialQ.id, kind: "existing", questionId: initialQ.id, league: initialQ.league as Suggestion["league"], category: initialQ.category as Suggestion["category"], statement: initialQ.title, rationale: "" } } : null);
   const [forecast, setForecast] = useState<Forecast | null>(initialQ ? defaultForecast(initialQ) : null);
   const [error, setError] = useState<string | null>(null);
+  const [subject, setSubject] = useState<SubjectLite | null>(null);
   const [pending, start] = useTransition();
 
   const runStructure = () => start(async () => {
     setError(null);
-    const res = await structure(text);
+    // Make sure the structurer knows who the take is about even if the text says "he" or "they".
+    const aboutText = subject && !text.toLowerCase().includes(subject.name.toLowerCase()) ? `${subject.name} — ${text}` : text;
+    const res = await structure(aboutText);
     if (res.error) { setError(res.error); return; }
     setSuggestions(res.suggestions); setProvider(res.provider); setStep("pick");
   });
@@ -53,8 +59,8 @@ export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, fi
     if (!target) return;
     const s = target.suggestion;
     const payload = s.kind === "debate"
-      ? { originalText: text || s.statement, debate: { league: s.league } }
-      : { originalText: text.trim() || target.q!.title, questionId: s.kind === "existing" ? s.questionId : undefined, draft: s.kind === "draft" ? s.draft : undefined, forecast: forecast! };
+      ? { originalText: text || s.statement, debate: { league: subject?.league ?? s.league }, subject: subject ? { type: subject.type, id: subject.id } : null }
+      : { originalText: text.trim() || target.q!.title, questionId: s.kind === "existing" ? s.questionId : undefined, draft: s.kind === "draft" ? s.draft : undefined, forecast: forecast!, subject: subject ? { type: subject.type, id: subject.id } : null };
     const res = await lock(payload);
     if (res?.error) setError(res.error);
   });
@@ -71,9 +77,24 @@ export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, fi
         <section className="animate-rise">
           {first && <Chip tone="volt" className="mb-3">Step 1 of 1 · Your first receipt</Chip>}
           <h1 className="font-display text-4xl font-black uppercase italic leading-none text-white">What’s your call?</h1>
-          <p className="mt-2 text-sm text-ink-400">Say it how you’d say it at the bar. We’ll turn it into something that can be graded — you approve the exact wording.</p>
-          <textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={4} autoFocus
-            placeholder="e.g. The Leafs are going to have a crazy good season" className={`${inputCls} mt-5 resize-none text-lg`}
+          <p className="mt-2 text-sm text-ink-400">Pick who it’s about, then say it how you’d say it at the bar. We’ll make it gradeable — you approve the exact wording.</p>
+          <div className="mt-5">
+            {subject ? (
+              <div className="flex items-center gap-3 rounded-2xl bg-ink-850 p-3 ring-1 ring-volt/40 animate-rise">
+                <SubjectAvatar s={subject} size={56} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-volt">Your take is about</div>
+                  <div className="truncate font-display text-xl font-black italic text-white">{subject.name}</div>
+                  <div className="text-xs text-ink-400">{subject.league} · {subject.type === "team" ? "Team" : subject.meta}</div>
+                </div>
+                <button type="button" onClick={() => setSubject(null)} className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-ink-300 hover:bg-ink-800 hover:text-white">Change</button>
+              </div>
+            ) : (
+              <SubjectPicker leagues={leagueTiles} onPick={setSubject} />
+            )}
+          </div>
+          <textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={4}
+            placeholder={subject ? `What’s your take on ${subject.name}?` : "e.g. The Leafs are going to have a crazy good season"} className={`${inputCls} mt-4 resize-none text-lg`}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && text.trim().length >= 4) runStructure(); }} />
           <div className="mt-3 flex flex-wrap gap-2">
             {EXAMPLES.map((ex) => (
@@ -133,6 +154,12 @@ export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, fi
           <h1 className="font-display text-3xl font-black uppercase italic leading-none text-white">Final check</h1>
           <p className="mt-2 text-sm text-ink-400">Once locked, this can’t be edited or deleted. You can post a timestamped revision later, but this record stays.</p>
           <dl className="mt-5 divide-y divide-ink-700/60 overflow-hidden rounded-2xl bg-ink-850 ring-1 ring-ink-700">
+            {subject && (
+              <div className="flex items-center gap-3 px-4 py-3">
+                <SubjectAvatar s={subject} size={44} />
+                <div><dt className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">About</dt><dd className="font-semibold text-white">{subject.name}</dd></div>
+              </div>
+            )}
             <Row k="Exact prediction" v={target.q && forecast ? describeForecast(target.q, forecast) : target.suggestion.statement} strong />
             {text && text !== target.suggestion.statement && <Row k="Your original words" v={`“${text}”`} />}
             <Row k="League" v={target.suggestion.league ?? "—"} />

@@ -11,11 +11,13 @@ type T = { id: string; league: string; label: string; abbr: string; color: strin
 const LEAGUES = [
   { id: "NFL", name: "NFL", note: "Full support" },
   { id: "NBA", name: "NBA", note: "Full support" },
+  { id: "NCAAF", name: "NCAAF", note: "College football" },
+  { id: "NCAAB", name: "NCAAB", note: "College hoops" },
   { id: "NHL", name: "NHL", note: "Early access" },
   { id: "MLB", name: "MLB", note: "Early access" },
 ];
 
-export function Onboarding({ username, teams }: { username: string; teams: T[] }) {
+export function Onboarding({ username, teams, leagueArt }: { username: string; teams: T[]; leagueArt: Record<string, string | null> }) {
   const [step, setStep] = useState(0);
   const [leagues, setLeagues] = useState<string[]>(["NFL", "NBA"]);
   const [picked, setPicked] = useState<string[]>([]);
@@ -44,7 +46,9 @@ export function Onboarding({ username, teams }: { username: string; teams: T[] }
             const on = leagues.includes(l.id);
             return (
               <button type="button" key={l.id} aria-pressed={on} onClick={() => toggle(leagues, setLeagues, l.id)}
-                className={`relative rounded-2xl p-4 text-left ring-1 transition ${on ? "bg-volt/10 ring-volt" : "bg-ink-850 ring-ink-700 hover:ring-ink-500"}`}>
+                className={`relative overflow-hidden rounded-2xl p-4 text-left ring-1 transition ${on ? "bg-volt/10 ring-volt" : "bg-ink-850 ring-ink-700 hover:ring-ink-500"}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- decorative league art */}
+                {leagueArt[l.id] && <img src={leagueArt[l.id]!} alt="" aria-hidden className={`pointer-events-none absolute -bottom-3 -right-3 size-24 object-contain transition ${on ? "opacity-100" : "opacity-60"}`} />}
                 <div className="font-display text-2xl font-black italic text-white">{l.name}</div>
                 <div className="text-xs text-ink-400">{l.note}</div>
                 {on && <Check className="absolute right-3 top-3 size-5 text-volt" />}

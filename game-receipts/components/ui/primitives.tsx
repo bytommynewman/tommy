@@ -59,9 +59,11 @@ export function SectionTitle({ children, action }: { children: ReactNode; action
   );
 }
 
-export function EmptyState({ title, body, action }: { title: string; body?: string; action?: ReactNode }) {
+export function EmptyState({ title, body, action, art }: { title: string; body?: string; action?: ReactNode; art?: string | null }) {
   return (
     <Card className="flex flex-col items-center gap-3 px-6 py-10 text-center">
+      {/* eslint-disable-next-line @next/next/no-img-element -- small local art, already sized */}
+      {art && <img src={art} alt="" aria-hidden width={112} height={112} className="-mb-1 size-28 object-contain drop-shadow-[0_0_24px_rgba(34,229,138,0.25)]" />}
       <div className="font-display text-xl font-extrabold italic uppercase text-ink-200">{title}</div>
       {body && <p className="max-w-sm text-sm text-ink-400">{body}</p>}
       {action}

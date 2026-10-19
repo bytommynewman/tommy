@@ -14,12 +14,13 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#050607",
     categories: ["sports", "social", "entertainment"],
     icons: [
-      { src: "/app-icon/192", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/app-icon/512", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/app-icon/512?maskable", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-1024.png", sizes: "1024x1024", type: "image/png", purpose: "any" },
+      { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "Lock a take", url: "/create", icons: [{ src: "/app-icon/192", sizes: "192x192" }] },
+      { name: "Lock a take", url: "/create", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Leaderboards", url: "/leaderboards" },
     ],
   };

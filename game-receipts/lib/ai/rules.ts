@@ -22,6 +22,8 @@ function find<T extends { aliases: string[] }>(items: T[], text: string) {
 }
 
 const LEAGUE_WORDS: [League, RegExp][] = [
+  ["NCAAF", /\b(ncaaf|college football|cfp|heisman|bowl game)\b/],
+  ["NCAAB", /\b(ncaab|college basketball|march madness|final four|sweet 16)\b/],
   ["NFL", /\b(nfl|super bowl|touchdowns?|qb|quarterback|passing yards|rushing)\b/],
   ["NBA", /\b(nba|finals mvp|rebounds?|assists?|triple[- ]doubles?)\b/],
   ["NHL", /\b(nhl|stanley cup|goals?|hat trick)\b/],
@@ -169,6 +171,8 @@ function thresholdFor(t: Team) {
     case "NBA": return { short: "50+ wins", long: "at least 50 wins" };
     case "NFL": return { short: "11+ wins", long: "at least 11 wins" };
     case "MLB": return { short: "92+ wins", long: "at least 92 wins" };
+    case "NCAAF": return { short: "11+ wins", long: "at least 11 regular-season wins" };
+    case "NCAAB": return { short: "27+ wins", long: "at least 27 regular-season wins" };
   }
 }
 
