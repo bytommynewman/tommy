@@ -1,4 +1,4 @@
-import type { League } from "./teams";
+import { GENERATED_TEAM_ID, type League } from "./teams";
 
 /** MOCK player reference data. Team affiliations are illustrative and not live-synced. */
 export interface Player {
@@ -60,11 +60,14 @@ export const PLAYERS: Player[] = [
 // Roster sync output replaces/extends the mock list with every athlete (and headshots).
 import generated from "./generated/rosters.json";
 type GenPlayer = { league: League; name: string; teamId: string | null; position: string; imageUrl?: string };
+const byId = new Map(PLAYERS.map((x) => [x.id, x]));
 for (const g of generated.players as GenPlayer[]) {
-  const made = p(g.league, g.name, g.teamId, g.position);
-  const existing = PLAYERS.find((x) => x.id === made.id);
-  if (existing) Object.assign(existing, { teamId: g.teamId ?? existing.teamId, position: g.position || existing.position, imageUrl: g.imageUrl });
-  else PLAYERS.push({ ...made, imageUrl: g.imageUrl });
+  const teamId = g.teamId && (GENERATED_TEAM_ID.get(g.teamId) ?? g.teamId);
+  const made = p(g.league, g.name, teamId, g.position);
+  const existing = byId.get(made.id);
+  if (existing) Object.assign(existing, { teamId: teamId ?? existing.teamId, position: g.position || existing.position, imageUrl: g.imageUrl });
+  // Bulk roster players match on full name only: thousands of bare surnames would collide with ordinary words ("Stanley Cup").
+  else PLAYERS.push({ ...made, aliases: made.aliases.slice(0, 2), imageUrl: g.imageUrl });
 }
 
 export const playerById = (id: string) => PLAYERS.find((x) => x.id === id);

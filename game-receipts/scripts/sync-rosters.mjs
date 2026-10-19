@@ -21,6 +21,7 @@ const get = async (url) => {
   if (!res.ok) throw new Error(`${res.status} ${url.replace(/key=[^&]+/, "key=***")}`);
   return res.json();
 };
+const probe = async (url) => { try { return (await fetch(url, { method: "HEAD" })).ok ? url : undefined; } catch { return undefined; } };
 // College catalogs are large; sync only the programs the app lists (lib/catalog/teams.ts).
 const teamsTs = fs.readFileSync(path.join(root, "lib/catalog/teams.ts"), "utf8");
 const collegeSchools = new Set([...teamsTs.matchAll(/t\("NCAA[FB]", "[^"]+", "([^"]+)"/g)].map((m) => m[1].toLowerCase()));
@@ -67,7 +68,9 @@ async function espn(league) {
     const roster = await get(`https://site.api.espn.com/apis/site/v2/sports/${s}/teams/${t.id}/roster`);
     // NBA/NHL return a flat list; NFL/MLB/NCAAF group athletes by unit.
     const athletes = (roster.athletes ?? []).flatMap((a) => (Array.isArray(a.items) ? a.items : [a]));
-    for (const a of athletes) addPlayer(league, a.fullName ?? a.displayName, teamId, a.position?.abbreviation, a.headshot?.href);
+    // Rosters often omit `headshot` even when ESPN hosts one at the standard path; probe it before giving up.
+    const urls = await Promise.all(athletes.map((a) => a.headshot?.href ?? probe(`https://a.espncdn.com/i/headshots/${s.split("/")[1]}/players/full/${a.id}.png`)));
+    athletes.forEach((a, i) => addPlayer(league, a.fullName ?? a.displayName, teamId, a.position?.abbreviation, urls[i]));
     process.stdout.write(".");
   }
 }
@@ -77,9 +80,11 @@ if (provider === "sportsdataio" && !KEY) { console.error("Set SPORTSDATAIO_KEY (
 for (const l of leagues) {
   try { await run(l); console.log(`\n✓ ${l}`); } catch (e) { console.error(`\n✗ ${l}: ${e.message}`); process.exitCode = 1; }
 }
+// Every athlete in the picker must have a headshot; drop the ones the provider has no photo for.
+const dropped = players.filter((p) => !p.imageUrl).length;
 // Deduplicate by derived id (league + name), keeping the first (rostered) entry.
 const seen = new Set();
-const uniq = players.filter((p) => { const id = `${p.league}-${slug(p.name)}`; if (seen.has(id)) return false; seen.add(id); return true; });
+const uniq = players.filter((p) => p.imageUrl).filter((p) => { const id = `${p.league}-${slug(p.name)}`; if (seen.has(id)) return false; seen.add(id); return true; });
 fs.writeFileSync(out, JSON.stringify({ generatedAt: new Date().toISOString(), source: provider, teams, players: uniq }));
-console.log(`Wrote ${teams.length} teams and ${uniq.length} athletes from ${provider} → ${path.relative(root, out)}`);
+console.log(`Wrote ${teams.length} teams and ${uniq.length} athletes from ${provider} → ${path.relative(root, out)} (dropped ${dropped} without a headshot)`);
 if (provider === "espn") console.log("Note: ESPN data is unofficial and for local development only. Use a licensed provider (SportsDataIO) before launch.");

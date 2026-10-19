@@ -92,8 +92,11 @@ export const TEAMS: Team[] = [
 // Roster sync output (scripts/sync-rosters.mjs) adds every team in each league, with logos.
 import generated from "./generated/rosters.json";
 type GenTeam = { id: string; league: League; abbr: string; city: string; name: string; color: string; imageUrl?: string };
+/** Provider team id → catalog team id (they differ when a provider abbreviates differently, e.g. ESPN "SJ" vs "SJS"). */
+export const GENERATED_TEAM_ID = new Map<string, string>();
 for (const g of generated.teams as GenTeam[]) {
   const existing = TEAMS.find((x) => x.id === g.id || (x.league === g.league && `${x.city} ${x.name}` === `${g.city} ${g.name}`));
+  GENERATED_TEAM_ID.set(g.id, existing?.id ?? g.id);
   if (existing) existing.imageUrl = g.imageUrl ?? existing.imageUrl;
   else TEAMS.push({ ...g, rating: 5, aliases: [g.name.toLowerCase(), `${g.city} ${g.name}`.toLowerCase()] });
 }
