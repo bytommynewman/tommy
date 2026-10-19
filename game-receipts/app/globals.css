@@ -46,9 +46,11 @@
 :root {
   color-scheme: dark;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
-html, body { background: var(--color-ink-950); color: var(--color-ink-100); }
+html, body { background: var(--color-ink-950); color: var(--color-ink-100); overflow-x: clip; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { -webkit-tap-highlight-color: transparent; }
 
 ::selection { background: color-mix(in oklab, var(--color-volt) 35%, transparent); }
@@ -90,6 +92,14 @@ input[type="range"].gr-range::-moz-range-thumb { width: 26px; height: 26px; bord
 input[type="range"].gr-range:focus-visible { outline: none; }
 input[type="range"].gr-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px var(--color-volt); }
 
+/* Route changes crossfade quickly instead of hard-cutting. */
+::view-transition-old(*), ::view-transition-new(*) { animation-duration: 180ms; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* Native-app feel on touch devices. */
+a, button, [role="button"], input, select, textarea, label { touch-action: manipulation; }
+html { overscroll-behavior-y: none; }
+
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }

@@ -15,7 +15,7 @@ const items = (username: string) => [
 export function BottomNav({ username }: { username: string }) {
   const path = usePathname();
   return (
-    <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-700/70 bg-ink-950/90 backdrop-blur-xl md:hidden" style={{ paddingBottom: "var(--safe-bottom)" }}>
+    <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-700/70 bg-ink-950/95 backdrop-blur-xl md:hidden" style={{ paddingBottom: "var(--safe-bottom)" }}>
       <div className="mx-auto flex max-w-xl items-stretch justify-around px-2">
         {items(username).map((it) => {
           const active = it.match.some((m) => path.startsWith(m));

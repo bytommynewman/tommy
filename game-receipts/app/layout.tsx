@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: { default: "Game Receipts — Call it. Lock it. Prove it.", template: "%s · Game Receipts" },
   description: "Everyone talks sports. Game Receipts remembers who was right. Lock timestamped sports predictions, get graded, build a permanent reputation.",
   applicationName: "Game Receipts",
-  appleWebApp: { capable: true, title: "Game Receipts", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Game Receipts", statusBarStyle: "black" },
 };
 
 export const viewport: Viewport = { themeColor: "#050607", width: "device-width", initialScale: 1, viewportFit: "cover" };

@@ -11,7 +11,7 @@ export function ReceiptCard({ v, award }: { v: PredictionView; award?: string })
   const callPct = p.forecast?.type === "binary" ? (s && question?.outcome?.type === "binary" && !question.outcome.yes ? 1 - p.forecast.pYes : p.forecast.pYes) : p.forecast?.primary.p;
   return (
     <div className="relative mx-auto w-full max-w-sm">
-      <div className="absolute -inset-6 rounded-[2rem] bg-volt/10 blur-2xl" aria-hidden />
+      <div className="absolute inset-x-0 -inset-y-6 rounded-[2rem] bg-volt/10 blur-2xl" aria-hidden />
       <div className="receipt-edge relative bg-gradient-to-b from-[#f6f7f8] to-[#dfe3e6] px-6 pb-9 pt-6 text-ink-950 shadow-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">

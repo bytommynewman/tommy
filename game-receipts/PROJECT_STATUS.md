@@ -13,6 +13,8 @@ _Last updated: 2026-10-19._ Location: `game-receipts/` inside the `bytommynewman
 - **Prod DB:** `supabase/migrations/0001_game_receipts.sql` (RLS, immutability trigger, `lock_prediction`/`withdraw_prediction`/`join_group` RPCs, indexes). It is verified on Postgres 16 by `supabase/tests/receipts_test.sql`.
 - **Tests:** 32 vitest tests, the SQL behavioral tests, and the Playwright E2E (`npm run smoke`), which passes the full flow including admin resolve and grade.
 
+- **Mobile/app (round 2):** fixed horizontal overflow that made iOS Safari zoom out and shrink the app. The E2E test now fails on any overflow. Added safe-area padding, crossfade route transitions (React `<ViewTransition>`), and an installable PWA: manifest, generated PNG icons at `/app-icon/[size]` and `/apple-icon`, a service worker with offline fallback (production only), and an install prompt. Added a Capacitor iOS/Android shell (`capacitor.config.ts`, see `NATIVE.md`).
+
 ## Key decisions
 - The local JSON store is a mock adapter, so the app runs with zero credentials. Supabase is the production target; the schema is written but **not wired into the app yet**.
 - Sports data is a mock catalog. Resolved demo questions use real 2024-25 outcomes with illustrative baselines. Seed takes carry `seed: true` and show a "Demo" badge because their timestamps are back-dated.
@@ -24,7 +26,8 @@ _Last updated: 2026-10-19._ Location: `game-receipts/` inside the `bytommynewman
 1. **Supabase wiring:** replace `lib/server/db.ts` and the services with Supabase queries and RPCs, move auth to Supabase Auth, and run grading as a service-role job. Needs project credentials.
 2. **Licensed sports data adapter**, plus automated "possibly settled" detection queued for human review.
 3. Stripe subscriptions (Phase 6), creator-league branding, and embeddable cards.
-4. Native wrapper (Expo or Capacitor) and push notifications.
+4. Run `npx cap add ios` on a Mac and commit `ios/`; App Store submission needs a deployed URL. Push notifications.
+7. Higgsfield art (stadium hero backgrounds, refined icon) is blocked: this cloud environment can't reach `upload.higgsfield.ai` or `d2ol7oe51mr4n9.cloudfront.net`, so allow those domains first.
 5. Tune the letter-grade scale with real data. Today everyone sits near C because grades are shrunk toward consensus (36).
 6. Light mode, account deletion and export flow, rate limiting at the edge, and a proper admin role assignment UI.
 

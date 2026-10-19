@@ -40,7 +40,7 @@ export default async function Landing() {
           </div>
           <p className="mt-4 text-xs text-ink-500">Free to play. No betting, no wagering, no real money — ever.</p>
         </div>
-        <div className="relative">
+        <div className="relative overflow-x-clip md:overflow-visible">
           <HeroLogo className="absolute -right-10 -top-16 hidden w-72 opacity-30 blur-[1px] md:block" />
           {best && <ReceiptCard v={viewPrediction(d, best, null)} award="Most impressive call" />}
         </div>

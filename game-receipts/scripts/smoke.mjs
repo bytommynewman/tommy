@@ -11,19 +11,29 @@ if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const exe = fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined;
 const browser = await chromium.launch({ executablePath: exe && fs.statSync(exe).isFile() ? exe : undefined });
 const ctx = await browser.newContext({ ...devices["iPhone 14"] });
+// Keep the iOS "Add to Home Screen" hint from covering controls mid-test.
+await ctx.addInitScript(() => { try { localStorage.setItem("gr-install-dismissed", "1"); } catch {} });
 const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (m) => m.type() === "error" && !/favicon/.test(m.text()) && errors.push(m.text()));
 const shot = async (name) => SHOTS && (await page.waitForLoadState("networkidle"), page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true, caret: "initial" }));
 const step = (s) => console.log("•", s);
+// Any horizontal overflow makes iOS Safari zoom the whole page out.
+const noOverflow = async (where) => {
+  const [sw, iw] = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
+  if (sw > iw) throw new Error(`FAILED: horizontal overflow on ${where} (${sw}px > ${iw}px)`);
+};
+const phoneShot = async (name) => SHOTS && page.screenshot({ path: `${SHOTS}/phone-${name}.png`, caret: "initial" });
 const expect = async (cond, msg) => { if (!(await cond)) throw new Error("FAILED: " + msg); };
 
 const u = `smoke_${Date.now().toString(36)}`;
 step("landing");
 await page.goto(BASE);
 await page.getByText("We remember who was right").waitFor();
+await noOverflow("/");
 await shot("01-landing");
+await phoneShot("landing");
 
 step("signup");
 await page.goto(`${BASE}/signup`);
@@ -80,6 +90,7 @@ step("feed, receipt, profile, leaderboards");
 for (const [path, name] of [["/feed?tab=trending", "11-feed"], ["/leaderboards", "12-leaderboards"], [`/u/${u}`, "13-profile"], ["/u/darkhorse_dana", "14-profile-dana"], ["/u/darkhorse_dana/reputation", "15-reputation"], ["/battles", "16-battles"], ["/leagues/the-film-room", "17-league"], ["/notifications", "18-notifications"], ["/settings", "19-settings"], ["/how-scoring-works", "20-scoring"]]) {
   const res = await page.goto(BASE + path);
   await expect(res.ok(), `${path} → ${res.status()}`);
+  await noOverflow(path);
   await shot(name);
 }
 const img = await page.request.get(`${predUrl.replace("/p/", "/r/")}/image?format=story`);
@@ -98,7 +109,15 @@ step("resolved receipt");
 await page.goto(`${BASE}/leaderboards?board=calls`);
 await page.locator('a[href^="/r/"]').first().click();
 await page.waitForURL(/\/r\/.+/);
+await page.waitForLoadState("networkidle");
+await noOverflow("receipt");
 await shot("22-receipt");
+await phoneShot("receipt-top");
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+await phoneShot("receipt-bottom");
+await page.goto(`${BASE}/feed?tab=trending`);
+await page.waitForLoadState("networkidle");
+await phoneShot("feed");
 
 step("admin resolve flow");
 await page.context().clearCookies();

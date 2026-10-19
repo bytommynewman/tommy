@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
-import type { ReactNode } from "react";
+import { ViewTransition, type ReactNode } from "react";
 import { currentUser } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
 import { Lockup } from "../brand/Logo";
 import { LinkButton } from "../ui/primitives";
 import { BottomNav, SideNav } from "./Nav";
+import { PwaClient } from "./PwaClient";
 
 export async function Shell({ children }: { children: ReactNode }) {
   const me = await currentUser();
   const unread = me ? db().notifications.filter((n) => n.userId === me.id && !n.read).length : 0;
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-30 border-b border-ink-700/60 bg-ink-950/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-ink-700/60 bg-ink-950/90 backdrop-blur-xl" style={{ paddingTop: "var(--safe-top)" }}>
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4">
           <Link href={me ? "/feed" : "/"} aria-label="Game Receipts home"><Lockup size="sm" /></Link>
           <div className="ml-auto flex items-center gap-1">
@@ -33,11 +34,12 @@ export async function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <div className="mx-auto flex max-w-5xl gap-8 px-4 pb-28 pt-5 md:pb-12">
+      <div className="mx-auto flex max-w-5xl gap-8 px-4 pt-5 pb-[calc(7.5rem+var(--safe-bottom))] md:pb-12">
         {me && <SideNav username={me.username} unread={unread} isAdmin={me.role === "admin"} />}
-        <main className="min-w-0 flex-1 md:max-w-2xl">{children}</main>
+        <main className="min-w-0 flex-1 md:max-w-2xl"><ViewTransition>{children}</ViewTransition></main>
       </div>
       {me && <BottomNav username={me.username} />}
+      {me && <PwaClient />}
     </div>
   );
 }
