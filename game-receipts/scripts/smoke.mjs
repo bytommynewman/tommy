@@ -16,7 +16,8 @@ await ctx.addInitScript(() => { try { localStorage.setItem("gr-install-dismissed
 const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
-page.on("console", (m) => m.type() === "error" && !/favicon/.test(m.text()) && errors.push(m.text()));
+// Remote photo CDNs may be unreachable in sandboxes; avatars fall back to monograms, so network failures aren't app errors.
+page.on("console", (m) => m.type() === "error" && !/favicon|Failed to load resource: net::/.test(m.text()) && errors.push(m.text()));
 const shot = async (name) => SHOTS && (await page.waitForLoadState("networkidle"), page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true, caret: "initial" }));
 const step = (s) => console.log("•", s);
 // Any horizontal overflow makes iOS Safari zoom the whole page out.
