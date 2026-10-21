@@ -16,7 +16,7 @@
    "beats": [
     {
      "caption": "\"Bro I CALLED it. Written down.\"",
-     "duration": 4.2,
+     "duration": 2.7,
      "steps": [
       {
        "do": "chat",
@@ -37,7 +37,8 @@
          "me",
          "screenshot or it didn't happen"
         ]
-       ]
+       ],
+       "pause": 0
       }
      ]
     },

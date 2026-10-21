@@ -1,7 +1,7 @@
 // Records the app flows for the Format A (speedrun) and Format B (POV) reel spots.
 // Prereq: `npm run build` already done. Usage: node marketing/reels/capture-reels.mjs [A1 A2 B1]
 // Starts its OWN production server on port 3400 (scratch data dir, random SESSION_SECRET) and kills only that PID.
-// Output: marketing/reels/out/raw/<id>.mp4 (780x1688, 30fps) + <id>.json (marks, focus keyframes, duration).
+// Output: marketing/reels/out/raw/<id>.mp4 (1170x2532 = 3x native, 30fps) + <id>.json (marks, focus keyframes, duration).
 // Playwright's recordVideo needs a bundled ffmpeg we don't have, so we use the CDP screencast like marketing/capture.mjs.
 import { chromium, devices } from "playwright";
 import { spawn, execFileSync } from "node:child_process";
@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
+const appRoot = process.env.GR_APP_ROOT ?? root;
 const RAW = path.join(here, "out/raw");
 fs.mkdirSync(RAW, { recursive: true });
 const only = process.argv.slice(2);
@@ -21,14 +22,14 @@ const BASE = `http://localhost:${PORT}`;
 const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ffmpeg");
 const VIEW = { width: 390, height: 844 };
-const VIDEO = { width: 780, height: 1688 };
+const VIDEO = { width: 1170, height: 2532 }; // 3x CSS viewport (native)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let server;
 async function startServer() {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "gr-reels-"));
-  server = spawn(process.execPath, [path.join(root, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT)], {
-    cwd: root, stdio: "ignore",
+  server = spawn(process.execPath, [path.join(appRoot, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT)], {
+    cwd: appRoot, stdio: "ignore",
     env: { ...process.env, GR_SEED_DEMO: "1", GR_DATA_DIR: dataDir, SESSION_SECRET: crypto.randomBytes(24).toString("hex"), NODE_ENV: "production" },
   });
   for (let i = 0; i < 120; i++) {
@@ -61,14 +62,18 @@ const initScript = () => {
 async function startScreencast(page) {
   const cdp = await page.context().newCDPSession(page);
   const frames = [];
-  cdp.on("Page.screencastFrame", (f) => {
-    frames.push({ ts: f.metadata.timestamp, data: f.data });
-    cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }).catch(() => {});
-  });
+  // Chrome's CDP screencast only delivers ~7 fps here (scrolls look choppy), so grab frames with a tight
+  // Page.captureScreenshot loop instead (~30 fps at 3x native) and stamp each with its capture time.
   const vt0 = Date.now();
-  await cdp.send("Page.startScreencast", { format: "jpeg", quality: 95, maxWidth: VIDEO.width, maxHeight: VIDEO.height, everyNthFrame: 1 });
+  let live = true;
+  const grab = (async () => {
+    while (live) {
+      const ts = Date.now() / 1000;
+      try { const r = await Promise.race([cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 92, optimizeForSpeed: true }), new Promise((_, rej) => setTimeout(() => rej(new Error("shot timeout")), 2000))]); frames.push({ ts, data: r.data }); } catch {}
+    }
+  })();
   const finish = async (endMs, dest) => {
-    await cdp.send("Page.stopScreencast").catch(() => {});
+    live = false; await Promise.race([grab, sleep(3000)]);
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gr-frames-"));
     let list = "ffconcat version 1.0\n";
     const end = endMs / 1000;
@@ -80,7 +85,7 @@ async function startScreencast(page) {
       list += `file '${file}'\nduration ${Math.max(0.001, t1 - t0 + (i === 0 ? t0 : 0)).toFixed(4)}\n`;
     });
     fs.writeFileSync(path.join(dir, "list.ffconcat"), list);
-    execFileSync(FFMPEG, ["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", path.join(dir, "list.ffconcat"), "-t", end.toFixed(3), "-vf", `scale=${VIDEO.width}:${VIDEO.height}:flags=lanczos,fps=30,format=yuv420p`, "-c:v", "libx264", "-crf", "14", "-preset", "fast", "-movflags", "+faststart", dest]);
+    execFileSync(FFMPEG, ["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", path.join(dir, "list.ffconcat"), "-t", end.toFixed(3), "-vf", `scale=${VIDEO.width}:${VIDEO.height}:flags=lanczos,fps=30,format=yuv420p`, "-c:v", "libx264", "-crf", "12", "-preset", "fast", "-movflags", "+faststart", dest]);
     fs.rmSync(dir, { recursive: true, force: true });
     return frames.length;
   };

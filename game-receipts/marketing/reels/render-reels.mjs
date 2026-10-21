@@ -1,7 +1,7 @@
 // Renders the Format A (speedrun split-screen) and Format B (filmed-screen POV) reel ads from the raw captures.
 // Usage: node marketing/reels/render-reels.mjs [A1 A2 B1 ...] [--top A1=/path/clip.mp4] [--top A2=/path/clip.mp4] [--keep-audio]
-//   Top clip (Format A creator panel) defaults to the UGC talking-head clips in marketing/ugc/{out,raw}
-//   (A1 <- mvp*.mp4, A2 <- kyle*.mp4). If none is found, falls back to a dimmed hero-tall.webp panel.
+//   Top clip (Format A creator panel) defaults to the UGC talking-head masters in marketing/ugc/raw
+//   (A1 <- raw/mvp.mp4, A2 <- raw/kyle.mp4: the untouched Kling masters). If none is found, falls back to a dimmed hero-tall.webp panel.
 // Prereq: node marketing/reels/capture-reels.mjs   (writes out/raw/<id>.mp4 + <id>.json)
 import { chromium } from "playwright";
 import { spawnSync } from "node:child_process";
@@ -9,6 +9,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { bug, endLogo } from "../brand.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
@@ -32,12 +33,12 @@ for (let i = 0; i < args.length; i++) {
 // ---- spot definitions --------------------------------------------------------------------------------------
 const SPECS = {
   A1: {
-    format: "A", file: "A1-mvp-speedrun.mp4", topMatch: /mvp/i, faceY: 200,
+    format: "A", file: "A1-mvp-speedrun.mp4", topMatch: /mvp/i, faceY: 230,
     hook: "Watch me lock my MVP pick in under 10 seconds",
     steps: [["s1", "Step 1: Pick your league"], ["s2", "Step 2: Search your guy"], ["s3", "Step 3: Pick a take (Wins an award · MVP)"], ["s4", "Step 4: Place it. Stamped."], ["board", "Graded when it's done"]],
   },
   A2: {
-    format: "A", file: "A2-prove-you-called-it.mp4", topMatch: /kyle/i, faceY: 270,
+    format: "A", file: "A2-prove-you-called-it.mp4", topMatch: /kyle/i, faceY: 190,
     hook: "How to prove you called it (takes 8 seconds)",
     steps: [["s1", "Step 1: Pick your team"], ["s2", "Step 2: Pick how far they go"], ["s3", "Step 3: Place take"], ["s4", "Step 4: Screenshot the receipt when it hits"]],
   },
@@ -46,7 +47,8 @@ const SPECS = {
     captions: [["hook", "easiest way to win every sports argument fr 😭"], ["player", "pick your player"], ["take", "pick your take"], ["place", "hit place"], ["+place:1.5", "it stamps the date"], ["graded", "graded when it's done"], ["board", "now you're on the leaderboard"]],
   },
 };
-const END_A = 2.5, TAG_B = 1.5;
+const END_A = 2.5, TAG_B = 1.8;
+const SRC_W = 1170, SRC_H = 2532; // raw captures are 3x native; renders only scale DOWN
 
 // ---- overlay PNGs via headless Chrome (fonts + emoji render properly there) ---------------------------------
 const FONT = `'Arial Black', Arial, sans-serif`;
@@ -59,6 +61,7 @@ async function png(name, w, h, html, scale = 1) {
   await shotPage.screenshot({ path: file, omitBackground: true });
   return file;
 }
+const dataUri = (f) => "data:image/png;base64," + fs.readFileSync(f).toString("base64");
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 // text that shrinks until it fits one line within maxW
 const fit = (id, maxW, start) => `<script>(()=>{const e=document.getElementById('${id}');let s=${start};e.style.fontSize=s+'px';while(e.scrollWidth>${maxW}&&s>20){s-=2;e.style.fontSize=s+'px'}})()</script>`;
@@ -71,10 +74,10 @@ function run(argv, label) {
   if (r.status !== 0) { console.error(r.stderr.slice(-3000)); throw new Error(`ffmpeg failed: ${label}`); }
 }
 function findTop(spec) {
-  for (const d of ["ugc/out", "ugc/raw"]) {
+  for (const d of ["ugc/raw"]) { // the untouched talking-head masters (ugc/out holds finished ads with hooks/footage baked in)
     const dir = path.join(root, "marketing", d);
     if (!fs.existsSync(dir)) continue;
-    const m = fs.readdirSync(dir).filter((x) => x.endsWith(".mp4") && spec.topMatch.test(x)).sort();
+    const m = fs.readdirSync(dir).filter((x) => x.endsWith(".mp4") && spec.topMatch.test(x) && !/oldline/.test(x)).sort();
     if (m.length) return path.join(dir, m[0]);
   }
   return null;
@@ -110,7 +113,9 @@ async function renderA(id, spec) {
   const bands = [];
   for (const [i, [, text]] of spec.steps.entries())
     bands.push(await png(`${id}-band${i}.png`, 1080, 100, `<div style="width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center"><div id=t style="color:#fff;font-size:46px;white-space:nowrap;font-weight:900">${esc(text)}</div></div>${fit("t", 1000, 46)}`));
-  const end = await png(`${id}-end.png`, 1080, 1920, `<div style="width:100%;height:100%;background:linear-gradient(rgba(5,8,6,.94),rgba(5,8,6,.94)),url('${hero}') center/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;text-align:center;padding:0 80px"><div style="color:#fff;font-size:70px;line-height:1.2">Comment <span style="color:#23e58a">RECEIPT</span> and I'll send you the link</div><div style="color:#fff;font-size:40px;letter-spacing:.08em;opacity:.92">GAME RECEIPTS · Free to play</div></div>`);
+  const el = await endLogo(440);
+  const end = await png(`${id}-end.png`, 1080, 1920, `<div style="width:100%;height:100%;background:linear-gradient(rgba(5,8,6,.94),rgba(5,8,6,.94)),url('${hero}') center/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px;text-align:center;padding:0 80px"><img src="${dataUri(el.file)}" width="440" height="440" style="display:block"><div style="color:#fff;font-size:70px;line-height:1.2">Comment <span style="color:#23e58a">RECEIPT</span> and I'll send you the link</div><div style="color:#23e58a;font-size:46px;letter-spacing:.04em">Call it. Lock it. Prove it.</div><div style="color:#fff;font-size:38px;letter-spacing:.08em;opacity:.92;margin-top:-24px">GAME RECEIPTS · Free to play</div></div>`);
+  const bg_ = await bug(100);
 
   // step windows
   const times = spec.steps.map(([m]) => cap.marks[m]);
@@ -120,38 +125,40 @@ async function renderA(id, spec) {
   const inputs = [];
   inputs.push(fallback ? loopPng(fbPanel, total) : ["-stream_loop", "-1", "-i", topClip]);   // 0
   inputs.push(["-i", path.join(RAW, `${id}.mp4`)]);                                          // 1
-  inputs.push(loopPng(pill, total), loopPng(hook, total), loopPng(end, total));              // 2,3,4
-  for (const b of bands) inputs.push(loopPng(b, total));                                     // 5..
+  inputs.push(loopPng(pill, total), loopPng(hook, total), loopPng(end, total), loopPng(bg_.file, total)); // 2,3,4,5
+  for (const b of bands) inputs.push(loopPng(b, total));                                     // 6..
   const G = [];
-  G.push(fallback ? `[0:v]fps=30,format=yuv420p[top]` : `[0:v]crop=1076:757:0:${spec.faceY},scale=1080:760:flags=lanczos,fps=30,setsar=1[top]`);
-  const scaledH = Math.round((1080 * 1688) / 780 / 2) * 2; // 2338
+  G.push(fallback ? `[0:v]fps=30,format=yuv420p[top]` : `[0:v]crop=1076:757:0:${spec.faceY},scale=1080:760:flags=lanczos,unsharp=5:5:0.25:5:5:0,fps=30,setsar=1[top]`);
+  const scaledH = Math.round((1080 * SRC_H) / SRC_W / 2) * 2; // 2338
   G.push(`[1:v]fps=30,scale=1080:${scaledH}:flags=lanczos,tpad=stop_mode=clone:stop_duration=4,crop=1080:1060:0:'${panExpr(cap.focus, scaledH, 1060)}',setsar=1[app]`);
   G.push(`color=c=black:s=1080x1920:r=30:d=${f(total)}[bg]`);
   G.push(`[bg][top]overlay=0:0[v1]`);
   G.push(`[v1][app]overlay=0:860[v2]`);
   let cur = "v2";
-  wins.forEach(([a, b], i) => { G.push(`[${cur}][${5 + i}:v]overlay=0:760:enable='between(t,${f(a)},${f(b)})'[b${i}]`); cur = `b${i}`; });
-  const px = fallback ? 260 : 790, py = fallback ? 300 : 230;
+  wins.forEach(([a, b], i) => { G.push(`[${cur}][${6 + i}:v]overlay=0:760:enable='between(t,${f(a)},${f(b)})'[b${i}]`); cur = `b${i}`; });
+  const px = fallback ? 260 : 690, py = fallback ? 300 : 230; // pill stays out of the right-hand 140 px rail
   G.push(`[${cur}][2:v]overlay=${px}:${py}:enable='lt(t,${f(D)})'[p1]`);
   const sz = fallback ? 104 : 52;
   const sw = `%{eif\\:floor(min(t\\,${f(TP)})/60)\\:d\\:2}\\:%{eif\\:mod(floor(min(t\\,${f(TP)}))\\,60)\\:d\\:2}.%{eif\\:mod(floor(min(t\\,${f(TP)})*10)\\,10)\\:d\\:1}`;
   G.push(`[p1]drawtext=fontfile=${MONO}:text='${sw}':fontcolor=white:fontsize=${sz}:x=${px}+(${pillW}-text_w)/2:y=${py}+(${pillH}-text_h)/2-2:enable='lt(t,${f(D)})'[p2]`);
   G.push(`[p2][3:v]overlay=0:0:enable='between(t,0,2)'[h1]`);
-  G.push(`[h1][4:v]overlay=0:0:enable='gte(t,${f(D)})',format=yuv420p[v]`);
+  G.push(`[h1][4:v]overlay=0:0:enable='gte(t,${f(D)})'[h2]`);
+  G.push(`[h2][5:v]overlay=${34 - bg_.pad}:${226 - bg_.pad}:format=auto:enable='lt(t,${f(D)})',format=yuv420p[v]`);
   const out = path.join(OUT, spec.file);
   encode(inputs, G, out, total, keepAudio && !fallback);
   return out;
 }
 
 function encode(inputs, G, out, total, withAudio, crf = 17) {
+  // x264 slow, crf 17, 20 Mbps cap, 48 kHz AAC 192k
   const script = path.join(TMP, path.basename(out) + ".filter");
   fs.writeFileSync(script, G.join(";\n"));
-  const silent = ["-f", "lavfi", "-t", f(total), "-i", "anullsrc=r=44100:cl=stereo"];
+  const silent = ["-f", "lavfi", "-t", f(total), "-i", "anullsrc=r=48000:cl=stereo"];
   const nIn = inputs.length;
   const argv = ["-y", "-v", "error", ...ffArgs(inputs), ...(withAudio ? [] : silent), "-filter_complex_script", script, "-map", "[v]",
-    ...(withAudio ? ["-map", "0:a", "-af", "volume=1"] : ["-map", `${nIn}:a`]),
-    "-t", f(total), "-r", "30", "-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p", "-crf", String(crf), "-preset", "medium",
-    "-c:a", "aac", "-b:a", "96k", "-ar", "44100", "-ac", "2", "-movflags", "+faststart", out];
+    ...(withAudio ? ["-map", "0:a", "-af", "aresample=48000"] : ["-map", `${nIn}:a`]),
+    "-t", f(total), "-r", "30", "-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p", "-crf", String(crf), "-preset", "slow", "-maxrate", "20M", "-bufsize", "40M",
+    "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", "-movflags", "+faststart", out];
   run(argv, out);
 }
 
@@ -160,7 +167,7 @@ async function renderB(id, spec) {
   const cap = JSON.parse(fs.readFileSync(path.join(RAW, `${id}.json`), "utf8"));
   const D = Math.min(cap.duration, cap.marks.board + spec.trimAfterBoard), total = D + TAG_B;
   const CW = 1220, CH = 2060, M = 70;
-  const PW = 784, PH = Math.round((784 * 1688) / 780); // 1696 (incl. bezel below)
+  const PW = 784, PH = Math.round((784 * SRC_H) / SRC_W); // 1696 (incl. bezel below)
   const bezel = 10, SW = PW - 2 * bezel, SH = PH - 2 * bezel;
   const desk = await png(`${id}-desk.png`, CW, CH, `<div style="width:100%;height:100%;background:radial-gradient(ellipse 70% 45% at 30% 20%,rgba(255,214,160,.16),transparent 70%),radial-gradient(ellipse 80% 60% at 50% 55%,#1b1a1f,#0c0b0e 80%),#0c0b0e"></div>`);
   const glare = await png(`${id}-glare.png`, SW, SH, `<div style="width:100%;height:100%;background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.10) 38%,rgba(255,255,255,.03) 52%,transparent 62%),radial-gradient(ellipse 60% 25% at 80% 8%,rgba(255,255,255,.12),transparent 70%)"></div>`);
@@ -173,9 +180,10 @@ async function renderB(id, spec) {
   times[0] = 0;
   for (const [i, [, text]] of spec.captions.entries())
     capImgs.push(await png(`${id}-cap${i}.png`, 1080, 360, `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 70px"><div style="color:#fff;font-size:64px;line-height:1.16;text-align:center;font-weight:900;${stroke}">${esc(text)}</div></div>`));
-  const tag = await png(`${id}-tag.png`, 1080, 1920, `<div style="width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center"><div style="color:#fff;font-size:84px;font-weight:900;letter-spacing:.01em">game receipts</div></div>`);
+  const el = await endLogo(520), bgb = await bug(96);
+  const tag = await png(`${id}-tag.png`, 1080, 1920, `<div style="width:100%;height:100%;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px"><img src="${dataUri(el.file)}" width="520" height="520" style="display:block"><div style="color:#23e58a;font-size:60px;font-weight:900">Call it. Lock it. Prove it.</div><div style="color:#fff;font-size:40px;font-weight:900;letter-spacing:.06em">Free to play</div></div>`);
 
-  const inputs = [loopPng(desk, total), ["-i", path.join(RAW, `${id}.mp4`)], loopPng(glare, total), loopPng(tag, total)];
+  const inputs = [loopPng(desk, total), ["-i", path.join(RAW, `${id}.mp4`)], loopPng(glare, total), loopPng(tag, total), loopPng(bgb.file, total)];
   for (const c of capImgs) inputs.push(loopPng(c, total));
   const G = [];
   G.push(`[1:v]fps=30,scale=${SW}:${SH}:flags=lanczos,tpad=stop_mode=clone:stop_duration=4,setsar=1[scr]`);
@@ -189,11 +197,12 @@ async function renderB(id, spec) {
   let cur = "g";
   times.forEach((a, i) => {
     const b = i + 1 < times.length ? times[i + 1] : D;
-    G.push(`[${cur}][${4 + i}:v]overlay=0:${1350 - 180}:enable='between(t,${f(a)},${f(b)})'[c${i}]`); cur = `c${i}`;
+    G.push(`[${cur}][${5 + i}:v]overlay=0:${1350 - 180}:enable='between(t,${f(a)},${f(b)})'[c${i}]`); cur = `c${i}`;
   });
-  G.push(`[${cur}][3:v]overlay=0:0:enable='gte(t,${f(D)})',format=yuv420p[v]`);
+  G.push(`[${cur}][4:v]overlay=${26 - bgb.pad}:${250 - bgb.pad}:format=auto:enable='lt(t,${f(D)})'[cb]`);
+  G.push(`[cb][3:v]overlay=0:0:enable='gte(t,${f(D)})',format=yuv420p[v]`);
   const out = path.join(OUT, spec.file);
-  encode(inputs, G, out, total, false, 24);
+  encode(inputs, G, out, total, false, 17);
   return out;
 }
 

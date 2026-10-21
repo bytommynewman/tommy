@@ -1,5 +1,7 @@
 // Turns raw phone captures (marketing/out/raw, from capture.mjs) into finished ad creative with ffmpeg:
-//   out/spot-<n>-<slug>.mp4          1080x1920, 30fps H.264, silent AAC track, +faststart
+//   out/spot-<n>-<slug>.mp4          1080x1920, 30fps H.264 (x264 slow, crf 17), silent 48 kHz AAC track, +faststart
+// Raw captures are 1170x2532 (3x native) and are only ever scaled DOWN (lanczos). Every video carries the emblem bug
+// (marketing/brand.mjs) and ends on the full logo.
 //   out/reddit-4x5-<n>-<slug>.mp4    1080x1350 reframe of each spot
 //   out/reddit-carousel-1..3.png     1080x1350 stills
 // Usage: node marketing/render.mjs [spotId ... | carousel]
@@ -9,6 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
+import { bug, endLogo } from "./brand.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
@@ -20,7 +23,6 @@ const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ff
 const IMPACT = "/System/Library/Fonts/Supplemental/Impact.ttf";
 const BLACK = "/System/Library/Fonts/Supplemental/Arial Black.ttf";
 const HERO = path.join(root, "public/art/hero-tall.webp");
-const LOGO = path.join(root, "public/brand/logo-360.png");
 const VOLT = "0x23E58A";
 const cfg = JSON.parse(fs.readFileSync(path.join(here, "spots.json"), "utf8"));
 const only = process.argv.slice(2).map(Number).filter(Boolean);
@@ -83,10 +85,13 @@ function lines(text, { font, size, max, y, pitch, color = "white", border = 0, b
 }
 
 // ---- layouts ------------------------------------------------------------------------------------------------
+// Phone is sized so the caption sits ABOVE it (story) and the emblem bug sits in the free side margin next to the phone:
+// out of the top 220 px, bottom 380 px and right-hand 140 px rail, and never over a caption/hook.
 const LAYOUTS = {
-  story: { W: 1080, H: 1920, pw: 842, bezel: 14, phoneY: null, capY: 262, capSize: 54, capMax: 24, capPitch: 100, hookY: 640, hookSize: 104, hookMax: 15, hookPitch: 128, endLogo: 330, endLogoY: 520, endTitleY: 900, endTagY: 1080, endFootY: 1270 },
-  reddit: { W: 1080, H: 1350, pw: 600, bezel: 12, phoneY: null, capY: 52, capSize: 50, capMax: 26, capPitch: 92, hookY: 400, hookSize: 104, hookMax: 15, hookPitch: 128, endLogo: 260, endLogoY: 250, endTitleY: 600, endTagY: 760, endFootY: 930 },
+  story: { W: 1080, H: 1920, pw: 700, bezel: 14, phoneY: 416, capY: 226, capSize: 52, capMax: 26, capPitch: 90, hookY: 640, hookSize: 104, hookMax: 15, hookPitch: 128, endLogo: 480, endLogoY: 400, endTagY: 930, endFootY: 1090, bug: { size: 108, x: 36, y: 440 } },
+  reddit: { W: 1080, H: 1350, pw: 600, bezel: 12, phoneY: 214, capY: 20, capSize: 44, capBox: 14, capMax: 30, capPitch: 80, hookY: 400, hookSize: 104, hookMax: 15, hookPitch: 128, endLogo: 360, endLogoY: 150, endTagY: 590, endFootY: 750, bug: { size: 112, x: 56, y: 230 } },
 };
+const SRC_W = 1170, SRC_H = 2532; // raw capture size (3x native)
 const ph = (pw) => Math.round((pw * 844) / 390 / 2) * 2;
 
 function background(L, name) {
@@ -108,15 +113,15 @@ function zoomExprs(punches) {
   };
 }
 
-function renderVideo(spot, layoutName, dest) {
+async function renderVideo(spot, layoutName, dest) {
   const L = LAYOUTS[layoutName];
   const meta = JSON.parse(fs.readFileSync(path.join(RAW, `spot-${spot.id}.json`), "utf8"));
   const S = meta.beats[0].start, D = meta.beats.at(-1).end - S, END = cfg.endCard.seconds, T = D + END;
   const pw = L.pw, h = ph(pw), b = L.bezel;
   const px = (L.W - pw) / 2, py = L.phoneY ?? Math.round((L.H - h) / 2);
-  const bezel = roundRect(path.join(CACHE, `bezel-${layoutName}.png`), pw + 2 * b, h + 2 * b, Math.round(pw * 0.11) + b, [14, 14, 17], [70, 70, 80], 2.5);
-  const mask = roundRect(path.join(CACHE, `mask-${layoutName}.png`), pw, h, Math.round(pw * 0.11), [255, 255, 255]);
-  const logoMask = roundRect(path.join(CACHE, "logo-mask.png"), 360, 360, 80, [255, 255, 255]);
+  const bezel = roundRect(path.join(CACHE, `bezel-${layoutName}-${pw}.png`), pw + 2 * b, h + 2 * b, Math.round(pw * 0.11) + b, [14, 14, 17], [70, 70, 80], 2.5);
+  const mask = roundRect(path.join(CACHE, `mask-${layoutName}-${pw}.png`), pw, h, Math.round(pw * 0.11), [255, 255, 255]);
+  const bg_ = await bug(L.bug.size), lg_ = await endLogo(L.endLogo);
   const bg = background(L, layoutName);
   const punches = meta.punches.map((p) => ({ ...p, at: p.t - S })).filter((p) => p.at >= 0 && p.at < D);
 
@@ -125,7 +130,7 @@ function renderVideo(spot, layoutName, dest) {
   g.push(`[0:v]trim=start=${S.toFixed(3)}:end=${(S + D + 0.2).toFixed(3)},setpts=PTS-STARTPTS,fps=30,tpad=stop_mode=clone:stop_duration=${END + 1},trim=duration=${T.toFixed(3)},setpts=PTS-STARTPTS[raw]`);
   if (punches.length) {
     const e = zoomExprs(punches);
-    g.push(`[raw]scale=${pw * 2}:${h * 2}:flags=lanczos,zoompan=z=${q(e.z)}:x=${q(e.x)}:y=${q(e.y)}:d=1:s=${pw}x${h}:fps=30[sc]`);
+    g.push(`[raw]zoompan=z=${q(e.z)}:x=${q(e.x)}:y=${q(e.y)}:d=1:s=${SRC_W}x${SRC_H}:fps=30,scale=${pw}:${h}:flags=lanczos[sc]`);
   } else g.push(`[raw]scale=${pw}:${h}:flags=lanczos[sc]`);
   g.push(`[sc]format=rgba[scr]`, `[3:v]format=rgba,alphaextract[ma]`, `[scr][ma]alphamerge[screen]`);
   g.push(`[2:v]format=rgba[bz]`, `[bz][screen]overlay=x=${b}:y=${b}:format=auto[phone0]`);
@@ -143,18 +148,18 @@ function renderVideo(spot, layoutName, dest) {
   for (const bt of meta.beats) {
     const a = Math.max(bt.start - S, hookEnd + 0.05), z = bt.end - S;
     if (z <= a) continue;
-    f.push(...lines(bt.caption, { font: BLACK, size: L.capSize, max: L.capMax, y: L.capY, pitch: L.capPitch, box: "black@0.84", boxBorder: 20, enable: `between(t,${a.toFixed(3)},${z.toFixed(3)})` }));
+    f.push(...lines(bt.caption, { font: BLACK, size: L.capSize, max: L.capMax, y: L.capY, pitch: L.capPitch, box: "black@0.84", boxBorder: L.capBox ?? 20, enable: `between(t,${a.toFixed(3)},${z.toFixed(3)})` }));
   }
   // end card
   const E = D, ec = cfg.endCard;
   f.push(`drawbox=x=0:y=0:w=iw:h=ih:color=black@0.45:t=fill:enable=${q(`gte(t,${E.toFixed(3)})`)}`);
-  f.push(...lines(ec.title, { font: IMPACT, size: 128, max: 14, y: L.endTitleY, pitch: 140, color: VOLT, border: 8, shadow: 3, enable: `gte(t,${E})` }));
-  f.push(...lines(ec.tagline, { font: BLACK, size: 50, max: 40, y: L.endTagY, pitch: 70, border: 4, enable: `gte(t,${E})` }));
+  f.push(...lines(ec.tagline, { font: IMPACT, size: 70, max: 40, y: L.endTagY, pitch: 80, color: VOLT, border: 5, shadow: 3, enable: `gte(t,${E})` }));
   f.push(...lines(ec.footer, { font: BLACK, size: 58, max: 40, y: L.endFootY, pitch: 80, color: "black", box: `${VOLT}@1.0`, boxBorder: 22, enable: `gte(t,${E})` }));
   g.push(`[comp]${f.join(",")}[txt]`);
-  // logo on the end card
-  g.push(`[4:v]scale=${L.endLogo}:${L.endLogo},format=rgba[lg0]`, `[5:v]scale=${L.endLogo}:${L.endLogo},format=rgba,alphaextract[lgm]`, `[lg0][lgm]alphamerge,fade=t=in:st=${E.toFixed(3)}:d=0.3:alpha=1[lg]`);
-  g.push(`[txt][lg]overlay=x=(W-w)/2:y=${L.endLogoY}:format=auto:enable=${q(`gte(t,${E})`)},format=yuv420p[v]`);
+  // full logo on the end card, emblem bug on every other frame
+  g.push(`[5:v]format=rgba,fade=t=in:st=${E.toFixed(3)}:d=0.3:alpha=1[lg]`);
+  g.push(`[txt][lg]overlay=x=(W-w)/2:y=${L.endLogoY}:format=auto:enable=${q(`gte(t,${E})`)}[t2]`);
+  g.push(`[4:v]format=rgba[bugv]`, `[t2][bugv]overlay=x=${L.bug.x - bg_.pad}:y=${L.bug.y - bg_.pad}:format=auto:enable=${q(`lt(t,${E})`)},format=yuv420p[v]`);
 
   const script = path.join(CACHE, `graph-${spot.id}-${layoutName}.txt`);
   fs.writeFileSync(script, g.join(";\n"));
@@ -163,29 +168,31 @@ function renderVideo(spot, layoutName, dest) {
     "-loop", "1", "-framerate", "30", "-i", bg,
     "-loop", "1", "-framerate", "30", "-i", bezel,
     "-loop", "1", "-framerate", "30", "-i", mask,
-    "-loop", "1", "-framerate", "30", "-i", LOGO,
-    "-loop", "1", "-framerate", "30", "-i", logoMask,
-    "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+    "-loop", "1", "-framerate", "30", "-i", bg_.file,
+    "-loop", "1", "-framerate", "30", "-i", lg_.file,
+    "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo",
     "-filter_complex_script", script,
     "-map", "[v]", "-map", "6:a", "-t", T.toFixed(3),
-    "-r", "30", "-c:v", "libx264", "-profile:v", "high", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
-    "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", dest,
+    "-r", "30", "-c:v", "libx264", "-profile:v", "high", "-preset", "slow", "-crf", "17", "-maxrate", "20M", "-bufsize", "40M", "-pix_fmt", "yuv420p",
+    "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", dest,
   ]);
   console.log(`rendered ${path.relative(root, dest)} (${T.toFixed(1)}s)`);
 }
 
 // ---- carousel -----------------------------------------------------------------------------------------------
-function renderCarousel() {
+async function renderCarousel() {
+  const cb = await bug(120);
   const W = 1080, H = 1350, pw = 700, b = 12, h = ph(pw), py = 300;
-  const bezel = roundRect(path.join(CACHE, "bezel-carousel.png"), pw + 2 * b, h + 2 * b, Math.round(pw * 0.11) + b, [14, 14, 17], [70, 70, 80], 2.5);
-  const mask = roundRect(path.join(CACHE, "mask-carousel.png"), pw, h, Math.round(pw * 0.11), [255, 255, 255]);
+  const bezel = roundRect(path.join(CACHE, `bezel-carousel-${pw}.png`), pw + 2 * b, h + 2 * b, Math.round(pw * 0.11) + b, [14, 14, 17], [70, 70, 80], 2.5);
+  const mask = roundRect(path.join(CACHE, `mask-carousel-${pw}.png`), pw, h, Math.round(pw * 0.11), [255, 255, 255]);
   const bg = background({ W, H }, "reddit");
   for (const c of cfg.carousel) {
     const shot = path.join(RAW, `carousel-${c.n}.png`);
     const g = [
       `[1:v]scale=${pw}:${h}:flags=lanczos,format=rgba[s]`, `[3:v]format=rgba,alphaextract[m]`, `[s][m]alphamerge[scr]`,
       `[2:v]format=rgba[bz]`, `[bz][scr]overlay=x=${b}:y=${b}:format=auto[ph]`,
-      `[0:v]format=rgba[bgv]`, `[bgv][ph]overlay=x=${(W - pw) / 2 - b}:y=${py - b}:format=auto[c]`,
+      `[0:v]format=rgba[bgv]`, `[bgv][ph]overlay=x=${(W - pw) / 2 - b}:y=${py - b}:format=auto[c0]`,
+      `[4:v]format=rgba[bugv]`, `[c0][bugv]overlay=x=${34 - cb.pad}:y=${340 - cb.pad}:format=auto[c]`,
     ];
     const f = [
       ...lines(c.headline, { font: IMPACT, size: 100, max: 20, y: 60, pitch: 112, border: 8, shadow: 3, upper: true }),
@@ -197,7 +204,7 @@ function renderCarousel() {
     const script = path.join(CACHE, `graph-carousel-${c.n}.txt`);
     fs.writeFileSync(script, g.join(";\n"));
     const dest = path.join(OUT, `reddit-carousel-${c.n}.png`);
-    ff(["-i", bg, "-i", shot, "-i", bezel, "-i", mask, "-filter_complex_script", script, "-map", "[v]", "-frames:v", "1", dest]);
+    ff(["-i", bg, "-i", shot, "-i", bezel, "-i", mask, "-i", cb.file, "-filter_complex_script", script, "-map", "[v]", "-frames:v", "1", dest]);
     console.log(`rendered ${path.relative(root, dest)}`);
   }
 }
@@ -205,8 +212,8 @@ function renderCarousel() {
 for (const spot of cfg.spots) {
   if (onlyCarousel || (only.length && !only.includes(spot.id))) continue;
   if (!fs.existsSync(path.join(RAW, `spot-${spot.id}.mp4`))) { console.warn(`skip spot ${spot.id}: no capture (run capture.mjs)`); continue; }
-  renderVideo(spot, "story", path.join(OUT, `spot-${spot.id}-${spot.slug}.mp4`));
-  renderVideo(spot, "reddit", path.join(OUT, `reddit-4x5-${spot.id}-${spot.slug}.mp4`));
+  await renderVideo(spot, "story", path.join(OUT, `spot-${spot.id}-${spot.slug}.mp4`));
+  await renderVideo(spot, "reddit", path.join(OUT, `reddit-4x5-${spot.id}-${spot.slug}.mp4`));
 }
-if ((onlyCarousel || !only.length) && fs.existsSync(path.join(RAW, "carousel-1.png"))) renderCarousel();
+if ((onlyCarousel || !only.length) && fs.existsSync(path.join(RAW, "carousel-1.png"))) await renderCarousel();
 for (const f of fs.readdirSync(CACHE)) if (/^t\d+-\d+\.txt$/.test(f)) fs.rmSync(path.join(CACHE, f));

@@ -5,11 +5,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import { bug, endLogo } from '../brand.mjs';
+// needs marketing/out/raw (run marketing/capture.mjs first): carousel-*.png stills + spot-2.mp4 footage, captured at 3x native
 const require = createRequire(path.resolve(process.cwd(), 'package.json'));
 const sharp = require('sharp');
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pub = path.resolve(here, '../../public');
 const out = path.join(here, 'assets');
+const RAW = path.resolve(here, '../out/raw');
+fs.mkdirSync('/tmp/gr', { recursive: true });
 fs.mkdirSync(out, { recursive: true });
 
 const VOLT = '#22e58a', VOLT_B = '#5cffb0', INK = '#050607', INK2 = '#0f1215';
@@ -43,6 +47,17 @@ const text = (lines, { x, y, size, lh, fill = '#fff', font = IMP, anchor = 'midd
   }).join('');
 const pill = (cx, cy, w, h, label, size) => `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="${h / 2}" fill="${VOLT}"/><text x="${cx}" y="${cy + size * 0.36}" font-family="${BLK}" font-size="${size}" fill="${INK}" text-anchor="middle" letter-spacing="${size * 0.08}">${label}</text>`;
 const fitSize = (lines, max, width = 940) => Math.round(Math.min(max, width / (0.47 * Math.max(...lines.map(l => (typeof l === 'object' ? l.t : l).length)))));
+const roundedMask = (w, h, r) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" rx="${r}" fill="#fff"/></svg>`);
+const phoneH = (pw) => Math.round((pw * 844) / 390 / 2) * 2;
+/** Phone-framed app screenshot (3x native capture, only ever scaled down), cropped to `visibleH` from the top. */
+async function phone(srcPng, pw, visibleH) {
+  const h = phoneH(pw), b = 12, r = Math.round(pw * 0.11);
+  const screen = await sharp(srcPng).resize(pw, h, { kernel: 'lanczos3' }).ensureAlpha().composite([{ input: roundedMask(pw, h, r), blend: 'dest-in' }]).png().toBuffer();
+  const W = pw + 2 * b, H = h + 2 * b;
+  const bezel = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect x="1.25" y="1.25" width="${W - 2.5}" height="${H - 2.5}" rx="${r + b}" fill="#0e0e11" stroke="#46464f" stroke-width="2.5"/></svg>`);
+  const full = await sharp(bezel).composite([{ input: screen, left: b, top: b }]).png().toBuffer();
+  return { buf: await sharp(full).extract({ left: 0, top: 0, width: W, height: Math.min(H, visibleH) }).png().toBuffer(), W };
+}
 const save = (buf, name) => sharp(buf).png({ compressionLevel: 9 }).toFile(path.join(out, name));
 
 // ---------- 1. avatar ----------
@@ -91,8 +106,8 @@ for (const [name, g] of Object.entries(icons)) {
 
 // ---------- 4. teaser posts ----------
 const posts = [
-  { slug: 'called-it', lines: ['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], sub: 'Game Receipts proves it.', src: HERO_T },
-  { slug: 'receipts', lines: ["SOON YOU'LL", 'HAVE THE', { t: 'RECEIPTS.', fill: VOLT }], sub: 'Lock it. Date-stamped. Graded.', src: SHARE },
+  { slug: 'called-it', lines: ['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], sub: 'Game Receipts proves it.', src: HERO_T, phone: 'carousel-1.png' },
+  { slug: 'receipts', lines: ["SOON YOU'LL", 'HAVE THE', { t: 'RECEIPTS.', fill: VOLT }], sub: 'Lock it. Date-stamped. Graded.', src: SHARE, phone: 'carousel-2.png' },
   { slug: 'coming-soon', lines: ['COMING', { t: 'SOON', fill: VOLT }], sub: 'FREE TO PLAY', tag: 'Call it. Lock it. Prove it.', src: HERO_W },
 ];
 for (const p of posts) {
@@ -100,6 +115,23 @@ for (const p of posts) {
     const { W, H } = fmt;
     const base = await bg(p.src, W, H, { dim: p.src === SHARE ? 0.8 : 0.65, pos: p.src === HERO_W ? 'right' : 'centre' });
     const n = p.lines.length;
+    if (p.phone) {
+      // phone-frame layout: full logo on top, headline, then the real app (take builder / LOCKED stamp) rising from the bottom
+      const story = !!fmt.top;
+      const lgS = story ? 260 : 190, lgY = story ? 290 : 36;
+      const size = fitSize(p.lines, story ? 150 : 118), lh = size * 1.0;
+      const y0 = (story ? 640 : 300) + size * 0.82;
+      const subY = y0 + (n - 1) * lh + (story ? 90 : 76);
+      const pw = story ? 620 : 500, pTop = story ? 1240 : 760;
+      const ph = await phone(path.join(RAW, p.phone), pw, H - pTop);
+      const o = svg(W, H, `<defs>${shadow}</defs>` + text(p.lines, { x: W / 2, y: y0, size, lh, ls: 2 }) +
+        `<text x="${W / 2}" y="${subY}" font-family="${BLK}" font-size="${story ? 50 : 42}" fill="#fff" text-anchor="middle" filter="url(#sh)">${p.sub}</text>`);
+      const lg = await logo(lgS);
+      const glow = svg(W, H, `<defs><radialGradient id="g" cx=".5" cy="${(pTop + 400) / H}" r=".5"><stop offset="0" stop-color="${VOLT}" stop-opacity=".30"/><stop offset="1" stop-color="${VOLT}" stop-opacity="0"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#g)"/>`);
+      const buf = await sharp(base).composite([{ input: glow }, { input: lg, left: Math.round((W - lgS) / 2), top: lgY }, { input: o }, { input: ph.buf, left: Math.round((W - ph.W) / 2), top: pTop }]).png().toBuffer();
+      await save(buf, `teaser-${p.slug}-${fmt.n}.png`);
+      continue;
+    }
     const size = fitSize(p.lines, n === 2 ? 300 : 210), lh = size * 1.0;
     // vertical layout: story keeps top 250 / bottom 380 clear
     const areaTop = fmt.top ? 520 : 330, areaBot = fmt.top ? H - 520 : H - 330;
@@ -132,34 +164,59 @@ for (const p of posts) {
   fs.copyFileSync(path.join(out, 'og-1200x630.png'), path.join(here, 'waitlist/og.png'));
 }
 
-// ---------- 6. teaser video (text PNG layers + ffmpeg) ----------
+// ---------- 6. teaser video (text PNG layers + real app glimpse in a phone frame + ffmpeg) ----------
+// 0-2.4 hook 1, 2.4-4.8 hook 2, 4.8-~10.8 real take-builder -> LOCKED footage (spot 2 capture, 1x), then COMING SOON end card.
 {
   const W = 1080, H = 1920, tmp = '/tmp/gr/vid';
   fs.mkdirSync(tmp, { recursive: true });
   const layer = async (name, body) => { await sharp(svg(W, H, `<defs>${shadow}</defs>` + body)).png().toFile(`${tmp}/${name}.png`); };
+  // app glimpse window from the raw capture: from "Pick a take" to the end of "Place take"
+  const meta = JSON.parse(fs.readFileSync(path.join(RAW, 'spot-2.json'), 'utf8'));
+  const pickBeat = meta.beats.find((b) => /pick a take/i.test(b.caption)) ?? meta.beats.at(-2);
+  const g0 = pickBeat.start, g1 = meta.beats.at(-1).end - 0.3, SPEED = 1.0;
+  const GS = 4.8, GD = (g1 - g0) / SPEED, GE = GS + GD, TOTAL = GE + 2.6;
+  const r2 = (x) => x.toFixed(2);
   await layer('t1', text(['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], { x: 540, y: 860, size: fitSize(['EVERYONE SAYS'], 210), lh: 150, ls: 2 }));
   await layer('t2', text(['SOON YOU’LL', 'HAVE THE', { t: 'RECEIPTS.', fill: VOLT }], { x: 540, y: 820, size: 190, lh: 185, ls: 2 }));
-  await layer('t3', text(['COMING', { t: 'SOON', fill: VOLT }], { x: 540, y: 850, size: 270, lh: 255, ls: 2 }) +
-    `<text x="540" y="1230" font-family="${BLK}" font-size="58" fill="#fff" text-anchor="middle" filter="url(#sh)">FREE TO PLAY</text>` +
-    `<text x="540" y="1320" font-family="${IMP}" font-size="56" fill="${VOLT}" text-anchor="middle" letter-spacing="3" filter="url(#sh)">CALL IT. LOCK IT. PROVE IT.</text>`);
-  await sharp(await logo(260)).png().toFile(`${tmp}/logo.png`);
+  await layer('t3', text(['COMING', { t: 'SOON', fill: VOLT }], { x: 540, y: 1000, size: 250, lh: 235, ls: 2 }) +
+    `<text x="540" y="1330" font-family="${BLK}" font-size="58" fill="#fff" text-anchor="middle" filter="url(#sh)">FREE TO PLAY</text>` +
+    `<text x="540" y="1420" font-family="${IMP}" font-size="56" fill="${VOLT}" text-anchor="middle" letter-spacing="3" filter="url(#sh)">CALL IT. LOCK IT. PROVE IT.</text>`);
+  await layer('cap', text(['Pick a take. Lock it.'], { x: 540, y: 300, size: 76, lh: 0, ls: 1 }));
+  const pw = 700, ph = phoneH(pw), pb = 14, py = 416, px = (W - pw) / 2;
+  await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${pw + 2 * pb}" height="${ph + 2 * pb}"><rect x="1.25" y="1.25" width="${pw + 2 * pb - 2.5}" height="${ph + 2 * pb - 2.5}" rx="${Math.round(pw * 0.11) + pb}" fill="#0e0e11" stroke="#46464f" stroke-width="2.5"/></svg>`)).png().toFile(`${tmp}/bezel.png`);
+  await sharp(roundedMask(pw, ph, Math.round(pw * 0.11))).png().toFile(`${tmp}/mask.png`);
+  const full = await endLogo(300), emb = await bug(108);
   await sharp(await sharp(HERO_T).resize(1296, 2304, { fit: 'cover' }).modulate({ brightness: 0.6 }).png().toBuffer()).png().toFile(`${tmp}/bg.png`);
-  // t1 0.4-2.8, t2 2.8-5.2, t3 5.2-7.5 (fade 0.35s); logo throughout
-  const fade = (i, a, b) => `[${i}:v]format=rgba,fade=t=in:st=${a}:d=0.35:alpha=1,fade=t=out:st=${b - 0.35}:d=0.35:alpha=1[l${i}]`;
+  const fade = (i, a, b) => `[${i}:v]format=rgba,fade=t=in:st=${r2(a)}:d=0.35:alpha=1,fade=t=out:st=${r2(b - 0.35)}:d=0.35:alpha=1[l${i}]`;
   const fc = [
-    `[0:v]zoompan=z='1.0+0.12*on/225':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=225:s=1080x1920:fps=30,format=yuv420p[bg]`,
-    fade(1, 0.4, 2.8), fade(2, 2.8, 5.2), fade(3, 5.2, 7.5),
-    `[4:v]format=rgba,fade=t=in:st=0.1:d=0.5:alpha=1[lg]`,
-    `[bg][lg]overlay=410:300:shortest=0[a]`,
-    `[a][l1]overlay[b]`, `[b][l2]overlay[c]`, `[c][l3]overlay,format=yuv420p[v]`,
+    `[0:v]zoompan=z='1.0+0.12*on/${Math.round(TOTAL * 30)}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${Math.round(TOTAL * 30)}:s=1080x1920:fps=30,format=yuv420p[bg]`,
+    fade(1, 0.4, 2.4), fade(2, 2.4, GS),
+    `[3:v]format=rgba,fade=t=in:st=${r2(GE)}:d=0.35:alpha=1[l3]`,
+    `[4:v]format=rgba,fade=t=in:st=${r2(GS + 0.2)}:d=0.35:alpha=1[lcap]`,
+    // full logo on the text beats (0-GS) and the end card (GE-); emblem bug beside the phone during the glimpse
+    `[5:v]format=rgba,fade=t=in:st=0.1:d=0.5:alpha=1[lg]`,
+    `[6:v]format=rgba[bugv]`,
+    // footage in a phone frame
+    `[7:v]trim=start=${r2(g0)}:end=${r2(g1)},setpts=(PTS-STARTPTS)/${SPEED},fps=30,scale=${pw}:${ph}:flags=lanczos,format=rgba[sc]`,
+    `[8:v]format=rgba,alphaextract[ma]`, `[sc][ma]alphamerge[screen]`,
+    `[9:v]format=rgba[bz]`, `[bz][screen]overlay=x=${pb}:y=${pb}:format=auto,fade=t=in:st=0:d=0.35:alpha=1,fade=t=out:st=${r2(GD - 0.35)}:d=0.35:alpha=1,setpts=PTS+${r2(GS)}/TB[phone]`,
+    `[bg][phone]overlay=x=${px - pb}:y=${py - pb}:format=auto:enable='between(t,${r2(GS)},${r2(GE)})':eof_action=pass[a0]`,
+    `[a0][lg]overlay=x=390:y=300:format=auto:enable='lt(t,${r2(GS)})+gte(t,${r2(GE)})'[a1]`,
+    `[a1][bugv]overlay=x=${36 - emb.pad}:y=${440 - emb.pad}:format=auto:enable='between(t,${r2(GS)},${r2(GE)})'[a2]`,
+    `[a2][lcap]overlay=format=auto[a3]`, `[a3][l1]overlay[b]`, `[b][l2]overlay[c]`, `[c][l3]overlay,format=yuv420p[v]`,
   ].join(';');
+  const L = (f) => ['-loop', '1', '-framerate', '30', '-t', r2(TOTAL), '-i', f];
+  // the logo layer (input 5) is 300 px: centre it (x=390) on the text beats and the end card
   execFileSync(process.env.HOME + '/.local/node/bin/ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error',
-    '-loop', '1', '-t', '7.5', '-i', `${tmp}/bg.png`,
-    '-loop', '1', '-t', '7.5', '-i', `${tmp}/t1.png`, '-loop', '1', '-t', '7.5', '-i', `${tmp}/t2.png`, '-loop', '1', '-t', '7.5', '-i', `${tmp}/t3.png`,
-    '-loop', '1', '-t', '7.5', '-i', `${tmp}/logo.png`,
-    '-f', 'lavfi', '-t', '7.5', '-i', 'anullsrc=r=44100:cl=stereo',
-    '-filter_complex', fc, '-map', '[v]', '-map', '5:a', '-t', '7.5',
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', '25', '-pix_fmt', 'yuv420p', '-r', '30', '-c:a', 'aac', '-b:a', '64k', '-movflags', '+faststart',
+    ...L(`${tmp}/bg.png`), ...L(`${tmp}/t1.png`), ...L(`${tmp}/t2.png`), ...L(`${tmp}/t3.png`), ...L(`${tmp}/cap.png`),
+    ...L(full.file), ...L(emb.file),
+    '-i', path.join(RAW, 'spot-2.mp4'),
+    ...L(`${tmp}/mask.png`), ...L(`${tmp}/bezel.png`),
+    '-f', 'lavfi', '-t', r2(TOTAL), '-i', 'anullsrc=r=48000:cl=stereo',
+    '-filter_complex', fc.replace('[8:v]', '[8:v]').replace('[9:v]', '[9:v]'), '-map', '[v]', '-map', '10:a', '-t', r2(TOTAL),
+    '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', '17', '-maxrate', '20M', '-bufsize', '40M', '-pix_fmt', 'yuv420p', '-r', '30',
+    '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-movflags', '+faststart',
     path.join(out, 'teaser-coming-soon-1080x1920.mp4')]);
+  console.log(`teaser video ${TOTAL.toFixed(1)}s, app glimpse ${GD.toFixed(1)}s`);
 }
 console.log('done');

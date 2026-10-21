@@ -1,5 +1,6 @@
 // Records REAL in-app footage for the two UGC spots (logged in as the demo user) against your OWN server.
 // Usage: BASE_URL=http://localhost:3300 node marketing/ugc/capture.mjs <outDir>
+// Output is 1236x2196 (3x the 412x732 CSS viewport, native) so finish.mjs only ever scales DOWN to 1080x1920.
 // Server: GR_SEED_DEMO=1 SESSION_SECRET=<random> GR_DATA_DIR=<scratch> NODE_ENV=production npx next start -p 3300
 import { chromium, devices } from "playwright";
 import fs from "node:fs";
@@ -43,25 +44,29 @@ async function record(name, fn) {
   fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true });
   const cdp = await ctx.newCDPSession(page);
   const frames = [];
-  cdp.on("Page.screencastFrame", (f) => {
-    const file = `${dir}/f${String(frames.length).padStart(5, "0")}.jpg`;
-    fs.writeFileSync(file, Buffer.from(f.data, "base64"));
-    frames.push({ file, t: f.metadata.timestamp });
-    cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }).catch(() => {});
-  });
+  // CDP screencast only delivers ~7 fps here, so grab frames with a tight Page.captureScreenshot loop (~30 fps, 3x native).
+  let live = false, grab;
   await page.goto(BASE + "/feed");
   await page.waitForLoadState("networkidle");
-  await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: 824, maxHeight: 1464, everyNthFrame: 1 });
+  live = true;
+  grab = (async () => {
+    while (live) {
+      const t = Date.now() / 1000;
+      try { const r = await Promise.race([cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 92, optimizeForSpeed: true }), new Promise((_, rej) => setTimeout(() => rej(new Error("shot timeout")), 2000))]);
+        const file = `${dir}/f${String(frames.length).padStart(5, "0")}.jpg`; fs.writeFileSync(file, Buffer.from(r.data, "base64")); frames.push({ file, t }); } catch {}
+    }
+  })();
   await pause(page, 500);
   await fn(page);
   await pause(page, 300);
-  await cdp.send("Page.stopScreencast");
+  live = false; await Promise.race([grab, pause(page, 3000)]);
   await ctx.close();
   const list = frames.map((f, i) => `file '${f.file}'\nduration ${Math.max(0.02, (frames[i + 1]?.t ?? f.t + 0.5) - f.t).toFixed(3)}`).join("\n") + `\nfile '${frames.at(-1).file}'\n`;
   fs.writeFileSync(`${dir}/list.txt`, list);
   const { spawnSync } = await import("node:child_process");
-  const r = spawnSync(FFMPEG, ["-y", "-f", "concat", "-safe", "0", "-i", `${dir}/list.txt`, "-vf", "fps=30,format=yuv420p", "-c:v", "libx264", "-crf", "16", `${OUT}/${name}.mp4`], { encoding: "utf8" });
+  const r = spawnSync(FFMPEG, ["-y", "-f", "concat", "-safe", "0", "-i", `${dir}/list.txt`, "-vf", "scale=1236:2196:flags=lanczos,fps=30,format=yuv420p", "-c:v", "libx264", "-crf", "12", "-preset", "fast", `${OUT}/${name}.mp4`], { encoding: "utf8" });
   if (r.status !== 0) throw new Error(r.stderr.slice(-800));
+  fs.rmSync(dir, { recursive: true, force: true });
   console.log("recorded", name, frames.length, "frames");
 }
 

@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
+const appRoot = process.env.GR_APP_ROOT ?? root; // run the production server from another checkout (e.g. a scratch copy) without touching this one
 const OUT = path.join(here, "out");
 const RAW = path.join(OUT, "raw");
 fs.mkdirSync(RAW, { recursive: true });
@@ -24,7 +25,7 @@ const PORT = Number(process.env.CAPTURE_PORT ?? 3200);
 const BASE = `http://localhost:${PORT}`;
 const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const VIEW = { width: 390, height: 844 };
-const VIDEO = { width: 780, height: 1688 }; // 2x the CSS viewport: sharp enough for a ~842px-wide phone in a 1080 canvas
+const VIDEO = { width: 1170, height: 2532 }; // 3x the CSS viewport (deviceScaleFactor 3): native, so renders only ever scale DOWN
 const PAUSE = 600;
 const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ffmpeg");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -33,8 +34,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let server;
 async function startServer() {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "gr-capture-"));
-  server = spawn(process.execPath, [path.join(root, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT)], {
-    cwd: root, stdio: "ignore",
+  server = spawn(process.execPath, [path.join(appRoot, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT)], {
+    cwd: appRoot, stdio: "ignore",
     env: { ...process.env, GR_SEED_DEMO: "1", GR_DATA_DIR: dataDir, SESSION_SECRET: crypto.randomBytes(24).toString("hex"), NODE_ENV: "production" },
   });
   for (let i = 0; i < 80; i++) {
@@ -71,7 +72,7 @@ const initScript = () => {
     if (!t0) return;
     if (location.search.includes("placed=") && !sessionStorage.getItem("grT1")) sessionStorage.setItem("grT1", String(Date.now()));
     const el = document.createElement("div");
-    el.style.cssText = "position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:99999;padding:3px 14px;border-radius:999px;background:#000d;border:2px solid #23e58a;color:#23e58a;font:900 22px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.04em";
+    el.style.cssText = "position:fixed;top:14px;right:92px;z-index:99999;padding:2px 10px;border-radius:999px;background:#000d;border:2px solid #23e58a;color:#23e58a;font:900 17px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.04em";
     document.body.appendChild(el);
     const tick = () => {
       const end = Number(sessionStorage.getItem("grT1") || 0) || Date.now();
@@ -108,13 +109,17 @@ async function smoothScroll(page, { to, by, ms = 1200 }) {
 async function startScreencast(page) {
   const cdp = await page.context().newCDPSession(page);
   const frames = [];
-  cdp.on("Page.screencastFrame", (f) => {
-    frames.push({ ts: f.metadata.timestamp, data: f.data });
-    cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }).catch(() => {});
-  });
-  await cdp.send("Page.startScreencast", { format: "jpeg", quality: 95, maxWidth: VIDEO.width, maxHeight: VIDEO.height, everyNthFrame: 1 });
+  // Chrome's CDP screencast only delivers ~7 fps here (scrolls look choppy), so grab frames with a tight
+  // Page.captureScreenshot loop instead (~30 fps at 3x native) and stamp each with its capture time.
+  let live = true;
+  const grab = (async () => {
+    while (live) {
+      const ts = Date.now() / 1000;
+      try { const r = await Promise.race([cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 92, optimizeForSpeed: true }), new Promise((_, rej) => setTimeout(() => rej(new Error("shot timeout")), 2000))]); frames.push({ ts, data: r.data }); } catch {}
+    }
+  })();
   return async (vt0, endMs, dest) => {
-    await cdp.send("Page.stopScreencast").catch(() => {});
+    live = false; await Promise.race([grab, sleep(3000)]);
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gr-frames-"));
     let list = "ffconcat version 1.0\n";
     const end = endMs / 1000;
@@ -126,7 +131,7 @@ async function startScreencast(page) {
       list += `file '${file}'\nduration ${Math.max(0.001, t1 - t0 + (i === 0 ? t0 : 0)).toFixed(4)}\n`;
     });
     fs.writeFileSync(path.join(dir, "list.ffconcat"), list);
-    execFileSync(FFMPEG, ["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", path.join(dir, "list.ffconcat"), "-vf", `scale=${VIDEO.width}:${VIDEO.height}:flags=lanczos,fps=30,format=yuv420p`, "-c:v", "libx264", "-crf", "14", "-preset", "fast", "-movflags", "+faststart", dest]);
+    execFileSync(FFMPEG, ["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", path.join(dir, "list.ffconcat"), "-vf", `scale=${VIDEO.width}:${VIDEO.height}:flags=lanczos,fps=30,format=yuv420p`, "-c:v", "libx264", "-crf", "12", "-preset", "fast", "-movflags", "+faststart", dest]);
     fs.rmSync(dir, { recursive: true, force: true });
     return frames.length;
   };
@@ -164,9 +169,9 @@ async function runStep(page, st, ctx) {
     case "goto": await page.goto(BASE + sub(st.url)); await page.waitForLoadState("networkidle"); break;
     case "chat": {
       await page.setContent(chatHtml(st.messages));
-      await sleep(500);
+      await sleep(250);
       const n = await page.locator(".m").count();
-      for (let i = 0; i < n; i++) { await page.locator(".m").nth(i).evaluate((e) => e.classList.add("on")); await sleep(850); }
+      for (let i = 0; i < n; i++) { await page.locator(".m").nth(i).evaluate((e) => e.classList.add("on")); await sleep(500); }
       break;
     }
     case "tab": await page.getByRole("tab", { name: new RegExp(st.name) }).click(); await sleep(250); break;
