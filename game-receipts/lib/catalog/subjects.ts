@@ -23,7 +23,7 @@ export function subjectLite(s: Subject | null | undefined): SubjectLite | null {
   if (!s) return null;
   if (s.type === "team") {
     const t = teamById(s.id);
-    return t ? { type: "team", id: t.id, league: t.league, name: teamLabel(t), meta: t.league, mark: t.abbr, color: t.color } : null;
+    return t ? { type: "team", id: t.id, league: t.league, name: teamLabel(t), meta: t.league, mark: t.abbr, color: t.color, imageUrl: t.imageUrl } : null;
   }
   const p = PLAYERS.find((x) => x.id === s.id);
   if (!p) return null;

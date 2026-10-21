@@ -7,6 +7,7 @@ import { forecastRows } from "@/lib/server/views";
 import { Avatar, Card, Chip } from "../ui/primitives";
 import { LikeButton } from "./interactive";
 import { SubjectAvatar } from "./SubjectAvatar";
+import { DateStamp } from "./DateStamp";
 import { outcomeLabel } from "@/lib/server/services/grading";
 
 export function StatusPill({ v }: { v: PredictionView }) {
@@ -79,11 +80,12 @@ export function PredictionCard({ v, now }: { v: PredictionView; now?: number }) 
               {v.subject && <div className="truncate text-xs font-semibold text-ink-300">{v.subject.name}</div>}
               <p className="text-[15px] font-semibold leading-snug text-white">{v.question?.title ?? p.structuredText}</p>
             </div>
+            <DateStamp at={p.lockedAt} tone={p.status === "resolved" && p.score && !p.score.correct ? "muted" : "volt"} className="mt-1 shrink-0" />
           </div>
-          {p.kind === "graded" && p.originalText && p.originalText !== p.structuredText && (
+          {p.kind === "graded" && p.originalText && p.originalText !== p.structuredText && p.originalText !== v.question?.title && (
             <p className="mt-1 line-clamp-2 text-sm italic text-ink-400">“{p.originalText}”</p>
           )}
-          {p.kind === "graded" && <div className="mt-3"><ForecastBars v={v} compact /></div>}
+          {p.kind === "graded" && p.forecast?.type === "categorical" && <div className="mt-3"><ForecastBars v={v} compact /></div>}
         </Link>
       </div>
 

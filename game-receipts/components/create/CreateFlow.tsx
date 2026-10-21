@@ -11,6 +11,7 @@ import { Spinner } from "../ui/client";
 import { btn, Chip, inputCls } from "../ui/primitives";
 import { defaultForecast, ForecastEditor } from "./ForecastEditor";
 import { SubjectPicker, type LeagueTile } from "./SubjectPicker";
+import { TakeBuilder } from "./TakeBuilder";
 import { SubjectAvatar } from "../app/SubjectAvatar";
 import type { SubjectLite } from "@/lib/catalog/subjects";
 
@@ -35,6 +36,8 @@ export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, fi
   const [forecast, setForecast] = useState<Forecast | null>(initialQ ? defaultForecast(initialQ) : null);
   const [error, setError] = useState<string | null>(null);
   const [subject, setSubject] = useState<SubjectLite | null>(null);
+  const [ownWords, setOwnWords] = useState(false);
+  const pickSubject = (s: SubjectLite | null) => { setSubject(s); setOwnWords(false); };
   const [pending, start] = useTransition();
 
   const runStructure = () => start(async () => {
@@ -87,12 +90,19 @@ export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, fi
                   <div className="truncate font-display text-xl font-black italic text-white">{subject.name}</div>
                   <div className="text-xs text-ink-400">{subject.league} · {subject.type === "team" ? "Team" : subject.meta}</div>
                 </div>
-                <button type="button" onClick={() => setSubject(null)} className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-ink-300 hover:bg-ink-800 hover:text-white">Change</button>
+                <button type="button" onClick={() => pickSubject(null)} className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-ink-300 hover:bg-ink-800 hover:text-white">Change</button>
               </div>
             ) : (
-              <SubjectPicker leagues={leagueTiles} onPick={setSubject} />
+              <SubjectPicker leagues={leagueTiles} onPick={pickSubject} />
             )}
           </div>
+          {subject && !ownWords && (
+            <>
+              <TakeBuilder key={subject.type + subject.id} subject={subject} />
+              <button type="button" onClick={() => setOwnWords(true)} className="mt-4 w-full rounded-xl py-2.5 text-sm font-semibold text-ink-300 ring-1 ring-ink-700 hover:text-white hover:ring-ink-500">Or write your own take on {subject.name}</button>
+            </>
+          )}
+          {(!subject || ownWords) && <>
           <textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={4}
             placeholder={subject ? `What’s your take on ${subject.name}?` : "e.g. The Leafs are going to have a crazy good season"} className={`${inputCls} mt-4 resize-none text-lg`}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && text.trim().length >= 4) runStructure(); }} />
@@ -105,6 +115,7 @@ export function CreateFlow({ questions, activeQuestionIds, initialQuestionId, fi
           <button type="button" disabled={pending || text.trim().length < 4} onClick={runStructure} className={btn("primary", "lg", "mt-5 w-full")}>
             {pending ? <><Spinner />Structuring…</> : <><Wand2 className="size-5" />Make it measurable</>}
           </button>
+          </>}
         </section>
       )}
 

@@ -117,7 +117,7 @@ const LockSchema = z.object({
   subject: z.object({ type: z.enum(["player", "team"]), id: z.string().max(120) }).nullable().optional(),
 });
 
-export async function lock(input: unknown): Promise<ActionState> {
+export async function lock(input: unknown, dest?: "feed"): Promise<ActionState> {
   const me = await requireUser();
   let id: string;
   try {
@@ -125,7 +125,7 @@ export async function lock(input: unknown): Promise<ActionState> {
     id = mutate((d) => lockPrediction(d, me.id, parsed)).id;
   } catch (e) { return fail(e); }
   revalidatePath("/feed");
-  redirect(`/p/${id}?locked=1`);
+  redirect(dest === "feed" ? `/feed?placed=${id}` : `/p/${id}?locked=1`);
 }
 
 export async function revise(predictionId: string, forecast: unknown, note: string): Promise<ActionState> {

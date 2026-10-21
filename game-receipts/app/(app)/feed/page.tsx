@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Lock } from "lucide-react";
 import { PageHeader } from "@/components/app/Shell";
 import { PredictionCard } from "@/components/app/PredictionCard";
 import { EmptyState, LinkButton, Tabs } from "@/components/ui/primitives";
@@ -19,9 +21,9 @@ const EMPTY: Record<FeedTab, [string, string]> = {
   NBA: ["No NBA takes yet", "Lock the first one."],
 };
 
-export default async function FeedPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function FeedPage({ searchParams }: { searchParams: Promise<{ tab?: string; placed?: string }> }) {
   const me = await requireUser();
-  const { tab: raw } = await searchParams;
+  const { tab: raw, placed } = await searchParams;
   const tab = (FEED_TABS.some((t) => t.id === raw) ? raw : "following") as FeedTab;
   const d = db();
   const items = feed(d, me.id, tab).map((p) => viewPrediction(d, p, me.id));
@@ -29,6 +31,13 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   return (
     <div>
       <PageHeader title="Feed" sub="Takes, receipts and results from your world." />
+      {placed && (
+        <div role="status" className="mb-4 flex items-center gap-3 rounded-2xl bg-volt/10 px-4 py-3 ring-1 ring-volt/40 animate-rise">
+          <Lock className="size-5 shrink-0 text-volt" />
+          <div className="flex-1 text-sm"><b className="text-white">Take placed.</b> <span className="text-ink-300">Timestamped and sealed — it’s at the top of your feed.</span></div>
+          <Link href={`/p/${placed}`} className="text-sm font-semibold text-volt hover:underline">View receipt</Link>
+        </div>
+      )}
       <Tabs active={tab} items={FEED_TABS.map((t) => ({ id: t.id, label: t.label, href: `/feed?tab=${t.id}` }))} />
       <div className="mt-4 space-y-3">
         {items.length ? items.map((v) => <PredictionCard key={v.p.id} v={v} now={now} />) : (

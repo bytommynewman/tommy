@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DateStamp } from "@/components/app/DateStamp";
 import { notFound } from "next/navigation";
 import { BadgeCheck, Clock, ExternalLink, Fingerprint, GitBranch, Lock, Newspaper, PartyPopper, ShieldCheck } from "lucide-react";
 import { AppealForm, ChallengeBox, CommentForm, OwnerActions, ReportButton } from "@/components/app/detail";
@@ -85,15 +86,16 @@ export default async function PredictionPage({ params, searchParams }: Props) {
           {q?.reviewStatus === "pending" && <Chip tone="gold">Question in review</Chip>}
           {awards.map((a) => <Chip key={a} tone="volt">🏆 {a}</Chip>)}
         </div>
-        {v.subject && (
-          <div className="mt-4 flex items-center gap-3">
+        <div className="mt-4 flex items-center gap-3">
+          {v.subject && <>
             <SubjectAvatar s={v.subject} size={64} />
-            <div><div className="font-display text-xl font-black italic text-white">{v.subject.name}</div><div className="text-xs text-ink-400">{v.subject.league} · {v.subject.type === "team" ? "Team" : v.subject.meta}</div></div>
-          </div>
-        )}
+            <div className="min-w-0 flex-1"><div className="font-display text-xl font-black italic text-white">{v.subject.name}</div><div className="text-xs text-ink-400">{v.subject.league} · {v.subject.type === "team" ? "Team" : v.subject.meta}</div></div>
+          </>}
+          <DateStamp at={p.lockedAt} className="ml-auto shrink-0" />
+        </div>
         <h1 className="mt-3 font-display text-2xl font-black italic leading-tight text-white">{p.structuredText}</h1>
-        {p.originalText !== p.structuredText && <p className="mt-2 border-l-2 border-ink-600 pl-3 text-sm italic text-ink-300">“{p.originalText}”<span className="ml-1 not-italic text-ink-500">— original words</span></p>}
-        {p.kind === "graded" && <div className="mt-5"><ForecastBars v={v} /></div>}
+        {p.originalText !== p.structuredText && p.originalText !== q?.title && <p className="mt-2 border-l-2 border-ink-600 pl-3 text-sm italic text-ink-300">“{p.originalText}”<span className="ml-1 not-italic text-ink-500">— original words</span></p>}
+        {p.kind === "graded" && p.forecast?.type === "categorical" && <div className="mt-5"><ForecastBars v={v} /></div>}
         {p.kind === "debate" && (
           <div className="mt-5">
             {me ? <DebateVote id={p.id} agree={votes.filter((x) => x.agree).length} disagree={votes.filter((x) => !x.agree).length} mine={votes.find((x) => x.userId === me.id)?.agree ?? null} />

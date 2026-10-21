@@ -93,6 +93,7 @@ await page.getByRole("tab", { name: /NHL/ }).click();
 await page.getByLabel("Search NHL").fill("celeb");
 await page.getByRole("button", { name: /Macklin Celebrini/ }).click();
 await page.getByText("Your take is about").waitFor();
+await page.getByRole("button", { name: /Or write your own take on/ }).click();
 await page.fill("textarea", "Best young center in the league within two years");
 await shot("10b-subject");
 await page.getByRole("button", { name: /Make it measurable/ }).click();
@@ -101,6 +102,20 @@ await page.getByRole("button", { name: /Lock it in/ }).click();
 await page.waitForURL(/\/p\/.+\?locked=1/);
 await page.getByRole("img", { name: "Macklin Celebrini" }).first().waitFor();
 await shot("10c-subject-locked");
+
+step("take builder: pick a take from the dropdown, place it, see it on the feed");
+await page.goto(`${BASE}/create`);
+await page.getByRole("tab", { name: /NHL/ }).click();
+await page.getByLabel("Search NHL").fill("celeb");
+await page.getByRole("button", { name: /Macklin Celebrini/ }).click();
+await page.getByText("Pick a take on Macklin Celebrini").waitFor();
+const builtTitle = (await page.getByText("Your take", { exact: true }).locator("xpath=following-sibling::div[1]").innerText()).trim();
+await expect(builtTitle.length > 0, "builder shows the built take");
+await shot("10d-builder");
+await page.getByRole("button", { name: "Place take" }).click();
+await page.waitForURL(/\/feed\?placed=/);
+await page.getByText("Take placed.").waitFor();
+await expect(await page.getByText(builtTitle, { exact: false }).first().isVisible(), "placed take appears on the feed");
 
 step("feed, receipt, profile, leaderboards");
 for (const [path, name] of [["/feed?tab=trending", "11-feed"], ["/leaderboards", "12-leaderboards"], [`/u/${u}`, "13-profile"], ["/u/darkhorse_dana", "14-profile-dana"], ["/u/darkhorse_dana/reputation", "15-reputation"], ["/battles", "16-battles"], ["/leagues/the-film-room", "17-league"], ["/notifications", "18-notifications"], ["/settings", "19-settings"], ["/how-scoring-works", "20-scoring"]]) {

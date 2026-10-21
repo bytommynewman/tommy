@@ -12,9 +12,9 @@ export function SubjectAvatar({ s, size = 40 }: { s: Pick<SubjectLite, "type" | 
     return (
       // eslint-disable-next-line @next/next/no-img-element -- remote provider images; sizes vary by provider
       <img src={s.imageUrl} alt={s.name} loading="lazy" onError={() => setFailed(true)}
-        className={`${round} shrink-0 bg-ink-800 ring-2 ${s.type === "player" ? "object-cover object-top" : "object-contain p-[12%]"}`}
+        className={`${round} shrink-0 bg-ink-800 ring-2 ${s.type === "player" ? "object-cover object-top" : "box-border object-contain"}`}
         // team colour ring ties the photo to the club
-        style={{ ...style, ["--tw-ring-color" as string]: s.color }} />
+        style={{ ...style, ...(s.type === "team" ? { padding: Math.round(size * 0.12) } : {}), ["--tw-ring-color" as string]: s.color }} />
     );
   }
   return (
