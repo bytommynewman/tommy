@@ -77,7 +77,7 @@ function build(spot, W, H, outFile) {
   f.push(`[2:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},fps=30,eq=brightness=-0.42:saturation=0.9,setsar=1,` +
     [cardF("GAME RECEIPTS", 780 + cy, 118, IMPACT, "0x22e58b", `:borderw=${px(6)}:bordercolor=black`),
      cardF("Call it. Lock it. Prove it.", 960 + cy, 58, BLACK, "white", `:borderw=${px(4)}:bordercolor=black`),
-     cardF("Free \u00B7 No betting", 1085 + cy, 46, BLACK, "0xd8dde0", `:borderw=${px(3)}:bordercolor=black`)].join(",") + `,format=yuv420p[card]`);
+     cardF("Free to play", 1085 + cy, 46, BLACK, "0xd8dde0", `:borderw=${px(3)}:bordercolor=black`)].join(",") + `,format=yuv420p[card]`);
   const total = hd + footSecs + 2;
   f.push(`anullsrc=r=44100:cl=stereo,atrim=0:${(footSecs + 2).toFixed(3)}[sil]`);
   f.push(`[head]${spot.cuts.map((_, i) => `[c${i}]`).join("")}[card]concat=n=${n + 2}:v=1:a=0[v]`);

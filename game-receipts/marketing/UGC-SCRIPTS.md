@@ -22,8 +22,8 @@ Rules: no team logos, no real jerseys (plain or blank tees/hoodies), no real ath
 
 ## Captions / copy
 
-- UGC-1: "Kyle is 0-for-3 and the receipts prove it 🧾 Free · no betting · link in bio #sportstok #hottakes #icalledit"
-- UGC-2: "Locked my MVP pick in October. Graded when it's done. 🧾 Free · no betting #nba #sportstok #mvp"
+- UGC-1: "Kyle is 0-for-3 and the receipts prove it 🧾 Free to play · link in bio #sportstok #hottakes #icalledit"
+- UGC-2: "Locked my MVP pick in October. Graded when it's done. 🧾 Free to play #nba #sportstok #mvp"
 
 ---
 
