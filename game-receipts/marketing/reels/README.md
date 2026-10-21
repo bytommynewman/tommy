@@ -26,3 +26,7 @@ node marketing/reels/render-reels.mjs A2 --top A2=/path/to/kyle-final.mp4 --keep
 Clips are expected to be portrait ~1076x1924; the face crop offset is `faceY` in `SPECS` (render-reels.mjs). With no clip found it falls back to a dimmed `public/art/hero-tall.webp` panel with a large stopwatch. `--keep-audio` uses the top clip's audio instead of the silent track.
 
 Format B can later be fed a real screen recording from `marketing/real/` by pointing `RAW/B1.mp4` + `B1.json` marks at it.
+
+## Instagram target
+
+`node marketing/reels/render-reels.mjs B1 --target ig` writes `<name>-ig.mp4` (2-pass ~9 Mbps H.264 High, BT.709, closed 2 s GOP, AAC 128k; B1 also loses the grain and gets safe-zone captions). Works for A1/A2 too (encode settings only).
