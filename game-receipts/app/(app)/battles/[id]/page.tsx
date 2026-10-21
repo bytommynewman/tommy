@@ -37,7 +37,7 @@ export default async function BattlePage({ params }: { params: Promise<{ id: str
           return (
             <Card key={u.id} className={`p-4 ${won ? "ring-2 ring-volt" : ""}`}>
               <div className="flex items-center gap-2.5">
-                <Avatar name={u.displayName} color={u.avatarColor} size={40} />
+                <Avatar name={u.displayName} color={u.avatarColor} src={u.avatarUrl} size={40} />
                 <div className="min-w-0 flex-1"><Link href={`/u/${u.username}`} className="block truncate font-semibold text-white">@{u.username}</Link><div className="text-xs text-ink-400">{role}</div></div>
                 {won && <Trophy className="size-6 text-volt" aria-label="Winner" />}
               </div>

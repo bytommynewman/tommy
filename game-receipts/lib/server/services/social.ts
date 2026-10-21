@@ -132,7 +132,7 @@ export function search(d: DB, viewerId: string, query: string) {
   if (q.length < 2) return { users: [], predictions: [], questions: [] };
   const vis = feedVisible(d, viewerId);
   return {
-    users: d.users.filter((u) => !isBlocked(d, viewerId, u.id) && (u.username.toLowerCase().includes(q) || u.displayName.toLowerCase().includes(q))).slice(0, 10),
+    users: d.users.filter((u) => !u.deletedAt && !isBlocked(d, viewerId, u.id) && (u.username.toLowerCase().includes(q) || u.displayName.toLowerCase().includes(q))).slice(0, 10),
     predictions: d.predictions.filter((p) => vis(p) && (p.structuredText.toLowerCase().includes(q) || p.originalText.toLowerCase().includes(q))).slice(0, 20),
     questions: d.questions.filter((x) => x.status !== "void" && x.reviewStatus !== "rejected" && x.title.toLowerCase().includes(q)).slice(0, 10),
   };

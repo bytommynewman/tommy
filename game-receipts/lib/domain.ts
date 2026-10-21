@@ -103,6 +103,16 @@ export interface User {
   createdAt: string;
   private: boolean;
   seed?: boolean;
+  /** Served by /api/avatar/<file>; absent means the colour monogram. */
+  avatarUrl?: string;
+  location?: string;
+  /** One http(s) link, rendered nofollow. */
+  website?: string;
+  usernameChangedAt?: string;
+  /** Retired handles; /u/<old> redirects to the current one. */
+  previousUsernames?: string[];
+  /** Set when the account was deleted and anonymized (predictions remain as public records). */
+  deletedAt?: string;
 }
 
 export interface Follow { followerId: string; followeeId: string; createdAt: string }

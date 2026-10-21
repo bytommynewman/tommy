@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { AvatarImage } from "./AvatarImage";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 const base = "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt";
@@ -38,14 +39,15 @@ export function Chip({ children, tone = "default", className = "" }: { children:
   return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ring-1 ${t} ${className}`}>{children}</span>;
 }
 
-export function Avatar({ name, color, size = 40 }: { name: string; color: string; size?: number }) {
+export function Avatar({ name, color, size = 40, src }: { name: string; color: string; size?: number; src?: string | null }) {
   return (
     <span
       aria-hidden
-      className="inline-flex shrink-0 items-center justify-center rounded-full font-display font-extrabold italic text-ink-950"
+      className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-display font-extrabold italic text-ink-950"
       style={{ width: size, height: size, background: `linear-gradient(145deg, ${color}, color-mix(in oklab, ${color} 55%, black))`, fontSize: size * 0.42 }}
     >
       {name.replace(/[^a-z0-9]/gi, "").slice(0, 1).toUpperCase() || "?"}
+      {src && <AvatarImage src={src} />}
     </span>
   );
 }

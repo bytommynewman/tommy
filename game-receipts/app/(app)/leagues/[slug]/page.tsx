@@ -43,7 +43,7 @@ export default async function LeaguePage({ params }: { params: Promise<{ slug: s
           {standings.map((r, i) => (
             <Link key={r.user.id} href={`/u/${r.user.username}`} className={`flex items-center gap-3 px-4 py-3 hover:bg-ink-800/50 ${r.user.id === me.id ? "bg-volt/5" : ""}`}>
               <span className="w-6 text-center font-display font-black italic text-ink-300">{i + 1}</span>
-              <Avatar name={r.user.displayName} color={r.user.avatarColor} size={34} />
+              <Avatar name={r.user.displayName} color={r.user.avatarColor} src={r.user.avatarUrl} size={34} />
               <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold text-white">{r.user.displayName}{r.role === "owner" && <span className="ml-1.5 text-xs text-volt">host</span>}</div><div className="text-xs text-ink-400">{r.resolved} resolved · {r.pending} pending</div></div>
               <GradeBadge grade={r.grade} letter={r.letter} ranked={r.resolved > 0} size="sm" />
             </Link>

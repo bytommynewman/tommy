@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Settings } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import { Link2, MapPin, Settings } from "lucide-react";
+import { SubjectAvatar } from "@/components/app/SubjectAvatar";
 import { GradeBadge } from "@/components/app/GradeBadge";
 import { BlockButton, FollowButton } from "@/components/app/interactive";
 import { PredictionCard } from "@/components/app/PredictionCard";
@@ -10,6 +11,7 @@ import { Avatar, Card, Chip, EmptyState, LinkButton, SectionTitle, Stat, Tabs } 
 import { teamById, teamLabel } from "@/lib/catalog/teams";
 import { currentUser } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
+import { userByFormerName } from "@/lib/server/services/accounts";
 import { isBlocked } from "@/lib/server/services/notify";
 import { battleRecord, userReputation } from "@/lib/server/services/reputation";
 import { userByName, viewPrediction } from "@/lib/server/views";
@@ -30,7 +32,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   const me = await currentUser();
   const d = db();
   const u = userByName(d, username);
-  if (!u) notFound();
+  if (!u) { const old = userByFormerName(d, username); if (old) redirect(`/u/${old.username}${rawTab ? `?tab=${rawTab}` : ""}`); notFound(); }
   const blockedByMe = !!me && d.blocks.some((b) => b.blockerId === me.id && b.blockedId === u.id);
   if (me && !blockedByMe && isBlocked(d, me.id, u.id)) notFound();
   const isMe = me?.id === u.id;
@@ -51,7 +53,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         <div className="h-20 bg-gradient-to-r from-volt/20 via-ink-800 to-ink-850" style={{ backgroundColor: u.avatarColor + "22" }} />
         <div className="-mt-10 px-5 pb-5">
           <div className="flex items-end gap-3">
-            <div className="rounded-full ring-4 ring-ink-850"><Avatar name={u.displayName} color={u.avatarColor} size={80} /></div>
+            <div className="rounded-full ring-4 ring-ink-850"><Avatar name={u.displayName} color={u.avatarColor} src={u.avatarUrl} size={80} /></div>
             <div className="ml-auto flex items-center gap-2 pb-1">
               {isMe ? <LinkButton href="/settings" variant="secondary" size="sm"><Settings className="size-4" />Edit</LinkButton>
                 : me ? <><FollowButton userId={u.id} following={following} /><BlockButton userId={u.id} blocked={blockedByMe} /></>
@@ -64,7 +66,13 @@ export default async function ProfilePage({ params, searchParams }: Props) {
               <div className="text-sm text-ink-400">@{u.username}</div>
               {u.bio && <p className="mt-2 text-sm text-ink-200">{u.bio}</p>}
               <div className="mt-2 flex gap-4 text-sm"><span><b className="text-white">{followers}</b> <span className="text-ink-400">followers</span></span><span><b className="text-white">{followingCount}</b> <span className="text-ink-400">following</span></span></div>
-              {u.favoriteTeams.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{u.favoriteTeams.map((t) => { const team = teamById(t); return team ? <Chip key={t}><span className="size-2 rounded-full" style={{ background: team.color }} />{teamLabel(team)}</Chip> : null; })}</div>}
+              {(u.location || u.website) && (
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-300">
+                  {u.location && <span className="inline-flex items-center gap-1"><MapPin className="size-3.5 text-ink-400" />{u.location}</span>}
+                  {u.website && <a href={u.website} target="_blank" rel="nofollow noopener ugc" className="inline-flex min-w-0 items-center gap-1 font-semibold text-volt hover:underline"><Link2 className="size-3.5 shrink-0" /><span className="truncate">{u.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</span></a>}
+                </div>
+              )}
+              {u.favoriteTeams.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{u.favoriteTeams.map((t) => { const team = teamById(t); return team ? <Chip key={t} className="normal-case tracking-normal"><SubjectAvatar s={{ type: "team", name: teamLabel(team), mark: team.abbr, color: team.color, imageUrl: team.imageUrl }} size={16} />{teamLabel(team)}</Chip> : null; })}</div>}
             </div>
             <Link href={`/u/${u.username}/reputation`} aria-label="Reputation breakdown"><GradeBadge grade={rep.overall.grade} letter={rep.overall.letter} ranked={rep.overall.ranked} size="lg" /></Link>
           </div>

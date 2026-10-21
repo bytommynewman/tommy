@@ -8,8 +8,10 @@ import { LEAGUES, TEAMS } from "@/lib/catalog/teams";
 import type { Evidence, User } from "@/lib/domain";
 import type { Forecast, Outcome } from "@/lib/scoring";
 import { endSession, requireAdmin, requireUser, startSession } from "@/lib/server/auth";
+import { avatarFileFromUrl, avatarUrlFor, processAvatar, removeAvatarFile, saveAvatar } from "@/lib/server/avatars";
 import { db, mutate } from "@/lib/server/db";
 import { hashPassword, verifyPassword } from "@/lib/server/password";
+import * as accounts from "@/lib/server/services/accounts";
 import { createBattle, respondBattle } from "@/lib/server/services/battles";
 import { resolveQuestion, voidQuestion } from "@/lib/server/services/grading";
 import { createGroup, joinGroup, leaveGroup } from "@/lib/server/services/groups";
@@ -27,7 +29,7 @@ function fail(e: unknown): ActionState {
   throw e;
 }
 
-const USERNAME = z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,20}$/, "Username: 3–20 letters, numbers or underscores");
+const USERNAME = { parse: (v: unknown) => accounts.validateUsername(v) };
 const PASSWORD = z.string().min(8, "Password must be at least 8 characters").max(200);
 const EMAIL = z.string().trim().toLowerCase().email("Enter a valid email");
 const ForecastSchema: z.ZodType<Forecast> = z.union([
@@ -48,8 +50,8 @@ export async function signup(_: ActionState, fd: FormData): Promise<ActionState>
     const password = PASSWORD.parse(fd.get("password"));
     id = mutate((d) => {
       if (d.users.some((u) => u.email === email)) throw new UserError("An account with that email already exists");
-      if (d.users.some((u) => u.username === username)) throw new UserError("That username is taken");
-      const palette = ["#22E58A", "#5B8CFF", "#FF6B5B", "#F5C542", "#B57BFF", "#3DD6D0", "#FF9F43"];
+      if (accounts.usernameTaken(d, username)) throw new UserError("That username is taken");
+      const palette = accounts.AVATAR_COLORS;
       const user: User = {
         id: newId(), email, username, displayName: username, passwordHash: hashPassword(password), bio: "",
         avatarColor: palette[Math.floor(Math.random() * palette.length)], favoriteLeagues: [], favoriteTeams: [],
@@ -67,7 +69,7 @@ export async function signup(_: ActionState, fd: FormData): Promise<ActionState>
 export async function login(_: ActionState, fd: FormData): Promise<ActionState> {
   const email = String(fd.get("email") ?? "").trim().toLowerCase();
   const password = String(fd.get("password") ?? "");
-  const user = db().users.find((u) => u.email === email);
+  const user = email ? db().users.find((u) => u.email === email && !u.deletedAt) : undefined;
   if (!user || !verifyPassword(password, user.passwordHash)) return { error: "Email or password is incorrect" };
   await startSession(user.id);
   const next = String(fd.get("next") ?? "");
@@ -89,7 +91,7 @@ export async function completeOnboarding(_: ActionState, fd: FormData): Promise<
     if (!leagues.length) throw new UserError("Pick at least one league");
     const teams = fd.getAll("teams").map(String).filter((t) => TEAMS.some((x) => x.id === t)).slice(0, 12);
     mutate((d) => {
-      if (d.users.some((u) => u.username === username && u.id !== me.id)) throw new UserError("That username is taken");
+      if (accounts.usernameTaken(d, username, me.id)) throw new UserError("That username is taken");
       const u = d.users.find((x) => x.id === me.id)!;
       Object.assign(u, { username, displayName, bio, favoriteLeagues: leagues, favoriteTeams: teams, onboarded: true });
     });
@@ -256,14 +258,85 @@ export async function exitLeague(groupId: string) {
 export async function updateProfile(_: ActionState, fd: FormData): Promise<ActionState> {
   const me = await requireUser();
   try {
-    const displayName = z.string().trim().min(1).max(40).parse(fd.get("displayName"));
-    const bio = z.string().trim().max(160).parse(fd.get("bio") ?? "");
-    const leagues = fd.getAll("leagues").map(String).filter((l) => (LEAGUES as string[]).includes(l));
-    const isPrivate = fd.get("private") === "on";
-    mutate((d) => Object.assign(d.users.find((u) => u.id === me.id)!, { displayName, bio, private: isPrivate, ...(leagues.length ? { favoriteLeagues: leagues } : {}) }));
+    const input = {
+      displayName: z.string().trim().min(1, "Add a display name").max(40).parse(fd.get("displayName")),
+      bio: z.string().trim().max(160, "Bio is 160 characters max").parse(fd.get("bio") ?? ""),
+      location: z.string().trim().max(40, "Location is 40 characters max").parse(fd.get("location") ?? ""),
+      website: z.string().trim().max(200, "That link is too long").parse(fd.get("website") ?? ""),
+      avatarColor: String(fd.get("avatarColor") ?? me.avatarColor),
+      leagues: fd.getAll("leagues").map(String),
+      teams: fd.getAll("teams").map(String),
+    };
+    mutate((d) => accounts.updateProfileDetails(d, me.id, input));
   } catch (e) { return fail(e); }
   revalidatePath("/", "layout");
-  return { ok: true, message: "Saved" };
+  return { ok: true, message: "Profile saved" };
+}
+
+export async function updatePrivacy(_: ActionState, fd: FormData): Promise<ActionState> {
+  const me = await requireUser();
+  const isPrivate = fd.get("private") === "on";
+  mutate((d) => { d.users.find((u) => u.id === me.id)!.private = isPrivate; });
+  revalidatePath("/", "layout");
+  return { ok: true, message: isPrivate ? "Account is now private" : "Account is now public" };
+}
+
+export async function uploadAvatar(_: ActionState, fd: FormData): Promise<ActionState> {
+  const me = await requireUser();
+  let file: string | null = null;
+  try {
+    const f = fd.get("avatar");
+    if (!(f instanceof File) || f.size === 0) throw new UserError("Choose an image first");
+    if (f.size > 8 * 1024 * 1024) throw new UserError("Image is too large (max 8 MB)");
+    file = saveAvatar(me.id, await processAvatar(Buffer.from(await f.arrayBuffer())));
+    const old = mutate((d) => accounts.setAvatar(d, me.id, avatarUrlFor(file!)));
+    const oldFile = avatarFileFromUrl(old);
+    if (oldFile && oldFile !== file) removeAvatarFile(oldFile);
+  } catch (e) { return fail(e); }
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Photo updated" };
+}
+
+export async function removeAvatar(): Promise<ActionState> {
+  const me = await requireUser();
+  const old = mutate((d) => accounts.setAvatar(d, me.id, undefined));
+  removeAvatarFile(avatarFileFromUrl(old));
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Photo removed" };
+}
+
+export async function changeUsername(_: ActionState, fd: FormData): Promise<ActionState> {
+  const me = await requireUser();
+  try { mutate((d) => accounts.changeUsername(d, me.id, fd.get("username"))); } catch (e) { return fail(e); }
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Username changed. Your old profile link will redirect." };
+}
+
+export async function changeEmail(_: ActionState, fd: FormData): Promise<ActionState> {
+  const me = await requireUser();
+  try {
+    const email = EMAIL.parse(fd.get("email"));
+    mutate((d) => accounts.changeEmail(d, me.id, email, String(fd.get("password") ?? "")));
+  } catch (e) { return fail(e); }
+  revalidatePath("/settings");
+  return { ok: true, message: "Email updated" };
+}
+
+export async function changePassword(_: ActionState, fd: FormData): Promise<ActionState> {
+  const me = await requireUser();
+  try { mutate((d) => accounts.changePassword(d, me.id, String(fd.get("current") ?? ""), String(fd.get("next") ?? ""), String(fd.get("confirm") ?? ""))); } catch (e) { return fail(e); }
+  return { ok: true, message: "Password updated" };
+}
+
+export async function deleteAccount(_: ActionState, fd: FormData): Promise<ActionState> {
+  const me = await requireUser();
+  try {
+    const { avatarUrl } = mutate((d) => accounts.deleteAccount(d, me.id, String(fd.get("username") ?? ""), String(fd.get("password") ?? "")));
+    removeAvatarFile(avatarFileFromUrl(avatarUrl));
+  } catch (e) { return fail(e); }
+  await endSession();
+  revalidatePath("/", "layout");
+  redirect("/");
 }
 
 export async function joinWaitlist(plan: "pro" | "creator") {

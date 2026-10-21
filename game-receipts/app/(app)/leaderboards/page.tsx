@@ -58,7 +58,7 @@ export default async function LeaderboardsPage({ searchParams }: { searchParams:
         return (
           <Link key={p.id} href={`/r/${p.id}`} className="flex items-center gap-3 rounded-2xl bg-ink-850 p-3 ring-1 ring-ink-700 hover:ring-volt">
             <span className="w-6 text-center font-display font-black italic text-ink-400">{i + 1}</span>
-            <Avatar name={u.displayName} color={u.avatarColor} size={36} />
+            <Avatar name={u.displayName} color={u.avatarColor} src={u.avatarUrl} size={36} />
             <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold text-white">{p.structuredText}</div><div className="text-xs text-ink-400">@{u.username} · {p.league}</div></div>
             <span className="font-display text-2xl font-black italic text-volt">{p.score!.prestige.toFixed(0)}</span>
           </Link>
@@ -89,11 +89,11 @@ function Board({ kind, viewerId, period, cat }: { kind: BoardKind; viewerId: str
   );
 }
 
-function Row({ rank, u, right, sub, me }: { rank: number | null; u: { username: string; displayName: string; avatarColor: string; isCreator: boolean }; right: React.ReactNode; sub?: string; me: boolean }) {
+function Row({ rank, u, right, sub, me }: { rank: number | null; u: { username: string; displayName: string; avatarColor: string; avatarUrl?: string; isCreator: boolean }; right: React.ReactNode; sub?: string; me: boolean }) {
   return (
     <Link href={`/u/${u.username}`} className={`flex items-center gap-3 px-4 py-3 hover:bg-ink-800/50 ${me ? "bg-volt/5" : ""}`}>
       <span className={`w-7 text-center font-display text-lg font-black italic ${rank === 1 ? "text-gold" : rank ? "text-ink-300" : "text-ink-600"}`}>{rank ?? "–"}</span>
-      <Avatar name={u.displayName} color={u.avatarColor} size={36} />
+      <Avatar name={u.displayName} color={u.avatarColor} src={u.avatarUrl} size={36} />
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-white"><span className="truncate">{u.displayName}</span>{me && <Chip tone="volt" className="shrink-0">You</Chip>}{u.isCreator && <Chip className="shrink-0">Creator</Chip>}</div>
         <div className="truncate text-xs text-ink-400">{sub ?? `@${u.username}`}</div>

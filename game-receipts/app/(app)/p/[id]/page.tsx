@@ -69,7 +69,7 @@ export default async function PredictionPage({ params, searchParams }: Props) {
       <Card className="p-5">
         <div className="flex items-center gap-3">
           <Link href={`/u/${v.author.username}`} className="flex items-center gap-2.5">
-            <Avatar name={v.author.displayName} color={v.author.avatarColor} size={44} />
+            <Avatar name={v.author.displayName} color={v.author.avatarColor} src={v.author.avatarUrl} size={44} />
             <div>
               <div className="font-semibold text-white">{v.author.displayName}</div>
               <div className="text-xs text-ink-400">@{v.author.username} · {timeAgo(p.lockedAt)}</div>
@@ -240,7 +240,7 @@ export default async function PredictionPage({ params, searchParams }: Props) {
             const u = d.users.find((x) => x.id === c.userId)!;
             return (
               <div key={c.id} className="flex gap-3">
-                <Avatar name={u.displayName} color={u.avatarColor} size={32} />
+                <Avatar name={u.displayName} color={u.avatarColor} src={u.avatarUrl} size={32} />
                 <div className="min-w-0 flex-1 rounded-2xl bg-ink-850 px-3.5 py-2.5 ring-1 ring-ink-700/60">
                   <div className="flex items-center gap-2 text-xs"><Link href={`/u/${u.username}`} className="font-semibold text-white">@{u.username}</Link><span className="text-ink-500">{timeAgo(c.createdAt)}</span>
                     {me && me.id !== c.userId && <span className="ml-auto"><ReportButton targetType="comment" targetId={c.id} /></span>}</div>

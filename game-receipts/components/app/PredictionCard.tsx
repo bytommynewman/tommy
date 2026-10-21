@@ -55,7 +55,7 @@ export function PredictionCard({ v, now }: { v: PredictionView; now?: number }) 
       <div className="p-4">
         <div className="flex items-center gap-3">
           <Link href={`/u/${author.username}`} className="flex min-w-0 items-center gap-2.5">
-            <Avatar name={author.displayName} color={author.avatarColor} size={36} />
+            <Avatar name={author.displayName} color={author.avatarColor} src={author.avatarUrl} size={36} />
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold text-white">{author.displayName}</div>
               <div className="truncate text-xs text-ink-400">@{author.username} · locked {timeAgo(p.lockedAt, now)}</div>

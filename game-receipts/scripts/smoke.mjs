@@ -2,6 +2,7 @@
 // Usage: npm run smoke [-- --shots <dir>]
 import { chromium, devices } from "playwright";
 import fs from "node:fs";
+import zlib from "node:zlib";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const shotsArg = process.argv.indexOf("--shots");
@@ -27,6 +28,16 @@ const noOverflow = async (where) => {
 };
 const phoneShot = async (name) => SHOTS && page.screenshot({ path: `${SHOTS}/phone-${name}.png`, caret: "initial" });
 const expect = async (cond, msg) => { if (!(await cond)) throw new Error("FAILED: " + msg); };
+
+// Tiny solid-colour PNG (non-square, so the server's center-crop is exercised).
+function makePng(w, h, [r, g, b]) {
+  const crcT = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+  const crc = (buf) => { let c = 0xffffffff; for (const x of buf) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  const chunk = (type, data) => { const t = Buffer.from(type); const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const c = Buffer.alloc(4); c.writeUInt32BE(crc(Buffer.concat([t, data]))); return Buffer.concat([len, t, data, c]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 2;
+  const row = Buffer.concat([Buffer.from([0]), Buffer.from(Array.from({ length: w }, () => [r, g, b]).flat())]);
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", ihdr), chunk("IDAT", zlib.deflateSync(Buffer.concat(Array.from({ length: h }, () => row)))), chunk("IEND", Buffer.alloc(0))]);
+}
 
 const u = `smoke_${Date.now().toString(36)}`;
 step("landing");
@@ -116,6 +127,32 @@ await page.getByRole("button", { name: "Place take" }).click();
 await page.waitForURL(/\/feed\?placed=/);
 await page.getByText("Take placed.").waitFor();
 await expect(await page.getByText(builtTitle, { exact: false }).first().isVisible(), "placed take appears on the feed");
+
+step("settings: upload avatar, edit bio/location/link, see them on the profile");
+await page.goto(`${BASE}/settings`);
+await noOverflow("/settings");
+await page.setInputFiles('input[name="avatar"]', { name: "me.png", mimeType: "image/png", buffer: makePng(120, 80, [200, 60, 40]) });
+await page.getByText("Photo updated").waitFor();
+await page.getByRole("button", { name: "Remove photo" }).waitFor();
+await page.fill('textarea[name="bio"]', "Smoke-test bio: Leafs till I die");
+await page.fill('input[name="location"]', "Toronto, ON");
+await page.fill('input[name="website"]', "https://example.com/smoke");
+await page.getByRole("button", { name: "Save profile" }).click();
+await page.getByText("Profile saved").waitFor();
+await shot("13a-settings-saved");
+await phoneShot("settings");
+await page.goto(`${BASE}/u/${u}`);
+await page.getByText("Smoke-test bio: Leafs till I die").waitFor();
+await page.getByText("Toronto, ON").waitFor();
+const link = page.getByRole("link", { name: /example\.com\/smoke/ });
+await expect((await link.getAttribute("rel")) === "nofollow noopener ugc", "profile link has rel=nofollow noopener ugc");
+const avatarSrc = await page.locator('img[src^="/api/avatar/"]').first().getAttribute("src");
+await expect(!!avatarSrc, "profile shows the uploaded avatar");
+const av = await page.request.get(BASE + avatarSrc);
+await expect(av.ok() && av.headers()["content-type"] === "image/webp" && /immutable/.test(av.headers()["cache-control"]), "avatar served as cached WebP");
+await expect((await page.request.get(`${BASE}/api/avatar/..%2F..%2Fdb.json`)).status() === 404, "avatar route rejects traversal");
+await noOverflow("profile with photo");
+await phoneShot("profile-photo");
 
 step("feed, receipt, profile, leaderboards");
 for (const [path, name] of [["/feed?tab=trending", "11-feed"], ["/leaderboards", "12-leaderboards"], [`/u/${u}`, "13-profile"], ["/u/darkhorse_dana", "14-profile-dana"], ["/u/darkhorse_dana/reputation", "15-reputation"], ["/battles", "16-battles"], ["/leagues/the-film-room", "17-league"], ["/notifications", "18-notifications"], ["/settings", "19-settings"], ["/how-scoring-works", "20-scoring"]]) {

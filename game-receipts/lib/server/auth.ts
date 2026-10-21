@@ -10,7 +10,8 @@ export const SESSION_COOKIE = "gr_session";
 export const currentUser = cache(async (): Promise<User | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const id = readToken(token);
-  return id ? db().users.find((u) => u.id === id) ?? null : null;
+  const u = id ? db().users.find((x) => x.id === id) : undefined;
+  return u && !u.deletedAt ? u : null; // deleted accounts' tokens stop working immediately
 });
 
 /** Data-access-layer guard: every authenticated page and action goes through this. */

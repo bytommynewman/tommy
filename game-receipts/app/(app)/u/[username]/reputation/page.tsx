@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { GradeBadge } from "@/components/app/GradeBadge";
 import { PageHeader } from "@/components/app/Shell";
@@ -8,6 +8,7 @@ import { CATEGORY_LABEL } from "@/lib/domain";
 import { MIN_RESOLVED_ALL_TIME, MIN_RESOLVED_MONTHLY, PRIOR_SCORE, PRIOR_WEIGHT } from "@/lib/scoring";
 import { db } from "@/lib/server/db";
 import { userReputation } from "@/lib/server/services/reputation";
+import { userByFormerName } from "@/lib/server/services/accounts";
 import { userByName } from "@/lib/server/views";
 
 export const metadata = { title: "Reputation" };
@@ -16,7 +17,7 @@ export default async function ReputationPage({ params }: { params: Promise<{ use
   const { username } = await params;
   const d = db();
   const u = userByName(d, username);
-  if (!u) notFound();
+  if (!u) { const old = userByFormerName(d, username); if (old) redirect(`/u/${old.username}/reputation`); notFound(); }
   const rep = userReputation(d, u.id);
   const o = rep.overall;
   return (

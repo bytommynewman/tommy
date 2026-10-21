@@ -8,7 +8,7 @@ import { buildSeed } from "./seed";
  * written atomically after each mutation. This is a MOCK persistence
  * adapter — production uses the Postgres schema in supabase/migrations.
  */
-const dataDir = () => process.env.GR_DATA_DIR ?? path.join(process.cwd(), ".data");
+export const dataDir = () => process.env.GR_DATA_DIR ?? path.join(process.cwd(), ".data");
 const file = () => path.join(dataDir(), "db.json");
 
 const g = globalThis as unknown as { __grdb?: DB };
