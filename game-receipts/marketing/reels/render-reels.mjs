@@ -45,16 +45,17 @@ const SPECS = {
   },
   A2: {
     format: "A", file: "A2-prove-you-called-it.mp4", topMatch: /kyle/i, faceY: 190,
-    hook: "How to prove you called it (takes 8 seconds)",
+    hook: "How to prove you called it (takes 6 seconds)",
     steps: [["s1", "Step 1: Pick your team"], ["s2", "Step 2: Pick how far they go"], ["s3", "Step 3: Place take"], ["s4", "Step 4: Screenshot the receipt when it hits"]],
   },
   B1: {
-    format: "B", file: "B1-pov-screen.mp4", trimAfterBoard: 3.7,
-    captions: [["hook", "easiest way to win every sports argument fr 😭"], ["player", "pick your player"], ["take", "pick your take"], ["place", "hit place"], ["+place:1.5", "it stamps the date"], ["graded", "graded when it's done"], ["board", "now you're on the leaderboard"]],
+    format: "B", file: "B1-pov-screen.mp4", trimAfterBoard: 2.6,
+    captions: [["hook", "easiest way to win every sports argument fr 😭"], ["player", "pick your player"], ["take", "pick your take"], ["place", "hit place"], ["+place:1.2", "it stamps the date"], ["graded", "graded when it's done"], ["board", "now you're on the leaderboard"]],
   },
 };
 const IG = target === "ig";
-const END_A = 2.5, TAG_B = 1.8;
+const END_A = 1.8, TAG_B = 1.8; // end cards 1.8 s
+const HOOK_A = 1.6; // Format A hook box on screen (s)
 const outName = (spec) => (IG ? spec.file.replace(/\.mp4$/, "-ig.mp4") : spec.file);
 // raw captures: A1/A2 at DSF 5.6 (2184x4726: the app fills the full 2160 width), B1 at DSF 5 (1950x4220); renders only scale DOWN
 const SRC = { A: { w: 2184, h: 4726 }, B: { w: 1950, h: 4220 } };
@@ -93,7 +94,7 @@ function panExpr(focus, scaledH, cropH) {
   let e = String(ys[0]?.y ?? 0); let prev = ys[0]?.y ?? 0;
   for (const k of ys) {
     const d = k.y - prev; if (d === 0) continue;
-    e += `+${d}*st(0\\,clip((t-${f(k.t)})/0.7\\,0\\,1))*ld(0)*ld(0)*(3-2*ld(0))`; prev = k.y;
+    e += `+${d}*st(0\\,clip((t-${f(k.t)})/0.5\\,0\\,1))*ld(0)*ld(0)*(3-2*ld(0))`; prev = k.y;
   }
   return e;
 }
@@ -145,7 +146,7 @@ async function renderA(id, spec) {
   const sz = fallback ? 208 : 104;
   const sw = `%{eif\\:floor(min(t\\,${f(TP)})/60)\\:d\\:2}\\:%{eif\\:mod(floor(min(t\\,${f(TP)}))\\,60)\\:d\\:2}.%{eif\\:mod(floor(min(t\\,${f(TP)})*10)\\,10)\\:d\\:1}`;
   G.push(`[p1]drawtext=fontfile=${MONO}:text='${sw}':fontcolor=white:fontsize=${sz}:x=${px}+(${pillW * 2}-text_w)/2:y=${py}+(${pillH * 2}-text_h)/2-4:enable='lt(t,${f(D)})'[p2]`);
-  G.push(`[p2][3:v]overlay=0:0:enable='between(t,0,2)'[h1]`);
+  G.push(`[p2][3:v]overlay=0:0:enable='between(t,0,${HOOK_A})'[h1]`);
   G.push(`[h1][4:v]overlay=0:0:enable='gte(t,${f(D)})'[h2]`);
   G.push(`[h2][5:v]overlay=${68 - bg_.pad}:${452 - bg_.pad}:format=auto:enable='lt(t,${f(D)})',${scaleToBt709}[v]`);
   const out = path.join(OUT, outName(spec));

@@ -140,8 +140,8 @@ async function renderVideo(spot, layoutName, dest) {
   g.push(`[1:v]format=rgba[bgv]`, `[bgv][phone]overlay=x=${px - b}:y=${py - b}:format=auto[comp]`);
 
   const f = [];
-  const hookEnd = 1.5;
-  // hook (first 1.5s) over a dimmed frame
+  const hookEnd = 1.3; // hook stays >= 1.2 s
+  // hook (first 1.3s) over a dimmed frame
   f.push(`drawbox=x=0:y=0:w=iw:h=ih:color=black@0.38:t=fill:enable=${q(`between(t,0,${hookEnd})`)}`);
   f.push(...lines(spot.hook, { font: IMPACT, size: L.hookSize, max: L.hookMax, y: L.hookY, pitch: L.hookPitch, border: 18, shadow: 8, enable: `between(t,0,${hookEnd})`, upper: true }));
   // flash on punch-in

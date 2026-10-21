@@ -4,7 +4,7 @@
   "title": "GAME RECEIPTS",
   "tagline": "Call it. Lock it. Prove it.",
   "footer": "Free to play",
-  "seconds": 2
+  "seconds": 1.8
  },
  "startUrl": "/feed",
  "spots": [
@@ -16,7 +16,7 @@
    "beats": [
     {
      "caption": "\"Bro I CALLED it. Written down.\"",
-     "duration": 2.7,
+     "duration": 2.4,
      "steps": [
       {
        "do": "chat",
@@ -44,7 +44,7 @@
     },
     {
      "caption": "Now you can prove it",
-     "duration": 2.0,
+     "duration": 1.6,
      "steps": [
       {
        "do": "goto",
@@ -54,7 +54,7 @@
     },
     {
      "caption": "Pick your league",
-     "duration": 1.8,
+     "duration": 1.2,
      "steps": [
       {
        "do": "tab",
@@ -64,7 +64,7 @@
     },
     {
      "caption": "Find your team",
-     "duration": 2.4,
+     "duration": 2,
      "steps": [
       {
        "do": "search",
@@ -79,7 +79,7 @@
     },
     {
      "caption": "Playoff run: Runner-up",
-     "duration": 2.6,
+     "duration": 1.5,
      "steps": [
       {
        "do": "select",
@@ -90,27 +90,27 @@
     },
     {
      "caption": "Place take. LOCKED.",
-     "duration": 4.8,
+     "duration": 3.2,
      "steps": [
       {
        "do": "place"
       },
       {
        "do": "wait",
-       "ms": 500
+       "ms": 400
       },
       {
        "do": "punch",
        "selector": "time[class*=\"border-dashed\"]",
        "z": 1.6,
        "label": "stamp",
-       "hold": 1.0
+       "hold": 1
       }
      ]
     },
     {
      "caption": "Then see who's really right",
-     "duration": 3.0,
+     "duration": 2.2,
      "steps": [
       {
        "do": "goto",
@@ -119,7 +119,7 @@
       {
        "do": "scroll",
        "by": 300,
-       "ms": 1500
+       "ms": 1000
       }
      ]
     }
@@ -133,7 +133,7 @@
    "beats": [
     {
      "caption": "Clock's running",
-     "duration": 1.4,
+     "duration": 2.3,
      "steps": [
       {
        "do": "goto",
@@ -146,7 +146,7 @@
     },
     {
      "caption": "League",
-     "duration": 1.2,
+     "duration": 1,
      "steps": [
       {
        "do": "tab",
@@ -156,18 +156,18 @@
     },
     {
      "caption": "Search",
-     "duration": 1.6,
+     "duration": 1.3,
      "steps": [
       {
        "do": "search",
        "label": "Search NBA",
-       "text": "celtics"
+       "text": "celt"
       }
      ]
     },
     {
      "caption": "Pick the team",
-     "duration": 1.2,
+     "duration": 1,
      "steps": [
       {
        "do": "pick",
@@ -177,7 +177,7 @@
     },
     {
      "caption": "Pick a take",
-     "duration": 1.6,
+     "duration": 1.1,
      "steps": [
       {
        "do": "select",
@@ -188,21 +188,21 @@
     },
     {
      "caption": "Place take",
-     "duration": 4.6,
+     "duration": 3.1,
      "steps": [
       {
        "do": "place"
       },
       {
        "do": "wait",
-       "ms": 600
+       "ms": 480
       },
       {
        "do": "punch",
        "selector": "time[class*=\"border-dashed\"]",
        "z": 1.6,
        "label": "stamp",
-       "hold": 1.0
+       "hold": 1
       }
      ]
     }
@@ -216,7 +216,7 @@
    "beats": [
     {
      "caption": "Call your MVP",
-     "duration": 2.6,
+     "duration": 3,
      "steps": [
       {
        "do": "goto",
@@ -239,7 +239,7 @@
     },
     {
      "caption": "Take on an award",
-     "duration": 2.0,
+     "duration": 1.5,
      "steps": [
       {
        "do": "select",
@@ -250,7 +250,7 @@
     },
     {
      "caption": "MVP? Most Improved? Pick the award",
-     "duration": 4.2,
+     "duration": 2.4,
      "steps": [
       {
        "do": "cycle",
@@ -261,13 +261,13 @@
         "Most Improved Player",
         "NBA MVP"
        ],
-       "pause": 850
+       "pause": 450
       }
      ]
     },
     {
      "caption": "MVP. Wins it. Place take.",
-     "duration": 1.8,
+     "duration": 1.4,
      "steps": [
       {
        "do": "select",
@@ -278,27 +278,27 @@
     },
     {
      "caption": "Stamped with the date",
-     "duration": 4.8,
+     "duration": 3.2,
      "steps": [
       {
        "do": "place"
       },
       {
        "do": "wait",
-       "ms": 500
+       "ms": 400
       },
       {
        "do": "punch",
        "selector": "time[class*=\"border-dashed\"]",
        "z": 1.6,
        "label": "stamp",
-       "hold": 1.0
+       "hold": 1
       }
      ]
     },
     {
      "caption": "Graded when the season's done",
-     "duration": 3.4,
+     "duration": 2.4,
      "steps": [
       {
        "do": "goto",
@@ -307,7 +307,7 @@
       {
        "do": "scroll",
        "by": 340,
-       "ms": 1700
+       "ms": 1150
       }
      ]
     }
@@ -321,7 +321,7 @@
    "beats": [
     {
      "caption": "LOCKED. Dated to the minute.",
-     "duration": 2.8,
+     "duration": 2.4,
      "steps": [
       {
        "do": "goto",
@@ -332,14 +332,14 @@
        "selector": "time[class*=\"border-dashed\"]",
        "z": 1.6,
        "label": "stamp",
-       "hold": 1.0,
-       "pause": 1500
+       "hold": 1,
+       "pause": 400
       }
      ]
     },
     {
      "caption": "Every take becomes a receipt",
-     "duration": 2.6,
+     "duration": 2,
      "steps": [
       {
        "do": "goto",
@@ -348,13 +348,13 @@
       {
        "do": "scroll",
        "by": 220,
-       "ms": 1400
+       "ms": 950
       }
      ]
     },
     {
      "caption": "Timestamped. Sealed. Can't be edited.",
-     "duration": 3.0,
+     "duration": 2.4,
      "steps": [
       {
        "do": "goto",
@@ -363,25 +363,25 @@
       {
        "do": "scrollToText",
        "text": "Record verified",
-       "ms": 1500
+       "ms": 800
       }
      ]
     },
     {
      "caption": "Full history stays on the record",
-     "duration": 2.8,
+     "duration": 2,
      "steps": [
       {
        "do": "scrollToText",
        "text": "Original take locked",
-       "ms": 1000,
+       "ms": 800,
        "offset": 160
       }
      ]
     },
     {
      "caption": "Graded when it happens: CASHED",
-     "duration": 4.6,
+     "duration": 3.2,
      "steps": [
       {
        "do": "goto",
@@ -390,21 +390,21 @@
       {
        "do": "punch",
        "selector": "text=Cashed",
-       "z": 2.0,
+       "z": 2,
        "label": "chip",
-       "hold": 1.0,
-       "pause": 1500
+       "hold": 1,
+       "pause": 400
       },
       {
        "do": "scroll",
        "by": 300,
-       "ms": 1000
+       "ms": 600
       }
      ]
     },
     {
      "caption": "Best calls climb the leaderboard",
-     "duration": 2.8,
+     "duration": 2.2,
      "steps": [
       {
        "do": "goto",
@@ -413,7 +413,7 @@
       {
        "do": "scroll",
        "by": 300,
-       "ms": 1500
+       "ms": 1000
       }
      ]
     }
@@ -427,7 +427,7 @@
    "beats": [
     {
      "caption": "See a take you'd fade?",
-     "duration": 2.8,
+     "duration": 2.4,
      "steps": [
       {
        "do": "goto",
@@ -436,13 +436,13 @@
       {
        "do": "scroll",
        "by": 160,
-       "ms": 1000
+       "ms": 700
       }
      ]
     },
     {
      "caption": "Challenge it",
-     "duration": 3.0,
+     "duration": 2.4,
      "steps": [
       {
        "do": "clickLink",
@@ -460,7 +460,7 @@
     },
     {
      "caption": "Send the battle",
-     "duration": 3.0,
+     "duration": 2.2,
      "steps": [
       {
        "do": "button",
@@ -469,13 +469,13 @@
       },
       {
        "do": "wait",
-       "ms": 600
+       "ms": 480
       }
      ]
     },
     {
      "caption": "Climb the leaderboards",
-     "duration": 3.4,
+     "duration": 2.4,
      "steps": [
       {
        "do": "goto",
@@ -484,13 +484,13 @@
       {
        "do": "scroll",
        "by": 380,
-       "ms": 1800
+       "ms": 1200
       }
      ]
     },
     {
      "caption": "Build a reputation that's real",
-     "duration": 3.6,
+     "duration": 2.4,
      "steps": [
       {
        "do": "goto",
@@ -499,7 +499,7 @@
       {
        "do": "scroll",
        "by": 420,
-       "ms": 2000
+       "ms": 1350
       }
      ]
     }
@@ -513,7 +513,7 @@
    "beats": [
     {
      "caption": "NFL · NBA · NHL · MLB · NCAA",
-     "duration": 4.4,
+     "duration": 3.4,
      "steps": [
       {
        "do": "goto",
@@ -522,71 +522,71 @@
       {
        "do": "tab",
        "name": "NFL",
-       "pause": 450
+       "pause": 150
       },
       {
        "do": "tab",
        "name": "NBA",
-       "pause": 450
+       "pause": 150
       },
       {
        "do": "tab",
        "name": "NHL",
-       "pause": 450
+       "pause": 150
       },
       {
        "do": "tab",
        "name": "MLB",
-       "pause": 450
+       "pause": 150
       },
       {
        "do": "tab",
        "name": "NCAAF",
-       "pause": 450
+       "pause": 150
       },
       {
        "do": "tab",
        "name": "NCAAB",
-       "pause": 450
+       "pause": 150
       }
      ]
     },
     {
      "caption": "Search any team or player",
-     "duration": 3.2,
+     "duration": 2.6,
      "steps": [
       {
        "do": "scrollList",
        "by": 360,
-       "ms": 900
+       "ms": 600
       },
       {
        "do": "tab",
        "name": "NFL",
-       "pause": 350
+       "pause": 150
       },
       {
        "do": "search",
        "label": "Search NFL",
-       "text": "mahomes",
-       "pause": 350
+       "text": "mahom",
+       "pause": 150
       },
       {
        "do": "pick",
        "name": "Patrick Mahomes",
-       "pause": 350
+       "pause": 150
       }
      ]
     },
     {
      "caption": "QB? Passing yards & TDs",
-     "duration": 4.0,
+     "duration": 2.6,
      "steps": [
       {
        "do": "select",
        "label": "Pick a take on",
        "option": "Season stat line",
-       "pause": 350
+       "pause": 150
       },
       {
        "do": "cycle",
@@ -596,40 +596,40 @@
         "passing touchdowns",
         "rushing yards"
        ],
-       "pause": 600
+       "pause": 400
       }
      ]
     },
     {
      "caption": "Goalie? Saves & shutouts",
-     "duration": 4.6,
+     "duration": 3.5,
      "steps": [
       {
        "do": "goto",
        "url": "/create",
-       "pause": 350
+       "pause": 150
       },
       {
        "do": "tab",
        "name": "NHL",
-       "pause": 350
+       "pause": 150
       },
       {
        "do": "search",
        "label": "Search NHL",
-       "text": "hellebuyck",
-       "pause": 350
+       "text": "helle",
+       "pause": 150
       },
       {
        "do": "pick",
        "name": "Connor Hellebuyck",
-       "pause": 350
+       "pause": 150
       },
       {
        "do": "select",
        "label": "Pick a take on",
        "option": "Season stat line",
-       "pause": 350
+       "pause": 150
       },
       {
        "do": "cycle",
@@ -639,7 +639,7 @@
         "save percentage",
         "shutouts"
        ],
-       "pause": 600
+       "pause": 400
       }
      ]
     }

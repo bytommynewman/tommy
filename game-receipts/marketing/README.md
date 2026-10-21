@@ -46,4 +46,4 @@ Arguments still work to redo part of the set, e.g. `node marketing/capture.mjs 4
 - Encode (`encode4k.mjs`): lossless intermediate, then 2-pass x264 High@5.1, yuv420p, 30 fps CFR, BT.709 tags (graph is re-matrixed 601 -> 709), target 45 Mbps (max 60M / buf 120M),
   closed GOP every 2 s, AAC-LC 48 kHz 192k, +faststart. Simple screens cannot use all 45 Mbps (x264 is already near-lossless), so plain spots land at 6-14 Mbps and the grainy/UGC reels at 35-45 Mbps.
 - UGC talking heads (Kling, ~1076x1924) are denoised (hqdn3d), lanczos-upscaled 2x and lightly sharpened: the only non-native pixels in the ads.
-- App-footage speed-ups never exceed 1.6x (`ugc/finish.mjs` cuts).
+- App-footage speed-ups never exceed 1.5x (`ugc/finish.mjs` cuts).

@@ -25,7 +25,7 @@ const BASE = `http://localhost:${PORT}`;
 const { CHROME, DSF, sleep } = lib;
 const VIEW = { width: 390, height: 844 };
 const CTX = { ...devices["iPhone 14"], viewport: VIEW, deviceScaleFactor: DSF }; // 1950x4220 native: renders only ever scale DOWN
-const PAUSE = 600;
+const PAUSE = 320; // idle gap after each action (was 600): faster pacing
 
 // ---- own server ---------------------------------------------------------------------------------------------
 let server;
@@ -122,25 +122,25 @@ async function runStep(page, st, ctx) {
     case "goto": await page.goto(BASE + sub(st.url)); await page.waitForLoadState("networkidle"); break;
     case "chat": {
       await page.setContent(chatHtml(st.messages));
-      await sleep(250);
+      await sleep(150);
       const n = await page.locator(".m").count();
-      for (let i = 0; i < n; i++) { await page.locator(".m").nth(i).evaluate((e) => e.classList.add("on")); await sleep(500); }
+      for (let i = 0; i < n; i++) { await page.locator(".m").nth(i).evaluate((e) => e.classList.add("on")); await sleep(330); }
       break;
     }
-    case "tab": await page.getByRole("tab", { name: new RegExp(st.name) }).click(); await sleep(250); break;
+    case "tab": await page.getByRole("tab", { name: new RegExp(st.name) }).click(); await sleep(150); break;
     case "search": {
       const box = page.getByLabel(st.label);
       await box.click();
-      await box.pressSequentially(st.text, { delay: 70 });
-      await page.waitForLoadState("networkidle"); await sleep(400);
+      await box.pressSequentially(st.text, { delay: 45 });
+      await page.waitForLoadState("networkidle"); await sleep(200);
       break;
     }
-    case "pick": await page.locator("ul button", { hasText: nameRe(st.name) }).first().click(); await page.getByText("Pick a take on").waitFor(); await sleep(300); break;
+    case "pick": await page.locator("ul button", { hasText: nameRe(st.name) }).first().click(); await page.getByText("Pick a take on").waitFor(); await sleep(150); break;
     case "select": {
       const sel = selectFor(page, st.label);
       const val = await sel.evaluate((s, opt) => [...s.options].find((o) => o.text.toLowerCase().includes(opt.toLowerCase()))?.value, st.option);
       if (val === undefined) throw new Error(`no option ${st.option} in ${st.label}`);
-      await sel.focus(); await sel.selectOption(val); await sleep(300);
+      await sel.focus(); await sel.selectOption(val); await sleep(150);
       break;
     }
     case "cycle": {
@@ -150,13 +150,13 @@ async function runStep(page, st, ctx) {
         const val = await sel.evaluate((s, o) => [...s.options].find((x) => x.text.toLowerCase().includes(o.toLowerCase()))?.value, opt);
         if (val === undefined) throw new Error(`no option ${opt} in ${st.label}`);
         await sel.selectOption(val);
-        await sleep(st.pause ?? 800);
+        await sleep(st.pause ?? 450);
       }
       break;
     }
     case "place": {
       const btn = page.getByRole("button", { name: "Place take" });
-      await btn.scrollIntoViewIfNeeded(); await sleep(300);
+      await btn.scrollIntoViewIfNeeded(); await sleep(150);
       await btn.click();
       await page.waitForURL(/\/feed\?placed=/); await page.waitForLoadState("networkidle");
       break;
@@ -164,11 +164,11 @@ async function runStep(page, st, ctx) {
     case "clickLink": await page.getByRole("link", { name: nameRe(st.name) }).first().click(); await page.waitForLoadState("networkidle"); break;
     case "button": {
       const b = page.getByRole("button", { name: nameRe(st.name) }).first();
-      await b.scrollIntoViewIfNeeded(); await sleep(200); await b.click();
+      await b.scrollIntoViewIfNeeded(); await sleep(100); await b.click();
       if (st.navigates) await page.waitForURL(/\/battles\//);
       await page.waitForLoadState("networkidle"); break;
     }
-    case "radio": await page.getByRole("radio", { name: st.name }).click(); await sleep(300); break;
+    case "radio": await page.getByRole("radio", { name: st.name }).click(); await sleep(150); break;
     case "scroll": await smoothScroll(page, st); break;
     case "scrollList": await page.locator("ul.overflow-y-auto").first().evaluate((el, by) => el.scrollBy({ top: by, behavior: "smooth" }), st.by); await sleep(st.ms ?? 1200); break;
     case "scrollToText": {
@@ -200,7 +200,7 @@ async function recordSpot(browser, state, spot) {
   page.on("pageerror", (e) => errors.push(e.message));
   const finish = await startScreencast(page);
   const vt0 = Date.now(); // video clock starts here
-  await page.goto(BASE + cfg.startUrl); await page.waitForLoadState("networkidle"); await sleep(700);
+  await page.goto(BASE + cfg.startUrl); await page.waitForLoadState("networkidle"); await sleep(400);
   const c = { vt0, punches: [] };
   const beats = [];
   for (const [i, b] of spot.beats.entries()) {

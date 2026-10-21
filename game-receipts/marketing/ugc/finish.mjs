@@ -23,14 +23,14 @@ const BLACK = "/System/Library/Fonts/Supplemental/Arial Black.ttf";
 const BG = path.join(ROOT, "public/art/hero-tall.webp");
 
 // footage cuts: [start s, end s, speed] from the raw screen capture (2060x3660, 5x native; only ever scaled down).
-// Speed-ups are capped at 1.6x: trim dead time instead of racing through it.
+// Speed-ups are capped at 1.5x: trim dead time instead of racing through it.
 // The head is the untouched Kling clip (light unsharp on luma only); app footage sits in a phone frame on the blurred hero
 // background, and a small picture-in-picture of the same app flow rides the head's lower third during its second half.
 const SPOTS = [  // pipStart: raw-footage second where the PiP clip (1x) starts
-  { id: 1, slug: "kyle", head: "kyle.mp4", footage: "kyle.mp4", hook: "my buddy \u201Ccalled it\u201D", pipStart: 4.0,
-    cuts: [[3.0, 6.0, 1.5], [6.0, 7.9, 1.2], [8.8, 12.0, 1.2], [21.0, 22.8, 1]] },
-  { id: 2, slug: "mvp", head: "mvp.mp4", footage: "mvp.mp4", hook: "my MVP pick has a DATE on it", pipStart: 6.0,
-    cuts: [[3.0, 6.6, 1.5], [6.6, 10.6, 1.5], [10.8, 13.4, 1.2], [21.2, 23.0, 1]] },
+  { id: 1, slug: "kyle", head: "kyle.mp4", footage: "kyle.mp4", hook: "my buddy \u201Ccalled it\u201D", pipStart: 3.2,
+    cuts: [[1.5, 2.9, 1.5], [3.2, 6.0, 1.5], [7.0, 7.9, 1.3], [8.0, 9.5, 1], [15.3, 16.3, 1.25]] },
+  { id: 2, slug: "mvp", head: "mvp.mp4", footage: "mvp.mp4", hook: "my MVP pick has a DATE on it", pipStart: 3.0,
+    cuts: [[1.7, 2.9, 1.5], [3.0, 4.8, 1.5], [5.6, 7.9, 1.5], [9.0, 9.6, 1.2], [9.8, 11.0, 1], [18.2, 19.2, 1.25]] },
 ];
 
 const run = (args) => {
@@ -66,7 +66,7 @@ async function build(spot, W, H, outFile) {
     for (let i = 1; i < words.length; i++) { const d = Math.abs(words.slice(0, i).join(" ").length - words.slice(i).join(" ").length); if (d < diff) { diff = d; best = i; } }
     hookText = words.slice(0, best).join(" ") + "\n" + words.slice(best).join(" ");
   }
-  const hookDt = hookText.split("\n").map((ln, i) => `drawtext=fontfile='${q(IMPACT)}':textfile='${q(txt(`hook-${spot.id}-${H}-${i}.txt`, ln))}':fontsize=${px(100)}:fontcolor=white:borderw=${px(8)}:bordercolor=black:x=(w-text_w)/2:y=${hookY + i * px(115)}:enable='lt(t,1.5)'`).join(",");
+  const hookDt = hookText.split("\n").map((ln, i) => `drawtext=fontfile='${q(IMPACT)}':textfile='${q(txt(`hook-${spot.id}-${H}-${i}.txt`, ln))}':fontsize=${px(100)}:fontcolor=white:borderw=${px(8)}:bordercolor=black:x=(w-text_w)/2:y=${hookY + i * px(115)}:enable='lt(t,1.3)'`).join(",");
   const cropY = story ? "0" : "(ih-oh)*0.22";
   const headMs = path.join(RAW, spot.head);
   const footage = path.join(RAW, "footage", spot.footage);
@@ -109,8 +109,8 @@ async function build(spot, W, H, outFile) {
   f.push(`[6:v]format=rgba,fade=t=in:st=0.1:d=0.3:alpha=1[clg]`, `[cbg][clg]overlay=(W-w)/2:${logoY}:format=auto,` +
     [cardF("Call it. Lock it. Prove it.", cy, 70, IMPACT, "0x22e58b", `:borderw=${px(5)}:bordercolor=black`),
      cardF("Free to play", cy + (story ? 260 : 200), 50, BLACK, "0xd8dde0", `:borderw=${px(3)}:bordercolor=black`)].join(",") + `,format=yuv420p[card]`);
-  const total = hd + footSecs + 2;
-  f.push(`anullsrc=r=48000:cl=stereo,atrim=0:${(footSecs + 2).toFixed(3)}[sil]`);
+  const END = 1.8, total = hd + footSecs + END;
+  f.push(`anullsrc=r=48000:cl=stereo,atrim=0:${(footSecs + END).toFixed(3)}[sil]`);
   f.push(`[head][app][card]concat=n=3:v=1:a=0,${scaleToBt709}[v]`);
   f.push(`[ha][sil]concat=n=2:v=0:a=1[a]`);
   const loopImg = (file, t) => ["-loop", "1", "-framerate", "30", "-t", String(t), "-i", file];

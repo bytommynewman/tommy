@@ -172,15 +172,15 @@ for (const p of posts) {
 }
 
 // ---------- 6. teaser video 2160x3840 (text PNG layers + real app glimpse in a phone frame + ffmpeg) ----------
-// 0-2.4 hook 1, 2.4-4.8 hook 2, 4.8-~10.8 real take-builder -> LOCKED footage (spot 2 capture, 1x), then COMING SOON end card.
+// 0-1.8 hook 1, 1.8-3.6 hook 2, 3.6-~8.8 real take-builder -> LOCKED footage (spot 2 capture, 1x), then COMING SOON end card.
 {
   const W = 1080, H = 1920, tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gr-teaser-'));
   const layer = async (name, body) => { await sharp(svg(W, H, `<defs>${shadow}</defs>` + body)).png().toFile(`${tmp}/${name}.png`); };
   // app glimpse window from the raw capture: from "Pick a take" to the end of "Place take"
   const meta = JSON.parse(fs.readFileSync(path.join(RAW, 'spot-2.json'), 'utf8'));
-  const pickBeat = meta.beats.find((b) => /pick a take/i.test(b.caption)) ?? meta.beats.at(-2);
-  const g0 = pickBeat.start, g1 = meta.beats.at(-1).end - 0.3, SPEED = 1.0;
-  const GS = 4.8, GD = (g1 - g0) / SPEED, GE = GS + GD, TOTAL = GE + 2.6;
+  const pickBeat = meta.beats.find((b) => /^search$/i.test(b.caption)) ?? meta.beats.at(-2);
+  const g0 = pickBeat.start, g1 = meta.beats.at(-1).end - 0.3, SPEED = 1.2; // app glimpse (<= 1.5x)
+  const GS = 3.6, GD = (g1 - g0) / SPEED, GE = GS + GD, TOTAL = GE + 1.8;
   const r2 = (x) => x.toFixed(2);
   await layer('t1', text(['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], { x: 540, y: 860, size: fitSize(['EVERYONE SAYS'], 210), lh: 150, ls: 2 }));
   await layer('t2', text(['SOON YOU’LL', 'HAVE THE', { t: 'RECEIPTS.', fill: VOLT }], { x: 540, y: 820, size: 190, lh: 185, ls: 2 }));
@@ -196,7 +196,7 @@ for (const p of posts) {
   const fade = (i, a, b) => `[${i}:v]format=rgba,fade=t=in:st=${r2(a)}:d=0.35:alpha=1,fade=t=out:st=${r2(b - 0.35)}:d=0.35:alpha=1[l${i}]`;
   const fc = [
     `[0:v]zoompan=z='1.0+0.12*on/${Math.round(TOTAL * 30)}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${Math.round(TOTAL * 30)}:s=2160x3840:fps=30,format=yuv420p[bg]`,
-    fade(1, 0.4, 2.4), fade(2, 2.4, GS),
+    fade(1, 0.3, 1.8), fade(2, 1.8, GS),
     `[3:v]format=rgba,fade=t=in:st=${r2(GE)}:d=0.35:alpha=1[l3]`,
     `[4:v]format=rgba,fade=t=in:st=${r2(GS + 0.2)}:d=0.35:alpha=1[lcap]`,
     // full logo on the text beats (0-GS) and the end card (GE-); emblem bug beside the phone during the glimpse

@@ -79,69 +79,69 @@ const FLOWS = {
   // A1: NBA → search player → Wins an award → MVP → Wins it → Place take (stopwatch ≈ 9 s) → feed stamp → leaderboards
   async A1({ page, at, mark, focus, act }) {
     mark("s1", 0);
-    await at(0.7); await focus(page.getByRole("tab", { name: /NBA/ })); await page.getByRole("tab", { name: /NBA/ }).click();
-    mark("s2", await at(1.7)); await focus(page.getByLabel("Search NBA"));
-    await page.getByLabel("Search NBA").click(); await page.getByLabel("Search NBA").pressSequentially("wemban", { delay: 90 });
+    await at(0.5); await focus(page.getByRole("tab", { name: /NBA/ })); await page.getByRole("tab", { name: /NBA/ }).click();
+    mark("s2", await at(1.2)); await focus(page.getByLabel("Search NBA"));
+    await page.getByLabel("Search NBA").click(); await page.getByLabel("Search NBA").pressSequentially("wemban", { delay: 50 });
     await page.waitForLoadState("networkidle");
-    await at(3.4); await focus(page.locator("ul button", { hasText: /Victor Wembanyama/ }).first());
+    await at(2.3); await focus(page.locator("ul button", { hasText: /Victor Wembanyama/ }).first());
     await page.locator("ul button", { hasText: /Victor Wembanyama/ }).first().click(); await page.getByText("Pick a take on").waitFor();
-    mark("s3", await at(4.5)); await act.select("Pick a take on", "Wins an award");
-    await at(5.9); await act.select("Award", "NBA MVP");
-    await at(7.3); await act.select("Finish", "Wins it");
+    mark("s3", await at(3.1)); await act.select("Pick a take on", "Wins an award");
+    await at(4.0); await act.select("Award", "NBA MVP");
+    await at(4.9); await act.select("Finish", "Wins it");
     const btn = page.getByRole("button", { name: "Place take" });
-    await at(8.2); await btn.scrollIntoViewIfNeeded(); await focus(btn);
-    mark("s4", await at(8.9)); mark("place"); await btn.click();
+    await at(5.6); await btn.scrollIntoViewIfNeeded(); await focus(btn);
+    mark("s4", await at(6.1)); mark("place"); await btn.click();
     await page.waitForURL(/\/feed\?placed=/); await page.waitForLoadState("networkidle");
     await focus(page.locator("time").first(), 0.35);
-    const tp = await at(clockOf() + 3.2); mark("board", tp);
+    const tp = await at(clockOf() + 2.0); mark("board", tp);
     await page.goto(BASE + "/leaderboards"); await page.waitForLoadState("networkidle"); await focus(null, 0.3);
-    await sleep(500); await smoothScroll(page, { by: 300, ms: 1500 }); await sleep(1500);
-    await at(clockOf() + 0.3);
+    await sleep(300); await smoothScroll(page, { by: 300, ms: 1000 }); await sleep(900);
+    await at(clockOf() + 0.2);
   },
   // A2: NHL → team → Playoff run → stage → Place take (≈ 8 s) → feed → resolved "Cashed" receipt + Prestige
   async A2({ page, at, mark, focus, act, receiptUrl }) {
     mark("s1", 0);
-    await at(0.7); await focus(page.getByRole("tab", { name: /NHL/ })); await page.getByRole("tab", { name: /NHL/ }).click();
-    await at(1.5); await focus(page.getByLabel("Search NHL"));
-    await page.getByLabel("Search NHL").click(); await page.getByLabel("Search NHL").pressSequentially("bruins", { delay: 90 });
+    await at(0.5); await focus(page.getByRole("tab", { name: /NHL/ })); await page.getByRole("tab", { name: /NHL/ }).click();
+    await at(1.1); await focus(page.getByLabel("Search NHL"));
+    await page.getByLabel("Search NHL").click(); await page.getByLabel("Search NHL").pressSequentially("bruins", { delay: 50 });
     await page.waitForLoadState("networkidle");
-    await at(3.0); await focus(page.locator("ul button", { hasText: /Boston Bruins/ }).first());
+    await at(2.0); await focus(page.locator("ul button", { hasText: /Boston Bruins/ }).first());
     await page.locator("ul button", { hasText: /Boston Bruins/ }).first().click(); await page.getByText("Pick a take on").waitFor();
-    await at(4.0); await act.select("Pick a take on", "Playoff run");
-    mark("s2", await at(5.6)); await act.select("How far", "Win the Stanley Cup");
+    await at(2.8); await act.select("Pick a take on", "Playoff run");
+    mark("s2", await at(3.8)); await act.select("How far", "Win the Stanley Cup");
     const btn = page.getByRole("button", { name: "Place take" });
-    await at(7.3); await btn.scrollIntoViewIfNeeded(); await focus(btn);
-    mark("s3", await at(8.0)); mark("place"); await btn.click();
+    await at(4.8); await btn.scrollIntoViewIfNeeded(); await focus(btn);
+    mark("s3", await at(5.4)); mark("place"); await btn.click();
     await page.waitForURL(/\/feed\?placed=/); await page.waitForLoadState("networkidle");
     await focus(page.locator("time").first(), 0.35);
-    mark("s4", await at(clockOf() + 2.6));
+    mark("s4", await at(clockOf() + 1.8));
     await page.goto(receiptUrl); await page.waitForLoadState("networkidle"); await focus(null, 0.1);
-    await sleep(2200);
+    await sleep(1300);
     const pres = page.getByText("Prestige", { exact: true }).first();
     const y = await pres.evaluate((e) => e.getBoundingClientRect().top + window.scrollY);
     await focus(null, 0.27);
-    await smoothScroll(page, { to: Math.max(0, y - 260), ms: 1400 }); await sleep(2300);
+    await smoothScroll(page, { to: Math.max(0, y - 260), ms: 1000 }); await sleep(1500);
     await at(clockOf() + 0.2);
   },
   // B1: slower, take-builder flow with room for one caption at a time
   async B1({ page, at, mark, focus, act }) {
     mark("hook", 0);
-    await at(2.4); mark("player"); await page.getByRole("tab", { name: /NBA/ }).click();
-    await at(3.4); await page.getByLabel("Search NBA").click(); await page.getByLabel("Search NBA").pressSequentially("jokic", { delay: 110 });
+    await at(1.8); mark("player"); await page.getByRole("tab", { name: /NBA/ }).click();
+    await at(2.4); await page.getByLabel("Search NBA").click(); await page.getByLabel("Search NBA").pressSequentially("jokic", { delay: 60 });
     await page.waitForLoadState("networkidle");
-    await at(5.2); await page.locator("ul button", { hasText: /Jokić|Jokic/ }).first().click(); await page.getByText("Pick a take on").waitFor();
-    mark("take", await at(6.4)); await act.select("Pick a take on", "Wins an award", false);
-    await at(7.8); await act.select("Award", "NBA MVP", false);
-    await at(9.0); await act.select("Finish", "Wins it", false);
+    await at(3.4); await page.locator("ul button", { hasText: /Jokić|Jokic/ }).first().click(); await page.getByText("Pick a take on").waitFor();
+    mark("take", await at(3.8)); await act.select("Pick a take on", "Wins an award", false);
+    await at(4.7); await act.select("Award", "NBA MVP", false);
+    await at(5.5); await act.select("Finish", "Wins it", false);
     const btn = page.getByRole("button", { name: "Place take" });
-    await at(10.0); await btn.scrollIntoViewIfNeeded();
-    mark("place", await at(10.8)); await btn.click();
+    await at(6.1); await btn.scrollIntoViewIfNeeded();
+    mark("place", await at(6.6)); await btn.click();
     await page.waitForURL(/\/feed\?placed=/); await page.waitForLoadState("networkidle");
-    mark("stamp"); const tg = clockOf() + 2.8; mark("graded", await at(tg));
-    mark("board", await at(tg + 2.4));
+    mark("stamp"); const tg = clockOf() + 1.8; mark("graded", await at(tg));
+    mark("board", await at(tg + 1.7));
     await page.goto(BASE + "/leaderboards"); await page.waitForLoadState("networkidle");
-    await sleep(600); await smoothScroll(page, { by: 280, ms: 1800 }); await sleep(1800);
-    await at(clockOf() + 0.3);
+    await sleep(400); await smoothScroll(page, { by: 280, ms: 1200 }); await sleep(1200);
+    await at(clockOf() + 0.2);
   },
 };
 let clockOf; // set per recording: current clip time
@@ -153,7 +153,7 @@ async function recordSpot(browser, state, id, receiptUrl) {
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto(BASE + "/create"); await page.waitForLoadState("networkidle"); await sleep(900);
+  await page.goto(BASE + "/create"); await page.waitForLoadState("networkidle"); await sleep(500);
   const sc = await startScreencast(page, DSF_BY[id]);
   const now = () => (Date.now() - sc.vt0) / 1000;
   clockOf = now;
@@ -171,7 +171,7 @@ async function recordSpot(browser, state, id, receiptUrl) {
     if (doFocus) await focus(sel);
     const val = await sel.evaluate((s, opt) => [...s.options].find((o) => o.text.toLowerCase().includes(opt.toLowerCase()))?.value, option);
     if (val === undefined) throw new Error(`no option "${option}" in ${label}`);
-    await sel.focus(); await sel.selectOption(val); await sleep(300);
+    await sel.focus(); await sel.selectOption(val); await sleep(150);
   } };
   await FLOWS[id]({ page, at, mark, focus, act, receiptUrl });
   await sleep(200);
