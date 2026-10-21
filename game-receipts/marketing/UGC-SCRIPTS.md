@@ -27,7 +27,9 @@ Rules: no team logos, no real jerseys (plain or blank tees/hoodies), no real ath
 
 ---
 
-# Batch 2 (8 spots, ~30 credits each)
+# Batch 2 (8 spots, ~30 credits each) — ON HOLD: render each one the day it's posted
+
+Tommy (Oct 21 2026): don't pre-render Batch 2. Generate a spot only on the day it's scheduled, after checking how the earlier posts performed, so credits aren't sunk if the approach doesn't work. ~30 credits per spot; needs Tommy's go each time.
 
 Same recipe and rules as above. Every line ≈26–32 words with a filler or false start. Plain clothes, no logos, no real jerseys, no readable screens. Cutaway = 7–8 s of real app footage named per spot.
 
