@@ -22,7 +22,7 @@ _Last updated: 2026-10-19._ Location: `game-receipts/` inside the `bytommynewman
 - Sports data is a mock catalog. Resolved demo questions use real 2024-25 outcomes with illustrative baselines. Seed takes carry `seed: true` and show a "Demo" badge because their timestamps are back-dated.
 - User-drafted questions use a 50/50 baseline and count toward reputation only after admin approval. This prevents farming trivial questions.
 - Battle winner = higher time-weighted accuracy; a gap under 0.5 is a push.
-- No money anywhere. Paid plans are a waitlist only, and plans never affect scoring.
+- Free to play. Paid plans are a waitlist only, and plans never affect scoring.
 
 ## Pending / next
 1. **Supabase wiring:** replace `lib/server/db.ts` and the services with Supabase queries and RPCs, move auth to Supabase Auth, and run grading as a service-role job. Needs project credentials.

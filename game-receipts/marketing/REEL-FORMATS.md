@@ -15,7 +15,7 @@ Layout 1080×1920:
 Spots:
 - **A1 "MVP pick in under 10 seconds"** — Hook: "Watch me lock my MVP pick in under 10 seconds". Steps: 1 Pick your league → 2 Search your guy → 3 Pick a take (Wins an award · MVP) → 4 Place it. Stamped. Graded when it's done. Stopwatch stops ~00:09. End beat: leaderboard.
 - **A2 "Prove you called it"** — Hook: "How to prove you called it (takes 8 seconds)". Steps: 1 Pick your team → 2 Pick how far they go → 3 Place take → 4 Screenshot the receipt when it hits. End beat: resolved "Cashed" receipt + Prestige.
-- CTA end card: "Comment **RECEIPT** and I'll send you the link" + "Free · No betting".
+- CTA end card: "Comment **RECEIPT** and I'll send you the link" + "Free to play".
 
 ## Format B · "Filmed my screen" POV (jack.tries1 style)
 

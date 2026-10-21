@@ -65,7 +65,7 @@ const save = (buf, name) => sharp(buf).png({ compressionLevel: 9 }).toFile(path.
   const overlay = svg(W, H, `<defs>${shadow}</defs>` +
     text(['CALL IT. LOCK IT.', { t: 'PROVE IT.', fill: VOLT }], { x: tx, y: sy + 118, size: 130, lh: 122, ls: 3 }) +
     pill(tx - 130, sy + 335, 440, 72, 'COMING SOON', 38) +
-    `<text x="${tx + 110}" y="${sy + 348}" font-family="${BLK}" font-size="30" fill="#fff" opacity=".9" filter="url(#sh)">FREE · NO BETTING</text>`);
+    `<text x="${tx + 110}" y="${sy + 348}" font-family="${BLK}" font-size="30" fill="#fff" opacity=".9" filter="url(#sh)">FREE TO PLAY</text>`);
   const buf = await sharp(base).composite([
     { input: l, left: Math.round(sx), top: Math.round(sy + 11), },
     { input: overlay }]).png().toBuffer();
@@ -93,7 +93,7 @@ for (const [name, g] of Object.entries(icons)) {
 const posts = [
   { slug: 'called-it', lines: ['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], sub: 'Game Receipts proves it.', src: HERO_T },
   { slug: 'receipts', lines: ["SOON YOU'LL", 'HAVE THE', { t: 'RECEIPTS.', fill: VOLT }], sub: 'Lock it. Date-stamped. Graded.', src: SHARE },
-  { slug: 'coming-soon', lines: ['COMING', { t: 'SOON', fill: VOLT }], sub: 'FREE · NO BETTING', tag: 'Call it. Lock it. Prove it.', src: HERO_W },
+  { slug: 'coming-soon', lines: ['COMING', { t: 'SOON', fill: VOLT }], sub: 'FREE TO PLAY', tag: 'Call it. Lock it. Prove it.', src: HERO_W },
 ];
 for (const p of posts) {
   for (const fmt of [{ n: 'feed-1080x1350', W: 1080, H: 1350, top: 0 }, { n: 'story-1080x1920', W: 1080, H: 1920, top: 1 }]) {
@@ -126,7 +126,7 @@ for (const p of posts) {
     text(['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], { x: 400, y: 200, size: 100, lh: 96, anchor: 'start', ls: 2 }) +
     `<text x="400" y="450" font-family="${BLK}" font-size="36" fill="#fff" filter="url(#sh)">Game Receipts proves it.</text>` +
     pill(555, 525, 330, 64, 'COMING SOON', 30) +
-    `<text x="745" y="535" font-family="${BLK}" font-size="26" fill="#fff" filter="url(#sh)">FREE · NO BETTING</text>`);
+    `<text x="745" y="535" font-family="${BLK}" font-size="26" fill="#fff" filter="url(#sh)">FREE TO PLAY</text>`);
   const buf = await sharp(base).composite([{ input: l, left: 40, top: 150, }, { input: o }]).png().toBuffer();
   await save(buf, 'og-1200x630.png');
   fs.copyFileSync(path.join(out, 'og-1200x630.png'), path.join(here, 'waitlist/og.png'));
@@ -140,7 +140,7 @@ for (const p of posts) {
   await layer('t1', text(['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], { x: 540, y: 860, size: fitSize(['EVERYONE SAYS'], 210), lh: 150, ls: 2 }));
   await layer('t2', text(['SOON YOU’LL', 'HAVE THE', { t: 'RECEIPTS.', fill: VOLT }], { x: 540, y: 820, size: 190, lh: 185, ls: 2 }));
   await layer('t3', text(['COMING', { t: 'SOON', fill: VOLT }], { x: 540, y: 850, size: 270, lh: 255, ls: 2 }) +
-    `<text x="540" y="1230" font-family="${BLK}" font-size="58" fill="#fff" text-anchor="middle" filter="url(#sh)">FREE · NO BETTING</text>` +
+    `<text x="540" y="1230" font-family="${BLK}" font-size="58" fill="#fff" text-anchor="middle" filter="url(#sh)">FREE TO PLAY</text>` +
     `<text x="540" y="1320" font-family="${IMP}" font-size="56" fill="${VOLT}" text-anchor="middle" letter-spacing="3" filter="url(#sh)">CALL IT. LOCK IT. PROVE IT.</text>`);
   await sharp(await logo(260)).png().toFile(`${tmp}/logo.png`);
   await sharp(await sharp(HERO_T).resize(1296, 2304, { fit: 'cover' }).modulate({ brightness: 0.6 }).png().toBuffer()).png().toFile(`${tmp}/bg.png`);

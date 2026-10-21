@@ -50,7 +50,7 @@ export default async function Landing() {
             <LinkButton href={me ? "/create" : "/signup"} size="lg">{me ? "Lock a take" : "Lock your first take"}</LinkButton>
             <LinkButton href="/how-scoring-works" variant="secondary" size="lg">How grading works</LinkButton>
           </div>
-          <p className="mt-4 text-xs text-ink-500">Free to play. No betting, no wagering, no real money — ever.</p>
+          <p className="mt-4 text-xs text-ink-500">Free to play.</p>
         </div>
         <div className="relative overflow-x-clip md:overflow-visible">
           <HeroLogo className="absolute -right-10 -top-16 hidden w-72 opacity-30 blur-[1px] md:block" />

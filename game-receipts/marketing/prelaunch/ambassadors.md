@@ -10,12 +10,12 @@
 5. **Top captains:** the 3 captains with the most qualified referrals by launch day get a pinned shout-out and first pick of vanity handle. Reward is access and status only — no cash, no gift cards, no prizes with monetary value.
 
 ## Rules
-- Free. No betting, no money, no stakes, no wagering framing anywhere in your invites.
+- Free to play. Keep your invites honest and simple.
 - Be honest: don't say Game Receipts is live before launch, don't invent features, don't claim to be staff.
 - No spam: group chats you're in, friends, your own socials. No bulk DMs, no paid/botted clicks, no incentives of your own (e.g. paying people to sign up).
 - Disclose if you're also paid separately by us (#partner). Founding Member perks alone don't require a disclosure, but "I get early access if you join" is fair to say out loud.
 - Privacy: we only store the email and the `ref` code, and use it to tell people when the app opens. Captains never see who joined, only their count.
-- We can revoke a badge or access for fraud, abuse, or posting content that breaks the brief (team logos, betting talk, harassment).
+- We can revoke a badge or access for fraud, abuse, or posting content that breaks the brief (team logos, harassment).
 - Counts are reviewed manually until launch. Edge cases: Tommy decides.
 
 ## Setup checklist (Tommy)
@@ -24,4 +24,4 @@
 - DM the badge-unlock message when a captain hits 5: "You're a Founding Member. Early access is yours. Badge goes live at launch."
 
 ## Copy for captains
-> You've been picked as a group-chat captain for Game Receipts, an app that gives every sports take a date-stamped receipt. Free, no betting. Bring 5 friends to the waitlist with your link and you get early access plus a permanent Founding Member badge. Your link: {{link}}
+> You've been picked as a group-chat captain for Game Receipts, an app that gives every sports take a date-stamped receipt. Free to play. Bring 5 friends to the waitlist with your link and you get early access plus a permanent Founding Member badge. Your link: {{link}}

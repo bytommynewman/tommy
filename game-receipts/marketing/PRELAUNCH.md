@@ -8,7 +8,7 @@ Handle: **@gamereceipts** everywhere (fallbacks in `prelaunch/handles.md`). Crea
 
 - **Name:** Game Receipts
 - **Bio (IG/TikTok, 80 chars):** "Lock your sports takes. Get graded. 🧾 Coming soon — join the waitlist ↓"
-- **YouTube description:** "Everyone says they called it. Game Receipts proves it. Lock a take on any player or team, get a timestamped receipt, get graded when it happens. Free. No betting. Coming soon."
+- **YouTube description:** "Everyone says they called it. Game Receipts proves it. Lock a take on any player or team, get a timestamped receipt, get graded when it happens. Free to play. Coming soon."
 - **Link in bio:** waitlist page (below).
 - **Profile assets:** `prelaunch/assets/` — avatar 1080², YouTube banner 2560×1440 (safe area 1546×423), IG story-highlight covers (Takes · Receipts · Leaderboard · Creators), "COMING SOON" teaser posts.
 
@@ -24,7 +24,7 @@ A one-page "coming soon" site: hook, 3 feature cards (dropdown takes · date-sta
 - **Week 3 — social proof:** creator videos, "early testers' best calls", waitlist count milestones.
 - **Week 4 — launch countdown:** 7-day countdown stories, launch-day post.
 - **Topical hooks** (fastest growth): react to that week's real storylines — "lock your take before Sunday", trade-deadline takes, MVP race updates.
-- Every post: "Free · No betting". AI-person videos carry the platform's AI label.
+- Every post: "Free to play". AI-person videos carry the platform's AI label.
 
 ## 4. Get other people promoting it
 

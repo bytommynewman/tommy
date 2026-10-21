@@ -40,7 +40,7 @@ export function SignupForm() {
       <Field label="Password" hint="At least 8 characters."><input className={inputCls} name="password" type="password" autoComplete="new-password" required minLength={8} /></Field>
       <FormError state={state} />
       <SubmitButton className="w-full" size="lg" pendingText="Creating…">Create account</SubmitButton>
-      <p className="text-center text-xs text-ink-500">Free forever for core predictions. No wagering, no real money.</p>
+      <p className="text-center text-xs text-ink-500">Free to play.</p>
       <p className="text-center text-sm text-ink-400">Already locked in? <Link href="/login" className="font-semibold text-volt">Log in</Link></p>
     </form>
   );

@@ -110,7 +110,7 @@ async function renderA(id, spec) {
   const bands = [];
   for (const [i, [, text]] of spec.steps.entries())
     bands.push(await png(`${id}-band${i}.png`, 1080, 100, `<div style="width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center"><div id=t style="color:#fff;font-size:46px;white-space:nowrap;font-weight:900">${esc(text)}</div></div>${fit("t", 1000, 46)}`));
-  const end = await png(`${id}-end.png`, 1080, 1920, `<div style="width:100%;height:100%;background:linear-gradient(rgba(5,8,6,.94),rgba(5,8,6,.94)),url('${hero}') center/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;text-align:center;padding:0 80px"><div style="color:#fff;font-size:70px;line-height:1.2">Comment <span style="color:#23e58a">RECEIPT</span> and I'll send you the link</div><div style="color:#fff;font-size:40px;letter-spacing:.08em;opacity:.92">GAME RECEIPTS · Free · No betting</div></div>`);
+  const end = await png(`${id}-end.png`, 1080, 1920, `<div style="width:100%;height:100%;background:linear-gradient(rgba(5,8,6,.94),rgba(5,8,6,.94)),url('${hero}') center/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;text-align:center;padding:0 80px"><div style="color:#fff;font-size:70px;line-height:1.2">Comment <span style="color:#23e58a">RECEIPT</span> and I'll send you the link</div><div style="color:#fff;font-size:40px;letter-spacing:.08em;opacity:.92">GAME RECEIPTS · Free to play</div></div>`);
 
   // step windows
   const times = spec.steps.map(([m]) => cap.marks[m]);

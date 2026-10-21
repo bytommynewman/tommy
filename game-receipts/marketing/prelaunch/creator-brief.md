@@ -3,7 +3,7 @@
 Post short videos about Game Receipts and get paid per view. This is the text to paste into the Whop campaign (or a Google Doc if running it manually).
 
 ## The app in one line
-Game Receipts lets you lock a sports take on any player or team, get a date-stamped receipt, and get graded when it happens. **Free. No betting. No money.** Just bragging rights. Tagline: **Call it. Lock it. Prove it.** Link: the waitlist page in our bio / the link we give you.
+Game Receipts lets you lock a sports take on any player or team, get a date-stamped receipt, and get graded when it happens. **Free to play.** Just bragging rights. Tagline: **Call it. Lock it. Prove it.** Link: the waitlist page in our bio / the link we give you.
 
 ## Payout
 - **$1.00 to $2.00 per 1,000 qualified views** (start at $1.00 CPM; top-performing creators move to $2.00 after their first approved batch).
@@ -35,7 +35,7 @@ You get a **clip pack** (screen recordings, `assets/` teasers, the logo). Use ou
 - "Worst take that aged badly? Drop it."
 
 ## Must do
-- Say or show **"Free · No betting"** somewhere in the video or caption.
+- Say or show **"Free to play"** somewhere in the video or caption.
 - **Disclose the relationship:** include **#ad** or **#partner** (and use the platform's paid-partnership / branded-content toggle) on every post, as required by FTC rules. Put it in the first line of the caption, not buried at the end.
 - Use your own voice and real opinions; take a stand on a real player or team take.
 - Include the call to action and the link we give you (or "link in bio").
@@ -43,10 +43,9 @@ You get a **clip pack** (screen recordings, `assets/` teasers, the logo). Use ou
 - Keep screen recordings real: show the actual product, accurately. Don't promise features that don't exist yet (it's pre-launch; say "coming soon" or "join the waitlist").
 
 ## Don't
-- **No betting framing.** No odds, picks-for-money, parlays, units, sportsbook names, "lock in your bet," "win money," or "free bets." This is not a gambling app and can never be pitched as one.
 - **No team, league, or sponsor logos**, no ESPN or broadcast footage, no jerseys with marks, no real athlete headshots as the main visual. Naming a team or player in text or speech is fine.
 - No fake earnings, fake testimonials, or "I made $X" claims. Don't say Game Receipts is live if it isn't.
-- Don't target or feature anyone under 13; no content aimed at minors for gambling-adjacent topics. Keep it clean: no harassment, slurs, or attacks on real people or players.
+- Don't target or feature anyone under 13; keep content appropriate for all audiences. Keep it clean: no harassment, slurs, or attacks on real people or players.
 - Don't edit our end card or tagline, and don't buy views or use bots. Violations void payouts and remove you from the program.
 
 ## AI label rules
@@ -60,4 +59,4 @@ You get a **clip pack** (screen recordings, `assets/` teasers, the logo). Use ou
 3. We approve or reply with a fix within 48 hours. Approved posts start counting views.
 
 ## Review checklist (internal)
-No betting words · no team logos · #ad/#partner in first line · "Free · No betting" present · AI label if synthetic · accurate product claims · link or "link in bio" · own account · public.
+No team logos · #ad/#partner in first line · "Free to play" present · AI label if synthetic · accurate product claims · link or "link in bio" · own account · public.

@@ -30,7 +30,7 @@ export default async function BattlesPage() {
       </section>
       {done.length > 0 && <section><SectionTitle>History</SectionTitle><div className="space-y-2">{done.map((b) => <BattleRow key={b.id} d={d} b={b} meId={me.id} />)}</div></section>}
       {friends.length > 0 && <section><SectionTitle>Around your circle</SectionTitle><div className="space-y-2">{friends.map((b) => <BattleRow key={b.id} d={d} b={b} meId={me.id} />)}</div></section>}
-      <Card className="p-4 text-xs text-ink-400">Battles are bragging rights only — no real money, wagers or paid entry, ever.</Card>
+      <Card className="p-4 text-xs text-ink-400">Battles are for bragging rights.</Card>
     </div>
   );
 }

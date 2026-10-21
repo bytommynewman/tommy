@@ -74,7 +74,7 @@ export function ChallengeBox({ targetId, q, targetForecast, mine, opponent }: { 
           {pending ? <Spinner /> : <Swords className="size-4" />}Send challenge
         </button>
       </div>
-      <p className="text-xs text-ink-500">Battles are for bragging rights only. No money, no wagers.</p>
+      <p className="text-xs text-ink-500">Battles are for bragging rights.</p>
     </div>
   );
 }
