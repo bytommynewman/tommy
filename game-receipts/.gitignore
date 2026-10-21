@@ -44,3 +44,6 @@ next-env.d.ts
 
 # marketing reel renders
 marketing/reels/out/
+
+marketing/ugc/raw/
+marketing/ugc/out/
