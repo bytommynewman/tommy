@@ -4,6 +4,7 @@ import { HeroLogo, Lockup } from "@/components/brand/Logo";
 import { ReceiptCard } from "@/components/receipt/ReceiptCard";
 import { LinkButton } from "@/components/ui/primitives";
 import { currentUser } from "@/lib/server/auth";
+import { marketingCapture } from "@/lib/marketing";
 import { db } from "@/lib/server/db";
 import { topCalls } from "@/lib/server/services/reputation";
 import { viewPrediction } from "@/lib/server/views";
@@ -83,7 +84,7 @@ export default async function Landing() {
       </section>
 
       <footer className="border-t border-ink-700/60 px-5 py-8 text-center text-xs text-ink-500">
-        © {new Date().getFullYear()} Game Receipts · Sports data in this build is mock/demo data, not a live feed. · Not affiliated with any league.
+        © {new Date().getFullYear()} Game Receipts · {marketingCapture() ? "" : "Sports data in this build is mock/demo data, not a live feed. · "}Not affiliated with any league.
       </footer>
     </div>
   );

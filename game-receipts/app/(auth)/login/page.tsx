@@ -1,10 +1,11 @@
 import { LoginForm } from "@/components/app/forms";
+import { marketingCapture } from "@/lib/marketing";
 
 export const metadata = { title: "Log in" };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
-  const demo = process.env.NODE_ENV !== "production";
+  const demo = process.env.NODE_ENV !== "production" && !marketingCapture();
   return (
     <>
       <h1 className="mb-1 text-center font-display text-3xl font-black uppercase italic text-white">Welcome back</h1>

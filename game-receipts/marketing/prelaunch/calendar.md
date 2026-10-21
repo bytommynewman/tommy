@@ -12,13 +12,13 @@ Rules for every post: end with "Free to play" (or a clear equivalent), no team l
 
 | Day | Date | Platform | Asset | Caption | AI label |
 |---|---|---|---|---|---|
-| 1 | D+1 | IG feed + X + pinned | `prelaunch/assets/teaser-called-it-feed-1080x1350.png` | Everyone says they called it. Game Receipts proves it. 🧾 Lock a take, get a date-stamped receipt, get graded. Free to play. Coming soon, waitlist in bio. #sportstok #hottakes #icalledit | No |
-| 2 | D+2 | TikTok + Reels + Shorts | `prelaunch/assets/teaser-coming-soon-1080x1920.mp4` | call it. lock it. prove it. 🧾 coming soon · free to play. waitlist in bio #sportstok #icalledit #nba #nfl | No |
+| 1 | D+1 | IG feed + X + pinned | `prelaunch/assets/teaser-called-it-feed-2160x2700.png` | Everyone says they called it. Game Receipts proves it. 🧾 Lock a take, get a date-stamped receipt, get graded. Free to play. Coming soon, waitlist in bio. #sportstok #hottakes #icalledit | No |
+| 2 | D+2 | TikTok + Reels + Shorts | `prelaunch/assets/teaser-coming-soon-2160x3840.mp4` | call it. lock it. prove it. 🧾 coming soon · free to play. waitlist in bio #sportstok #icalledit #nba #nfl | No |
 | 3 | D+3 | TikTok + Reels + Shorts | `out/spot-1-he-said-he-called-it.mp4` | your buddy "called it." did he though? 🙄 now you can prove it. free to play · link in bio #sportstok #hottakes #icalledit | No |
-| 4 | D+4 | IG story + X (engagement) | `prelaunch/assets/teaser-receipts-story-1080x1920.png (story) / text post on X` | What's your worst take that aged badly? Drop it below. Soon you'll have the receipts. 🧾 #sportstok #hottakes | No |
+| 4 | D+4 | IG story + X (engagement) | `prelaunch/assets/teaser-receipts-story-2160x3840.png (story) / text post on X` | What's your worst take that aged badly? Drop it below. Soon you'll have the receipts. 🧾 #sportstok #hottakes | No |
 | 5 | D+5 | TikTok + Reels + Shorts | `out/spot-2-10-second-take.mp4` | lock a take in 10 seconds ⏱️ free to play · waitlist in bio #sportstok #nba #nfl #hottakes | No |
 | 6 | D+6 | TikTok + Reels + Shorts | `reels/out/A1-mvp-speedrun.mp4` | watch me lock my MVP pick in under 10 seconds. comment RECEIPT and i'll send you the link 🧾 free to play #nba #mvp #sportstok | Yes (AI person) |
-| 7 | D+7 | IG feed + story + Reddit (r/SideProject, founder post) | `prelaunch/assets/teaser-coming-soon-feed-1080x1350.png` | Week 1 down. Game Receipts: lock a sports take, get a date-stamped receipt, get graded. Free to play. Building in public, waitlist in bio. #sportstok #icalledit | No |
+| 7 | D+7 | IG feed + story + Reddit (r/SideProject, founder post) | `prelaunch/assets/teaser-coming-soon-feed-2160x2700.png` | Week 1 down. Game Receipts: lock a sports take, get a date-stamped receipt, get graded. Free to play. Building in public, waitlist in bio. #sportstok #icalledit | No |
 | 8 | D+8 | TikTok + Reels + Shorts | `out/spot-3-mvp-pick.mp4` | your MVP pick. stamped with the date. 🧾 graded when the season's done. free to play #nba #mvp #sportstok | No |
 | 9 | D+9 | TikTok + Reels + Shorts | `ugc/out/ugc-1-kyle.mp4` | Kyle is 0-for-3 and the receipts prove it 🧾 Free to play · link in bio #sportstok #hottakes #icalledit | Yes (AI person) |
 | 10 | D+10 | TikTok + Reels + Shorts | `out/spot-4-receipts-dont-lie.mp4` | you can't delete a receipt. timestamped. sealed. can't be edited. free to play #sportstok #icalledit #hottakes | No |
@@ -28,18 +28,18 @@ Rules for every post: end with "Free to play" (or a clear equivalent), no team l
 | 14 | D+14 | TikTok + Reels + Shorts | `out/spot-6-every-player-every-team.mp4` | every team. every player. every league. 🧾 waitlist in bio · free to play #nba #nfl #nhl #mlb #sportstok | No |
 | 15 | D+15 | TikTok + Reels + Shorts | `ugc/out/ugc-2-mvp-pick.mp4` | Locked my MVP pick in October. Graded when it's done. 🧾 Free to play #nba #sportstok #mvp | Yes (AI person) |
 | 16 | D+16 | TikTok + Reels + Shorts | `Creator video #1 (creator's own file, from creator-brief.md program; repost with permission)` | Real take, real receipt. First creator on Game Receipts. Free to play · waitlist in bio #sportstok #partner (if paid) | No (real person; #ad/#partner if paid) |
-| 17 | D+17 | IG story + X | `prelaunch/assets/teaser-receipts-story-1080x1920.png` | Waitlist milestone post: 'We hit {{N}} on the waitlist. Invite 3 friends = early access.' Update N before posting. 🧾 | No |
+| 17 | D+17 | IG story + X | `prelaunch/assets/teaser-receipts-story-2160x3840.png` | Waitlist milestone post: 'We hit {{N}} on the waitlist. Invite 3 friends = early access.' Update N before posting. 🧾 | No |
 | 18 | D+18 | TikTok + Reels + Shorts | `out/spot-1-he-said-he-called-it.mp4 (repost, new hook caption)` | who in your group chat 'called it' but never did? tag them 😂 receipts coming soon · free to play #sportstok #hottakes #icalledit | No |
 | 19 | D+19 | TikTok + Reels + Shorts | `reels/out/A1-mvp-speedrun.mp4 (repost)` | MVP pick in under 10 seconds. comment RECEIPT for the link · free to play #nba #mvp #sportstok | Yes (AI person) |
 | 20 | D+20 | TikTok + Reels + Shorts | `Creator video #2 (or best reply video to a waitlist comment)` | early tester's best call 👀 free to play · waitlist in bio #sportstok #icalledit | No (real person; #ad/#partner if paid) |
-| 21 | D+21 | IG feed + X + Reddit (r/IMadeThis) | `prelaunch/assets/teaser-called-it-feed-1080x1350.png (repost) or a take-builder screenshot` | 3 weeks to launch. Everyone says they called it. We built the receipt. Free to play. Waitlist in bio. 🧾 #sportstok | No |
-| 22 | D+22 | IG story + TikTok/Reels/Shorts | `prelaunch/assets/teaser-coming-soon-story-1080x1920.png + Countdown sticker (set to launch date)` | Launch in 7 days. Lock your takes before the season does it for you. Waitlist in bio · free to play #sportstok #icalledit | No |
+| 21 | D+21 | IG feed + X + Reddit (r/IMadeThis) | `prelaunch/assets/teaser-called-it-feed-2160x2700.png (repost) or a take-builder screenshot` | 3 weeks to launch. Everyone says they called it. We built the receipt. Free to play. Waitlist in bio. 🧾 #sportstok | No |
+| 22 | D+22 | IG story + TikTok/Reels/Shorts | `prelaunch/assets/teaser-coming-soon-story-2160x3840.png + Countdown sticker (set to launch date)` | Launch in 7 days. Lock your takes before the season does it for you. Waitlist in bio · free to play #sportstok #icalledit | No |
 | 23 | D+23 | TikTok + Reels + Shorts | `out/spot-2-10-second-take.mp4 (repost)` | 6 days. a take takes 10 seconds. free to play · waitlist in bio #sportstok #nba #nfl | No |
 | 24 | D+24 | TikTok + Reels + Shorts | `out/spot-4-receipts-dont-lie.mp4 (repost)` | 5 days. you can't delete a receipt. free to play · waitlist in bio #sportstok #icalledit | No |
 | 25 | D+25 | TikTok + Reels + Shorts | `reels/out/B1-pov-screen.mp4 (repost)` | 4 days until the group chat loses its power. comment RECEIPT for the link #sportstok #hottakes | No |
-| 26 | D+26 | IG story + X + Reddit-ad creative | `prelaunch/assets/teaser-receipts-feed-1080x1350.png` | 3 days. Founding Members (5 friends on the waitlist) get early access + a permanent badge. Free to play. 🧾 | No |
+| 26 | D+26 | IG story + X + Reddit-ad creative | `prelaunch/assets/teaser-receipts-feed-2160x2700.png` | 3 days. Founding Members (5 friends on the waitlist) get early access + a permanent badge. Free to play. 🧾 | No |
 | 27 | D+27 | TikTok + Reels + Shorts | `out/spot-6-every-player-every-team.mp4 (repost) + story reminder` | tomorrow. every team, every player, every league. free to play · set your reminder #sportstok #nba #nfl #nhl | No |
-| 28 | D+28 | ALL platforms (launch day) | `Launch video: new cut from out/spot-1 + spot-4 with end card 'Live now'; plus prelaunch/assets/teaser-coming-soon-feed-1080x1350.png as a placeholder if no cut exists` | It's live. Call it. Lock it. Prove it. 🧾 Free to play. Link in bio. #sportstok #icalledit #hottakes | No |
+| 28 | D+28 | ALL platforms (launch day) | `Launch video: new cut from out/spot-1 + spot-4 with end card 'Live now'; plus prelaunch/assets/teaser-coming-soon-feed-2160x2700.png as a placeholder if no cut exists` | It's live. Call it. Lock it. Prove it. 🧾 Free to play. Link in bio. #sportstok #icalledit #hottakes | No |
 
 ## Weekly check-ins
 - **End of week 1:** which teaser got the most saves/shares; waitlist count; reply to every comment in the first hour on each post.

@@ -40,4 +40,4 @@ In `index.html` replace `https://SITE_URL/` (OG and Twitter image tags, share UR
 For a custom domain (e.g. gamereceipts.com; see `../handles.md`) point DNS at the host per its instructions; HTTPS is automatic on all of the above.
 
 ## Files
-`index.html` · `og.png` (also in `../assets/og-1200x630.png`) · `hero-tall.webp` / `hero-wide.webp` (background) · `logo.webp` · `icon-192.png` · `preview-*.png` (screenshots from `shoot.mjs`, safe to delete).
+`index.html` · `og.png` (also in `../assets/og-2400x1260.png (this og.png is its 1200x630 downscale)`) · `hero-tall.webp` / `hero-wide.webp` (background) · `logo.webp` · `icon-192.png` · `preview-*.png` (screenshots from `shoot.mjs`, safe to delete).

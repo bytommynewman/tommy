@@ -2,6 +2,7 @@ import type { DB, Question, User } from "../domain";
 import { CATALOG_QUESTIONS } from "../catalog/questions";
 import type { League } from "../catalog/teams";
 import type { Forecast } from "../scoring";
+import { marketingCapture } from "../marketing";
 import { hashPassword } from "./password";
 import { gradeQuestion } from "./services/grading";
 import { lockPrediction } from "./services/predictions";
@@ -13,8 +14,13 @@ import { lockPrediction } from "./services/predictions";
  */
 export const DEMO_PASSWORD = "receipts-demo";
 
+// GR_MARKETING_CAPTURE: the account ad footage is recorded with. The seed key stays "demo" internally (ids, follows, likes);
+// only what the UI shows changes, so no demo wording or handle ever appears on screen.
+const MARKETING = marketingCapture();
 const users: [string, string, string, League[], string, Partial<User>?][] = [
-  ["demo", "You (Demo)", "Demo account. Lock a take and see how grading works.", ["NFL", "NBA"], "#22E58A"],
+  MARKETING
+    ? ["demo", "Jordan", "Calls it early, keeps the receipts.", ["NFL", "NBA"], "#22E58A", { username: "jordan_calls" }]
+    : ["demo", "You (Demo)", "Demo account. Lock a take and see how grading works.", ["NFL", "NBA"], "#22E58A"],
   ["lockedin_larry", "Larry Locks", "Spreadsheets > vibes. Calibrated since '09.", ["NBA", "NFL"], "#5B8CFF"],
   ["darkhorse_dana", "Dana", "I only fade the chalk. Long shots, loud receipts.", ["NBA"], "#FF6B5B"],
   ["chalk_charlie", "Charlie", "Favourites win for a reason.", ["NFL", "NBA"], "#F5C542"],
@@ -100,9 +106,10 @@ export function buildSeed(): DB {
 
   const pw = hashPassword(DEMO_PASSWORD);
   const id = (u: string) => `seed-${u}`;
-  for (const [username, displayName, bio, leagues, color, extra] of users) {
+  for (const [key, displayName, bio, leagues, color, extra] of users) {
+    const username = extra?.username ?? key;
     d.users.push({
-      id: id(username), email: `${username}@demo.gamereceipts.dev`, username, displayName, passwordHash: pw, bio,
+      id: id(key), email: MARKETING ? `${username}@gamereceipts.test` : `${key}@demo.gamereceipts.dev`, username, displayName, passwordHash: pw, bio,
       avatarColor: color, favoriteLeagues: leagues, favoriteTeams: [], role: "user", plan: "free", onboarded: true,
       isCreator: false, createdAt: "2024-08-01T00:00:00.000Z", private: false, seed: true, ...extra,
     });

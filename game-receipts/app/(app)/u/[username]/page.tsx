@@ -10,6 +10,7 @@ import { ReportButton } from "@/components/app/detail";
 import { Avatar, Card, Chip, EmptyState, LinkButton, SectionTitle, Stat, Tabs } from "@/components/ui/primitives";
 import { teamById, teamLabel } from "@/lib/catalog/teams";
 import { currentUser } from "@/lib/server/auth";
+import { marketingCapture } from "@/lib/marketing";
 import { db } from "@/lib/server/db";
 import { userByFormerName } from "@/lib/server/services/accounts";
 import { isBlocked } from "@/lib/server/services/notify";
@@ -62,7 +63,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
           </div>
           <div className="mt-3 flex items-start gap-3">
             <div className="min-w-0 flex-1">
-              <h1 className="flex items-center gap-2 font-display text-2xl font-black italic text-white">{u.displayName}{u.isCreator && <Chip tone="volt">Creator</Chip>}{u.seed && <Chip tone="muted">Demo</Chip>}</h1>
+              <h1 className="flex items-center gap-2 font-display text-2xl font-black italic text-white">{u.displayName}{u.isCreator && <Chip tone="volt">Creator</Chip>}{u.seed && !marketingCapture() && <Chip tone="muted">Demo</Chip>}</h1>
               <div className="text-sm text-ink-400">@{u.username}</div>
               {u.bio && <p className="mt-2 text-sm text-ink-200">{u.bio}</p>}
               <div className="mt-2 flex gap-4 text-sm"><span><b className="text-white">{followers}</b> <span className="text-ink-400">followers</span></span><span><b className="text-white">{followingCount}</b> <span className="text-ink-400">following</span></span></div>

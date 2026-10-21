@@ -1,7 +1,9 @@
 // Finishes the AI UGC spots: Kling talking head (native audio, untouched) + hook text -> real app footage -> end card.
 // Node 20+, system ffmpeg (no ffprobe needed). Usage: node marketing/ugc/finish.mjs [spotId ...]
 // Inputs:  marketing/ugc/raw/<head>.mp4 (Kling), marketing/ugc/raw/footage/<footage>.mp4 (capture.mjs)
-// Outputs: marketing/ugc/out/ugc-<n>-<slug>.mp4 (1080x1920) and ...-4x5.mp4 (1080x1350, Reddit)
+// Outputs: marketing/ugc/out/ugc-<n>-<slug>.mp4 (2160x3840, 4K) and ...-4x5.mp4 (2160x2700, Reddit), encoded by ../encode4k.mjs (2-pass H.264 High@5.1, BT.709).
+// The Kling talking head is ~1076x1924: it is denoised (mild hqdn3d), upscaled 2x with lanczos and lightly sharpened. It cannot be true 4K
+// (that needs AI upscaling = credits); everything else (app footage, overlays, end card) is native 4K.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -9,6 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import { bug, endLogo } from "../brand.mjs";
+import { encode4k, scaleToBt709 } from "../encode4k.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, "../..");
@@ -18,9 +21,8 @@ const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ff
 const IMPACT = "/System/Library/Fonts/Supplemental/Impact.ttf";
 const BLACK = "/System/Library/Fonts/Supplemental/Arial Black.ttf";
 const BG = path.join(ROOT, "public/art/hero-tall.webp");
-const BAR = "0x06090b"; // app background, pads the 4:5 footage
 
-// footage cuts: [start s, end s, speed] from the raw screen capture (1236x2196, 3x native; only ever scaled down).
+// footage cuts: [start s, end s, speed] from the raw screen capture (2060x3660, 5x native; only ever scaled down).
 // Speed-ups are capped at 1.6x: trim dead time instead of racing through it.
 // The head is the untouched Kling clip (light unsharp on luma only); app footage sits in a phone frame on the blurred hero
 // background, and a small picture-in-picture of the same app flow rides the head's lower third during its second half.
@@ -47,16 +49,16 @@ const roundedMask = (w, h, r) => Buffer.from(`<svg xmlns="http://www.w3.org/2000
 async function frameAssets(pw, sh, b, tag) {
   const r = Math.round(pw * 0.11), W = pw + 2 * b, H = sh + 2 * b;
   const bezel = path.join(tmp, `bezel-${tag}.png`), mask = path.join(tmp, `mask-${tag}.png`);
-  await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect x="1.25" y="1.25" width="${W - 2.5}" height="${H - 2.5}" rx="${r + b}" fill="#0e0e11" stroke="#46464f" stroke-width="2.5"/></svg>`)).png().toFile(bezel);
+  await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect x="2.5" y="2.5" width="${W - 5}" height="${H - 5}" rx="${r + b}" fill="#0e0e11" stroke="#46464f" stroke-width="5"/></svg>`)).png().toFile(bezel);
   await sharp(roundedMask(pw, sh, r)).png().toFile(mask);
   return { bezel, mask, W, H };
 }
 
 async function build(spot, W, H, outFile) {
-  const story = H === 1920;
-  const sc = H / 1920;
+  const story = H === 3840;
+  const sc = H / 1920; // px(n): n is the old 1080-wide design number; the scale doubles it for 2160 wide
   const px = (n) => Math.round(n * sc);
-  const hookY = story ? 260 : 190;
+  const hookY = story ? 520 : 380;
   const words = spot.hook.toUpperCase().split(" ");
   let hookText = words.join(" ");
   if (hookText.length > 17) {
@@ -71,19 +73,19 @@ async function build(spot, W, H, outFile) {
   const hd = dur(headMs);
   const n = spot.cuts.length;
   // phone frame (side margins are free: the emblem bug lives there) + small PiP
-  const pw = story ? 720 : 600, sh = Math.round((pw * 732) / 412 / 2) * 2, bz = story ? 14 : 12;
+  const pw = story ? 1440 : 1200, sh = Math.round((pw * 732) / 412 / 2) * 2, bz = story ? 28 : 24;
   const ph = await frameAssets(pw, sh, bz, `${story ? "s" : "r"}`);
   const phX = (W - ph.W) / 2, phY = Math.round((H - ph.H) / 2);
-  const pipW = story ? 250 : 200, pipH = Math.round((pipW * 732) / 412 / 2) * 2, pipB = 5;
+  const pipW = story ? 500 : 400, pipH = Math.round((pipW * 732) / 412 / 2) * 2, pipB = 10;
   const pip = await frameAssets(pipW, pipH, pipB, `${story ? "s" : "r"}pip`);
-  const pipX = story ? 40 : 30, pipY = story ? 1090 : 960;
-  const bugSize = story ? 108 : 92, bg_ = await bug(bugSize);
-  const headBug = story ? { x: 36, y: 520 } : { x: 28, y: 400 };
-  const phoneBug = story ? { x: 36, y: phY + 24 } : { x: 56, y: phY + 16 };
-  const lg_ = await endLogo(story ? 440 : 330);
+  const pipX = story ? 80 : 60, pipY = story ? 2180 : 1920;
+  const bugSize = story ? 216 : 184, bg_ = await bug(bugSize);
+  const headBug = story ? { x: 72, y: 1040 } : { x: 56, y: 800 };
+  const phoneBug = story ? { x: 72, y: phY + 48 } : { x: 112, y: phY + 32 };
+  const lg_ = await endLogo(story ? 880 : 660);
   const SPLIT = 5.0; // PiP appears for the head's second half
   const f = [];
-  f.push(`[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H}:(iw-${W})/2:${cropY},fps=30,setsar=1,unsharp=5:5:0.3:5:5:0,${hookDt},format=yuv420p[head0]`);
+  f.push(`[0:v]hqdn3d=1.2:1.2:2:2,scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H}:(iw-${W})/2:${cropY},fps=30,setsar=1,unsharp=5:5:0.45:5:5:0,${hookDt},format=yuv420p[head0]`);
   // pip: first seconds of the app flow, 1x
   f.push(`[1:v]fps=30,split=${n + 1}${["[pipsrc]", ...spot.cuts.map((_, i) => `[s${i}]`)].join("")}`);
   f.push(`[pipsrc]trim=${spot.pipStart ?? spot.cuts[0][0]}:${(spot.pipStart ?? spot.cuts[0][0]) + hd - SPLIT},setpts=PTS-STARTPTS,scale=${pipW}:${pipH}:flags=lanczos,format=rgba[pa]`);
@@ -95,37 +97,34 @@ async function build(spot, W, H, outFile) {
   const footSecs = spot.cuts.reduce((t, [a, b, sp]) => t + (b - a) / sp, 0);
   f.push(`${spot.cuts.map((_, i) => `[c${i}]`).join("")}concat=n=${n}:v=1:a=0,format=rgba[fv]`);
   f.push(`[9:v]format=rgba,alphaextract[fm]`, `[fv][fm]alphamerge[fa]`);
-  f.push(`[2:v]scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H},gblur=sigma=26,eq=brightness=-0.30:saturation=0.85,fps=30,format=rgba[bgf]`);
+  f.push(`[2:v]scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H},gblur=sigma=52,eq=brightness=-0.30:saturation=0.85,fps=30,format=rgba[bgf]`);
   f.push(`[10:v]format=rgba[bz]`, `[bgf][bz]overlay=${phX}:${phY}:format=auto[pb0]`, `[pb0][fa]overlay=${phX + bz}:${phY + bz}:format=auto[pb1]`);
   f.push(`[5:v]format=rgba[bugv2]`, `[pb1][bugv2]overlay=${phoneBug.x - bg_.pad}:${phoneBug.y - bg_.pad}:format=auto,trim=duration=${footSecs.toFixed(3)},setpts=PTS-STARTPTS,format=yuv420p,setsar=1[app]`);
   // end card: full logo above the tagline + "Free to play"
   const cardF = (t, y, size, font, col = "white", extra = "") =>
     `drawtext=fontfile='${q(font)}':textfile='${q(txt(`c${spot.id}-${H}-${y}.txt`, t))}':fontsize=${px(size)}:fontcolor=${col}:x=(w-text_w)/2:y=${y}${extra}`;
-  const logoY = story ? 380 : 120;
-  const cy = story ? 380 + 440 + 70 : 120 + 330 + 50;
+  const logoY = story ? 760 : 240;
+  const cy = story ? 760 + 880 + 140 : 240 + 660 + 100;
   f.push(`[3:v]scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H},fps=30,eq=brightness=-0.42:saturation=0.9,setsar=1,format=rgba[cbg]`);
   f.push(`[6:v]format=rgba,fade=t=in:st=0.1:d=0.3:alpha=1[clg]`, `[cbg][clg]overlay=(W-w)/2:${logoY}:format=auto,` +
     [cardF("Call it. Lock it. Prove it.", cy, 70, IMPACT, "0x22e58b", `:borderw=${px(5)}:bordercolor=black`),
-     cardF("Free to play", cy + (story ? 130 : 100), 50, BLACK, "0xd8dde0", `:borderw=${px(3)}:bordercolor=black`)].join(",") + `,format=yuv420p[card]`);
+     cardF("Free to play", cy + (story ? 260 : 200), 50, BLACK, "0xd8dde0", `:borderw=${px(3)}:bordercolor=black`)].join(",") + `,format=yuv420p[card]`);
   const total = hd + footSecs + 2;
   f.push(`anullsrc=r=48000:cl=stereo,atrim=0:${(footSecs + 2).toFixed(3)}[sil]`);
-  f.push(`[head][app][card]concat=n=3:v=1:a=0[v]`);
+  f.push(`[head][app][card]concat=n=3:v=1:a=0,${scaleToBt709}[v]`);
   f.push(`[ha][sil]concat=n=2:v=0:a=1[a]`);
   const loopImg = (file, t) => ["-loop", "1", "-framerate", "30", "-t", String(t), "-i", file];
-  run([
-    "-i", headMs, "-i", footage,
-    ...loopImg(BG, footSecs + 1), ...loopImg(BG, 3),
-    ...loopImg(bg_.file, total), ...loopImg(bg_.file, total), ...loopImg(lg_.file, 3),
-    ...loopImg(pip.bezel, total), ...loopImg(pip.mask, total), ...loopImg(ph.mask, total), ...loopImg(ph.bezel, total),
-    "-filter_complex", f.join(";"), "-map", "[v]", "-map", "[a]",
-    "-t", total.toFixed(2), "-c:v", "libx264", "-profile:v", "high", "-preset", "slow", "-crf", "17", "-maxrate", "20M", "-bufsize", "40M", "-pix_fmt", "yuv420p", "-r", "30",
-    "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", outFile]);
+  encode4k({
+    inputs: [["-i", headMs], ["-i", footage], loopImg(BG, footSecs + 1), loopImg(BG, 3), loopImg(bg_.file, total), loopImg(bg_.file, total), loopImg(lg_.file, 3),
+      loopImg(pip.bezel, total), loopImg(pip.mask, total), loopImg(ph.mask, total), loopImg(ph.bezel, total)],
+    script: f.join(";\n"), audio: "graph", total, dest: outFile,
+  });
 }
 fs.mkdirSync(OUT, { recursive: true });
 fs.mkdirSync(path.join(OUT, "frames"), { recursive: true });
 const want = process.argv.slice(2).map(Number);
 for (const s of SPOTS.filter((x) => !want.length || want.includes(x.id))) {
-  for (const [W, H, suf] of [[1080, 1920, ""], [1080, 1350, "-4x5"]]) {
+  for (const [W, H, suf] of [[2160, 3840, ""], [2160, 2700, "-4x5"]]) {
     const o = path.join(OUT, `ugc-${s.id}-${s.slug}${suf}.mp4`);
     await build(s, W, H, o);
     const d = dur(o);

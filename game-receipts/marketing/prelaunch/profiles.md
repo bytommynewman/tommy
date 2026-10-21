@@ -1,6 +1,6 @@
 # Profiles — final copy per platform
 
-Use handle `@gamereceiptsapp` (see `handles.md`; swap if you land a different set). Display name everywhere: **Game Receipts**. Brand art: `assets/avatar-1080.png`, `assets/youtube-banner-2560x1440.png`, `assets/highlight-*.png`. Link everywhere: the waitlist URL (`https://<waitlist-url>`). Tagline: **Call it. Lock it. Prove it.** Every post carries "Free to play".
+Use handle `@gamereceiptsapp` (see `handles.md`; swap if you land a different set). Display name everywhere: **Game Receipts**. Brand art: `assets/avatar-2048.png`, `assets/youtube-banner-2560x1440.png`, `assets/highlight-*.png`. Link everywhere: the waitlist URL (`https://<waitlist-url>`). Tagline: **Call it. Lock it. Prove it.** Every post carries "Free to play".
 
 Character limits checked: IG name 30 / bio 150; TikTok bio 80; X bio 160; YouTube description 1000; Reddit profile description 200.
 
@@ -13,9 +13,9 @@ Character limits checked: IG name 30 / bio 150; TikTok bio 80; X bio 160; YouTub
   `Coming soon ↓ join the waitlist`
 - **Link text:** Join the waitlist → (URL: waitlist)
 - **Highlights:** Takes · Receipts · Leaderboard · Creators (covers in `assets/`). Fill each with the matching teaser story / feature clip.
-- **Pinned post 1 (teaser):** asset `teaser-called-it-feed-1080x1350.png`
+- **Pinned post 1 (teaser):** asset `teaser-called-it-feed-2160x2700.png`
   Caption: `Everyone says they called it. Game Receipts proves it. 🧾 Lock a take, get a date-stamped receipt, get graded when it happens. Free to play. Coming soon. Join the waitlist: link in bio. #sportstok #hottakes #icalledit #nba #nfl`
-- **Pinned post 2:** `assets/teaser-coming-soon-1080x1920.mp4` as a Reel. Caption: `Call it. Lock it. Prove it. Coming soon. Free to play. Waitlist in bio 🧾 #sportstok #icalledit`
+- **Pinned post 2:** `assets/teaser-coming-soon-2160x3840.mp4` as a Reel. Caption: `Call it. Lock it. Prove it. Coming soon. Free to play. Waitlist in bio 🧾 #sportstok #icalledit`
 - **Pinned post 3:** first UGC/spot video once ready (AI label on if it has an AI person).
 
 ## TikTok
@@ -44,7 +44,7 @@ Character limits checked: IG name 30 / bio 150; TikTok bio 80; X bio 160; YouTub
 - **Handle:** @gamereceiptsapp (@GameReceipts is taken; see handles.md)
 - **Bio (≤160):** `Lock a sports take. Get a date-stamped receipt. Get graded. Free to play. Coming soon. 🧾 Waitlist below.` (about 110 chars)
 - **Location:** (blank) · **Website:** waitlist URL
-- **Pinned post:** `Everyone says they called it.` (line break) `Game Receipts proves it. Lock a take, get a date-stamped receipt, get graded when it happens.` (line break) `Free to play. Coming soon. Waitlist: <url>` + attach `teaser-called-it-feed-1080x1350.png`.
+- **Pinned post:** `Everyone says they called it.` (line break) `Game Receipts proves it. Lock a take, get a date-stamped receipt, get graded when it happens.` (line break) `Free to play. Coming soon. Waitlist: <url>` + attach `teaser-called-it-feed-2160x2700.png`.
 
 ## Reddit (u/gamereceiptsapp)
 - **Display name:** Game Receipts

@@ -1,14 +1,13 @@
-// Records phone-footage clips for every spot in marketing/spots.json (iPhone 14 emulation, 390x844 @3x).
+// Records phone-footage clips for every spot in marketing/spots.json (iPhone 14 emulation, 390x844 @5x = 1950x4220, 4K-grade).
 // Prereq: `npm run build`. Usage: node marketing/capture.mjs [spotId ... | carousel]
 // Starts its OWN production server on port 3200 with a fresh scratch data dir (so demo data is clean and
 // duplicate-take guards never trip), then stops only that server's process.
 import { chromium, devices } from "playwright";
-import { spawn, execFileSync } from "node:child_process";
-import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import * as lib from "./capture-lib.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
@@ -23,29 +22,15 @@ const onlyCarousel = args.includes("carousel");
 
 const PORT = Number(process.env.CAPTURE_PORT ?? 3200);
 const BASE = `http://localhost:${PORT}`;
-const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const { CHROME, DSF, sleep } = lib;
 const VIEW = { width: 390, height: 844 };
-const VIDEO = { width: 1170, height: 2532 }; // 3x the CSS viewport (deviceScaleFactor 3): native, so renders only ever scale DOWN
+const CTX = { ...devices["iPhone 14"], viewport: VIEW, deviceScaleFactor: DSF }; // 1950x4220 native: renders only ever scale DOWN
 const PAUSE = 600;
-const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ffmpeg");
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---- own server ---------------------------------------------------------------------------------------------
 let server;
-async function startServer() {
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "gr-capture-"));
-  server = spawn(process.execPath, [path.join(appRoot, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT)], {
-    cwd: appRoot, stdio: "ignore",
-    env: { ...process.env, GR_SEED_DEMO: "1", GR_DATA_DIR: dataDir, SESSION_SECRET: crypto.randomBytes(24).toString("hex"), NODE_ENV: "production" },
-  });
-  for (let i = 0; i < 80; i++) {
-    try { if ((await fetch(BASE + "/login")).ok) return; } catch {}
-    await sleep(250);
-  }
-  throw new Error("capture server did not start (did you run `npm run build`?)");
-}
-const stopServer = () => { try { server?.kill("SIGTERM"); } catch {} };
-process.on("exit", stopServer);
+const startServer = async () => { server = await lib.startServer(appRoot, PORT, "capture"); };
+const stopServer = () => server?.stop();
 
 // ---- in-page helpers ----------------------------------------------------------------------------------------
 // Legal: every remote request (ESPN headshots/logos, any image CDN) is aborted so avatars render as monograms.
@@ -104,51 +89,19 @@ async function smoothScroll(page, { to, by, ms = 1200 }) {
   }), { to, by, ms });
 }
 
-// Playwright's own video recorder needs a browser-bundled ffmpeg that isn't installed here, so we record with the
-// DevTools screencast (JPEG frames + timestamps) and encode a constant-30fps H.264 clip with the system ffmpeg.
+// Playwright's own video recorder needs a browser-bundled ffmpeg that isn't installed here, so frames are grabbed with a
+// Page.captureScreenshot loop (capture-lib.mjs, >= 30 fps at 1950x4220) and encoded to a 30 fps near-lossless clip.
 async function startScreencast(page) {
-  const cdp = await page.context().newCDPSession(page);
-  const frames = [];
-  // Chrome's CDP screencast only delivers ~7 fps here (scrolls look choppy), so grab frames with a tight
-  // Page.captureScreenshot loop instead (~30 fps at 3x native) and stamp each with its capture time.
-  let live = true;
-  const grab = (async () => {
-    while (live) {
-      const ts = Date.now() / 1000;
-      try { const r = await Promise.race([cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 92, optimizeForSpeed: true }), new Promise((_, rej) => setTimeout(() => rej(new Error("shot timeout")), 2000))]); frames.push({ ts, data: r.data }); } catch {}
-    }
-  })();
+  const grab = await lib.startGrab(page, { view: VIEW, dir: path.join(os.tmpdir(), `gr-frames-${process.pid}`) });
   return async (vt0, endMs, dest) => {
-    live = false; await Promise.race([grab, sleep(3000)]);
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gr-frames-"));
-    let list = "ffconcat version 1.0\n";
-    const end = endMs / 1000;
-    frames.forEach((f, i) => {
-      const file = path.join(dir, `f${String(i).padStart(6, "0")}.jpg`);
-      fs.writeFileSync(file, Buffer.from(f.data, "base64"));
-      const t0 = Math.max(0, f.ts - vt0 / 1000);
-      const t1 = i + 1 < frames.length ? Math.max(0, frames[i + 1].ts - vt0 / 1000) : Math.max(t0 + 0.04, end);
-      list += `file '${file}'\nduration ${Math.max(0.001, t1 - t0 + (i === 0 ? t0 : 0)).toFixed(4)}\n`;
-    });
-    fs.writeFileSync(path.join(dir, "list.ffconcat"), list);
-    execFileSync(FFMPEG, ["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", path.join(dir, "list.ffconcat"), "-vf", `scale=${VIDEO.width}:${VIDEO.height}:flags=lanczos,fps=30,format=yuv420p`, "-c:v", "libx264", "-crf", "12", "-preset", "fast", "-movflags", "+faststart", dest]);
-    fs.rmSync(dir, { recursive: true, force: true });
-    return frames.length;
+    const frames = await grab.stop();
+    const r = lib.encodeFrames(frames, { t0: vt0, endMs, dest, dir: path.join(os.tmpdir(), `gr-frames-${process.pid}`) });
+    console.log(`  grab ${r.grabFps.toFixed(1)} fps (p95 gap ${(r.p95gap * 1000).toFixed(0)} ms, ${(r.slowShare * 100).toFixed(0)}% of gaps >50 ms)`);
+    return r.frames;
   };
 }
 
-async function login(browser) {
-  const ctx = await browser.newContext({ ...devices["iPhone 14"], viewport: VIEW });
-  const page = await ctx.newPage();
-  await page.goto(BASE + "/login");
-  await page.fill('input[name="email"]', "demo@demo.gamereceipts.dev");
-  await page.fill('input[name="password"]', "receipts-demo");
-  await page.click('button[type="submit"]');
-  await page.waitForURL("**/feed");
-  const state = await ctx.storageState();
-  await ctx.close();
-  return state;
-}
+const login = (browser) => lib.login(browser, BASE, CTX);
 
 // A <select>'s accessible name includes its selected option text, so find it via its caption span instead.
 const selectFor = (page, label) => page.locator("label").filter({ has: page.locator("span", { hasText: nameRe(label) }) }).locator("select").first();
@@ -239,14 +192,14 @@ async function runStep(page, st, ctx) {
 }
 
 async function recordSpot(browser, state, spot) {
-  const ctx = await browser.newContext({ ...devices["iPhone 14"], viewport: VIEW, storageState: state });
-  await ctx.addInitScript(initScript);
+  const ctx = await browser.newContext({ ...CTX, storageState: state });
+  await ctx.addInitScript(initScript); await ctx.addInitScript(lib.demoGuardScript);
   await ctx.route("**/*", (r) => (isLocal(r.request().url()) ? r.continue() : r.abort()));
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  const vt0 = Date.now(); // video clock starts here
   const finish = await startScreencast(page);
+  const vt0 = Date.now(); // video clock starts here
   await page.goto(BASE + cfg.startUrl); await page.waitForLoadState("networkidle"); await sleep(700);
   const c = { vt0, punches: [] };
   const beats = [];
@@ -258,6 +211,7 @@ async function recordSpot(browser, state, spot) {
     beats.push({ i, start: (start - vt0) / 1000, end: (Date.now() - vt0) / 1000, caption: b.caption });
   }
   await sleep(300);
+  await lib.assertNoDemo(page, `spot ${spot.id}`);
   const nFrames = await finish(vt0, Date.now() - vt0, path.join(RAW, `spot-${spot.id}.mp4`));
   await ctx.close();
   fs.writeFileSync(path.join(RAW, `spot-${spot.id}.json`), JSON.stringify({ id: spot.id, beats, punches: c.punches, errors }, null, 1));
@@ -266,8 +220,8 @@ async function recordSpot(browser, state, spot) {
 
 // ---- carousel stills ----------------------------------------------------------------------------------------
 async function carousel(browser, state) {
-  const ctx = await browser.newContext({ ...devices["iPhone 14"], viewport: VIEW, storageState: state });
-  await ctx.addInitScript(initScript);
+  const ctx = await browser.newContext({ ...CTX, storageState: state });
+  await ctx.addInitScript(initScript); await ctx.addInitScript(lib.demoGuardScript);
   await ctx.route("**/*", (r) => (isLocal(r.request().url()) ? r.continue() : r.abort()));
   const page = await ctx.newPage();
   const shot = async (n) => { await page.waitForLoadState("networkidle"); await sleep(1500); await page.screenshot({ path: path.join(RAW, `carousel-${n}.png`) }); };
@@ -281,6 +235,7 @@ async function carousel(browser, state) {
   await page.getByRole("button", { name: "Place take" }).click();
   await page.waitForURL(/\/feed\?placed=/); await page.evaluate(() => window.scrollTo(0, 0)); await shot(2);
   await page.goto(BASE + "/p/" + ids.CASHED); await page.evaluate(() => window.scrollTo(0, 120)); await sleep(1800); await shot(3);
+  await lib.assertNoDemo(page, "carousel");
   await ctx.close();
   console.log("carousel stills captured");
 }

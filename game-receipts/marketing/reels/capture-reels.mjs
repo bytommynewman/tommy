@@ -1,15 +1,14 @@
 // Records the app flows for the Format A (speedrun) and Format B (POV) reel spots.
 // Prereq: `npm run build` already done. Usage: node marketing/reels/capture-reels.mjs [A1 A2 B1]
 // Starts its OWN production server on port 3400 (scratch data dir, random SESSION_SECRET) and kills only that PID.
-// Output: marketing/reels/out/raw/<id>.mp4 (1170x2532 = 3x native, 30fps) + <id>.json (marks, focus keyframes, duration).
+// Output: marketing/reels/out/raw/<id>.mp4 (A1/A2 2184x4726 = 5.6x, B1 1950x4220 = 5x native, 30fps CFR) + <id>.json (marks, focus keyframes, duration).
 // Playwright's recordVideo needs a bundled ffmpeg we don't have, so we use the CDP screencast like marketing/capture.mjs.
 import { chromium, devices } from "playwright";
-import { spawn, execFileSync } from "node:child_process";
-import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import * as lib from "../capture-lib.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
@@ -19,27 +18,16 @@ fs.mkdirSync(RAW, { recursive: true });
 const only = process.argv.slice(2);
 const PORT = Number(process.env.REELS_PORT ?? 3400);
 const BASE = `http://localhost:${PORT}`;
-const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ffmpeg");
+const { CHROME, DSF, sleep } = lib;
 const VIEW = { width: 390, height: 844 };
-const VIDEO = { width: 1170, height: 2532 }; // 3x CSS viewport (native)
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Format A shows the app full-bleed across the 2160 px frame, so A1/A2 are captured at DSF 5.6 (2184x4726) and only ever scaled down;
+// Format B (phone in a desk scene) uses DSF 5 (1950x4220).
+const DSF_BY = { A1: 5.6, A2: 5.6, B1: DSF };
+const CTX = { ...devices["iPhone 14"], viewport: VIEW, deviceScaleFactor: DSF };
 
 let server;
-async function startServer() {
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "gr-reels-"));
-  server = spawn(process.execPath, [path.join(appRoot, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT)], {
-    cwd: appRoot, stdio: "ignore",
-    env: { ...process.env, GR_SEED_DEMO: "1", GR_DATA_DIR: dataDir, SESSION_SECRET: crypto.randomBytes(24).toString("hex"), NODE_ENV: "production" },
-  });
-  for (let i = 0; i < 120; i++) {
-    try { if ((await fetch(BASE + "/login")).ok) return; } catch {}
-    await sleep(250);
-  }
-  throw new Error("server did not start (run `npm run build` first)");
-}
-const stopServer = () => { try { server?.kill("SIGTERM"); } catch {} };
-process.on("exit", stopServer);
+const startServer = async () => { server = await lib.startServer(appRoot, PORT, "reels"); };
+const stopServer = () => server?.stop();
 
 // Legal: all remote requests (ESPN headshots/logos) are aborted so avatars render as monograms.
 const isLocal = (u) => { try { const h = new URL(u).hostname; return h === "localhost" || h === "127.0.0.1"; } catch { return true; } };
@@ -59,51 +47,19 @@ const initScript = () => {
   }, 600);
 };
 
-async function startScreencast(page) {
-  const cdp = await page.context().newCDPSession(page);
-  const frames = [];
-  // Chrome's CDP screencast only delivers ~7 fps here (scrolls look choppy), so grab frames with a tight
-  // Page.captureScreenshot loop instead (~30 fps at 3x native) and stamp each with its capture time.
-  const vt0 = Date.now();
-  let live = true;
-  const grab = (async () => {
-    while (live) {
-      const ts = Date.now() / 1000;
-      try { const r = await Promise.race([cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 92, optimizeForSpeed: true }), new Promise((_, rej) => setTimeout(() => rej(new Error("shot timeout")), 2000))]); frames.push({ ts, data: r.data }); } catch {}
-    }
-  })();
+async function startScreencast(page, dsf) {
+  const dir = path.join(os.tmpdir(), `gr-reel-frames-${process.pid}`);
+  const grab = await lib.startGrab(page, { view: VIEW, dir, dsf });
   const finish = async (endMs, dest) => {
-    live = false; await Promise.race([grab, sleep(3000)]);
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gr-frames-"));
-    let list = "ffconcat version 1.0\n";
-    const end = endMs / 1000;
-    frames.forEach((f, i) => {
-      const file = path.join(dir, `f${String(i).padStart(6, "0")}.jpg`);
-      fs.writeFileSync(file, Buffer.from(f.data, "base64"));
-      const t0 = Math.max(0, f.ts - vt0 / 1000);
-      const t1 = i + 1 < frames.length ? Math.max(0, frames[i + 1].ts - vt0 / 1000) : Math.max(t0 + 0.04, end);
-      list += `file '${file}'\nduration ${Math.max(0.001, t1 - t0 + (i === 0 ? t0 : 0)).toFixed(4)}\n`;
-    });
-    fs.writeFileSync(path.join(dir, "list.ffconcat"), list);
-    execFileSync(FFMPEG, ["-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", path.join(dir, "list.ffconcat"), "-t", end.toFixed(3), "-vf", `scale=${VIDEO.width}:${VIDEO.height}:flags=lanczos,fps=30,format=yuv420p`, "-c:v", "libx264", "-crf", "12", "-preset", "fast", "-movflags", "+faststart", dest]);
-    fs.rmSync(dir, { recursive: true, force: true });
-    return frames.length;
+    const frames = await grab.stop();
+    const r = lib.encodeFrames(frames, { t0: grab.t0, endMs, dest, dir });
+    console.log(`  grab ${r.grabFps.toFixed(1)} fps (p95 gap ${(r.p95gap * 1000).toFixed(0)} ms, ${(r.slowShare * 100).toFixed(0)}% of gaps >50 ms)`);
+    return r.frames;
   };
-  return { vt0, finish };
+  return { vt0: grab.t0, finish };
 }
 
-async function login(browser) {
-  const ctx = await browser.newContext({ ...devices["iPhone 14"], viewport: VIEW });
-  const page = await ctx.newPage();
-  await page.goto(BASE + "/login");
-  await page.fill('input[name="email"]', "demo@demo.gamereceipts.dev");
-  await page.fill('input[name="password"]', "receipts-demo");
-  await page.click('button[type="submit"]');
-  await page.waitForURL("**/feed");
-  const state = await ctx.storageState();
-  await ctx.close();
-  return state;
-}
+const login = (browser) => lib.login(browser, BASE, CTX);
 
 const nameRe = (s) => new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
 const selectFor = (page, label) => page.locator("label").filter({ has: page.locator("span", { hasText: nameRe(label) }) }).locator("select").first();
@@ -191,14 +147,14 @@ const FLOWS = {
 let clockOf; // set per recording: current clip time
 
 async function recordSpot(browser, state, id, receiptUrl) {
-  const ctx = await browser.newContext({ ...devices["iPhone 14"], viewport: VIEW, storageState: state });
-  await ctx.addInitScript(initScript);
+  const ctx = await browser.newContext({ ...CTX, deviceScaleFactor: DSF_BY[id], storageState: state });
+  await ctx.addInitScript(initScript); await ctx.addInitScript(lib.demoGuardScript);
   await ctx.route("**/*", (r) => (isLocal(r.request().url()) ? r.continue() : r.abort()));
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(BASE + "/create"); await page.waitForLoadState("networkidle"); await sleep(900);
-  const sc = await startScreencast(page);
+  const sc = await startScreencast(page, DSF_BY[id]);
   const now = () => (Date.now() - sc.vt0) / 1000;
   clockOf = now;
   const marks = {}, focusKeys = [];
@@ -219,6 +175,7 @@ async function recordSpot(browser, state, id, receiptUrl) {
   } };
   await FLOWS[id]({ page, at, mark, focus, act, receiptUrl });
   await sleep(200);
+  await lib.assertNoDemo(page, `reel ${id}`);
   const dur = now();
   const n = await sc.finish(dur * 1000, path.join(RAW, `${id}.mp4`));
   await ctx.close();
@@ -231,7 +188,7 @@ try {
   await startServer();
   const state = await login(browser);
   // a resolved "Cashed" receipt with Prestige: top of the calls leaderboard
-  const lctx = await browser.newContext({ ...devices["iPhone 14"], viewport: VIEW, storageState: state });
+  const lctx = await browser.newContext({ ...CTX, storageState: state });
   const lp = await lctx.newPage();
   await lp.goto(BASE + "/leaderboards?board=calls"); await lp.waitForLoadState("networkidle");
   const href = await lp.locator('a[href^="/r/"]').first().getAttribute("href");

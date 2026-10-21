@@ -1,73 +1,58 @@
-// Records REAL in-app footage for the two UGC spots (logged in as the demo user) against your OWN server.
-// Usage: BASE_URL=http://localhost:3300 node marketing/ugc/capture.mjs <outDir>
-// Output is 1236x2196 (3x the 412x732 CSS viewport, native) so finish.mjs only ever scales DOWN to 1080x1920.
-// Server: GR_SEED_DEMO=1 SESSION_SECRET=<random> GR_DATA_DIR=<scratch> NODE_ENV=production npx next start -p 3300
+// Records REAL in-app footage for the two UGC spots (logged in as "Jordan" / @jordan_calls, no demo wording) against your OWN server.
+// Usage: GR_APP_ROOT=<scratch checkout built with GR_MARKETING_CAPTURE=1> node marketing/ugc/capture.mjs <outDir> [kyle|mvp]
+// Starts its own production server on :3300 (scratch data dir) and stops only that process.
+// Output is 2060x3660 (5x the 412x732 CSS viewport, native) so finish.mjs only ever scales DOWN into the 2160x3840 frame.
 import { chromium, devices } from "playwright";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import * as lib from "../capture-lib.mjs";
 
-const BASE = process.env.BASE_URL ?? "http://localhost:3300";
+const here = path.dirname(fileURLToPath(import.meta.url));
+const appRoot = process.env.GR_APP_ROOT ?? path.resolve(here, "../..");
+const PORT = Number(process.env.UGC_PORT ?? 3300);
+const BASE = `http://localhost:${PORT}`;
 const OUT = path.resolve(process.argv[2] ?? "marketing/ugc/raw/footage");
-const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const { CHROME, DSF } = lib;
+const server = await lib.startServer(appRoot, PORT, "ugc");
 fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: CHROME });
-const base = { ...devices["iPhone 14"], viewport: { width: 412, height: 732 } }; // 9:16 so the footage fills the frame
+const VIEW = { width: 412, height: 732 }; // 9:16 so the footage fills the frame
+const base = { ...devices["iPhone 14"], viewport: VIEW, deviceScaleFactor: DSF };
 const mk = async (extra = {}) => {
   const ctx = await browser.newContext({ ...base, ...extra });
   await ctx.route(/espncdn\.com/, (r) => r.abort()); // monogram avatars only
   await ctx.addInitScript(() => { try { localStorage.setItem("gr-install-dismissed", "1"); } catch {} });
+  await ctx.addInitScript(lib.demoGuardScript);
   return ctx;
 };
 
 // login once, reuse the session
-const lctx = await mk();
-const lp = await lctx.newPage();
-await lp.goto(BASE + "/login");
-await lp.fill('input[name="email"]', "demo@demo.gamereceipts.dev");
-await lp.fill('input[name="password"]', "receipts-demo");
-await lp.click('button[type="submit"]');
-await lp.waitForURL("**/feed");
-const state = await lctx.storageState();
-await lctx.close();
+const state = await lib.login(browser, BASE, base);
 
 const pause = (p, ms) => p.waitForTimeout(ms);
+void os;
 const slowScroll = async (p, y, steps = 12) => { for (let i = 0; i < steps; i++) { await p.mouse.wheel(0, y / steps); await pause(p, 60); } };
 
-// Playwright's own video recorder needs its bundled ffmpeg (not installed here), so we grab CDP screencast
-// frames with timestamps and stitch them with the system ffmpeg (concat demuxer, real frame durations).
-const FFMPEG = process.env.FFMPEG ?? path.join(process.env.HOME, ".local/node/bin/ffmpeg");
+// Frames come from the shared Page.captureScreenshot loop (capture-lib.mjs, device-metrics override, DSF 5) and are stitched to a 30 fps clip.
 async function record(name, fn) {
   const ctx = await mk({ storageState: state });
   const page = await ctx.newPage();
   const dir = `${OUT}/_${name}`;
-  fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true });
-  const cdp = await ctx.newCDPSession(page);
-  const frames = [];
-  // CDP screencast only delivers ~7 fps here, so grab frames with a tight Page.captureScreenshot loop (~30 fps, 3x native).
-  let live = false, grab;
   await page.goto(BASE + "/feed");
   await page.waitForLoadState("networkidle");
-  live = true;
-  grab = (async () => {
-    while (live) {
-      const t = Date.now() / 1000;
-      try { const r = await Promise.race([cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 92, optimizeForSpeed: true }), new Promise((_, rej) => setTimeout(() => rej(new Error("shot timeout")), 2000))]);
-        const file = `${dir}/f${String(frames.length).padStart(5, "0")}.jpg`; fs.writeFileSync(file, Buffer.from(r.data, "base64")); frames.push({ file, t }); } catch {}
-    }
-  })();
+  const grab = await lib.startGrab(page, { view: VIEW, dir });
   await pause(page, 500);
   await fn(page);
   await pause(page, 300);
-  live = false; await Promise.race([grab, pause(page, 3000)]);
+  const endMs = Date.now() - grab.t0;
+  const frames = await grab.stop();
+  await lib.assertNoDemo(page, `ugc ${name}`);
   await ctx.close();
-  const list = frames.map((f, i) => `file '${f.file}'\nduration ${Math.max(0.02, (frames[i + 1]?.t ?? f.t + 0.5) - f.t).toFixed(3)}`).join("\n") + `\nfile '${frames.at(-1).file}'\n`;
-  fs.writeFileSync(`${dir}/list.txt`, list);
-  const { spawnSync } = await import("node:child_process");
-  const r = spawnSync(FFMPEG, ["-y", "-f", "concat", "-safe", "0", "-i", `${dir}/list.txt`, "-vf", "scale=1236:2196:flags=lanczos,fps=30,format=yuv420p", "-c:v", "libx264", "-crf", "12", "-preset", "fast", `${OUT}/${name}.mp4`], { encoding: "utf8" });
-  if (r.status !== 0) throw new Error(r.stderr.slice(-800));
-  fs.rmSync(dir, { recursive: true, force: true });
-  console.log("recorded", name, frames.length, "frames");
+  const r = lib.encodeFrames(frames, { t0: grab.t0, endMs, dest: `${OUT}/${name}.mp4`, dir });
+  console.log(`recorded ${name}: ${r.frames} frames, ${r.grabFps.toFixed(1)} fps grabbed (p95 gap ${(r.p95gap * 1000).toFixed(0)} ms)`);
 }
 
 async function pickPlayer(page, tab, q, re) {
@@ -129,3 +114,4 @@ if (!only || only === "mvp") await record("mvp", async (page) => {
   await slowScroll(page, 200); await pause(page, 900);
 });
 await browser.close();
+server.stop();

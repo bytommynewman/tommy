@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BadgeCheck, Clock, Flame, MessageCircle, Swords, XCircle } from "lucide-react";
 import { CATEGORY_LABEL } from "@/lib/domain";
+import { marketingCapture } from "@/lib/marketing";
 import { fmtDate, pct, timeAgo, untilLabel } from "@/lib/format";
 import type { PredictionView } from "@/lib/server/views";
 import { forecastRows } from "@/lib/server/views";
@@ -62,7 +63,7 @@ export function PredictionCard({ v, now }: { v: PredictionView; now?: number }) 
             </div>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1.5">
-            {p.seed && <Chip tone="muted">Demo</Chip>}
+            {p.seed && !marketingCapture() && <Chip tone="muted">Demo</Chip>}
             <StatusPill v={v} />
           </div>
         </div>

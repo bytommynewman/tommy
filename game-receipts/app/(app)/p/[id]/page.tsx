@@ -10,6 +10,7 @@ import { ForecastBars, StatusPill } from "@/components/app/PredictionCard";
 import { CopyButton, ScoreRing } from "@/components/ui/client";
 import { Avatar, Card, Chip, LinkButton, SectionTitle } from "@/components/ui/primitives";
 import { CATEGORY_LABEL } from "@/lib/domain";
+import { marketingCapture } from "@/lib/marketing";
 import { durationLabel, fmtDate, fmtDateTime, nowMs, pct, timeAgo } from "@/lib/format";
 import { verifyPrediction } from "@/lib/integrity";
 import { PRESTIGE_WEIGHTS, WITHDRAW_GRACE_MINUTES } from "@/lib/scoring";
@@ -75,7 +76,7 @@ export default async function PredictionPage({ params, searchParams }: Props) {
               <div className="text-xs text-ink-400">@{v.author.username} · {timeAgo(p.lockedAt)}</div>
             </div>
           </Link>
-          <div className="ml-auto flex items-center gap-1.5">{p.seed && <Chip tone="muted">Demo</Chip>}<StatusPill v={v} /></div>
+          <div className="ml-auto flex items-center gap-1.5">{p.seed && !marketingCapture() && <Chip tone="muted">Demo</Chip>}<StatusPill v={v} /></div>
         </div>
         <div className="mt-4 flex flex-wrap gap-1.5">
           {p.league && <Chip>{p.league}</Chip>}

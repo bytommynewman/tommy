@@ -1,36 +1,47 @@
-# Game Receipts ad QA (re-render with logo everywhere, real app footage, high-quality encode)
+# Game Receipts ad QA (4K re-render, demo-free captures)
 
-Checked by extracting frames at 0.5 s, 25%, 50%, 75%, last and the end card for every video (contact sheets in `marketing/qa/<name>-sheet.jpg`)
-and viewing them. All videos: 30 fps constant, H.264 High yuv420p x264 slow crf 17 (maxrate 20M), AAC 192k 48 kHz, +faststart.
-Monogram avatars only (remote ESPN images blocked at capture), no betting/money wording on any frame.
+Everything is delivered in 4K (2160x3840 9:16, 2160x2700 4:5), 30 fps CFR, H.264 High@5.1 yuv420p, BT.709 tags, 2-pass encode (target 45 Mbps, max 60M / buf 120M), closed 2 s GOP, AAC-LC 48 kHz 192k, +faststart.
+Bitrate is content-limited: x264 hits near-lossless on plain screens (6-18 Mbps) and reaches 35-45 Mbps on the grainy / photographic reels.
 
-"App s" = seconds of real in-app footage on screen. Logo = emblem bug throughout + full logo on the end card (images: full logo).
+QA done for every video: full-resolution frames at 0.5 s, 25/50/75 %, last frame and end card (`node marketing/qa.mjs`, frames kept outside the repo), contact sheets in `marketing/qa/<name>-sheet.jpg` (all < 1 MB),
+100 % crops (1080x1080) of app UI text, hook/caption text and the UGC head inspected. App UI and text are crisp (native 5x capture scaled down); only the UGC/Kling faces are soft (upscaled from ~1080p, see below).
 
-| Deliverable | Duration | Size | Logo | App footage (s) | Issues fixed |
-|---|---|---|---|---|---|
-| out/spot-1-he-said-he-called-it.mp4 | 21.9 s | 3.1 MB | ✓ | ✓ 17.2 | Mock chat cut from 4.2 s to 2.7 s; 780 px capture upscaled to 842 -> 1170 px capture scaled down to 700; caption moved above phone |
-| out/spot-2-10-second-take.mp4 | 14.4 s | 2.3 MB | ✓ | ✓ 12.4 | Stopwatch no longer covers page title; sharper capture; caption off the app header |
-| out/spot-3-mvp-pick.mp4 | 23.9 s | 2.6 MB | ✓ | ✓ 21.9 | Re-checked frame by frame (30 fps): after "Place take" the skeleton is on screen ~0.3 s (9 frames, 'Placing...' ~0.1 s before it), under the 0.5 s limit, so no cut was needed (the old ~1 s note was wrong). Same pipeline as the others |
-| out/spot-4-receipts-dont-lie.mp4 | 24.0 s | 5.6 MB | ✓ | ✓ 22.0 | same |
-| out/spot-5-put-it-on-the-line.mp4 | 19.4 s | 3.8 MB | ✓ | ✓ 17.3 | same |
-| out/spot-6-every-player-every-team.mp4 | 23.4 s | 2.0 MB | ✓ | ✓ 21.3 | same |
-| out/reddit-4x5-3-mvp-pick.mp4 | 23.9 s | | ✓ | ✓ 21.9 | Same raw capture as spot 3: skeleton ~0.3 s, no trim needed |
-| out/reddit-4x5-1..6 (6 files) | 14.4-24.0 s | 1.7-4.9 MB | ✓ | ✓ same as spots | Caption moved above the phone (was covering the app header/title); phone sharper |
-| out/reddit-carousel-1..3.png | still | 0.2-0.4 MB | ✓ | ✓ (still) | Native 1170 px screenshots, bug in side margin |
-| reels/out/A1-mvp-speedrun.mp4 | 20.1 s | 10.9 MB | ✓ | ✓ 17.6 | Top panel now uses the untouched Kling master (was picking the finished 4:5 ad); end card gets full logo; stopwatch out of the right rail; 3x capture |
-| reels/out/A2-prove-you-called-it.mp4 | 20.5 s | 12.2 MB | ✓ | ✓ 18.0 | same |
-| reels/out/B1-pov-screen-ig.mp4 | 21.7 s | 24.4 MB (9.0 Mbps) | ✓ | ✓ 19.9 | `render-reels.mjs B1 --target ig`: 2-pass H.264 High 9M (max 10M/buf 20M), 1080x1920 30 fps CFR, BT.709 tagged, closed GOP keyframe every 2 s, AAC-LC 48 kHz 128k; grain removed, glare halved; captions shifted into x 60-930 and y < 1500; logo at y 280. Cover: B1-cover-1080x1920.jpg + B1-cover-grid-1080x1440.jpg (LOCKED stamp, t 12.7 s). Sheet: qa/B1-ig-sheet.jpg. Safe-zone overlay checked: captions/logo/stamp clear of IG UI. Known: the app's Place button sits at y~1640 (inside bottom UI) in the capture itself |
-| reels/out/B1-pov-screen.mp4 | 21.7 s | 51.6 MB | ✓ | ✓ 19.9 | End tag is now full logo + tagline; crf 24 -> 17 (grain makes it large); 3x capture |
-| ugc/out/ugc-1-kyle.mp4 + 4x5 | 20.1 s | 16.1 / 12.2 MB | ✓ | ✓ 8.1 + PiP over head 5 s | App footage re-captured at 1236x2196 (was 412x732 upscaled 2.6x); max speed-up 2.0x -> 1.5x; footage in phone frame; PiP in lower third |
-| ugc/out/ugc-2-mvp.mp4 + 4x5 | 21.1 s | 13.1 / 10.1 MB | ✓ | ✓ 9.0 + PiP over head 5 s | same; speed 2.4x -> 1.6x |
-| prelaunch/assets/teaser-coming-soon-1080x1920.mp4 | 13.3 s | 5.8 MB | ✓ full logo | ✓ 5.9 (take builder -> LOCKED feed, phone frame) | Had no app footage; crf 25 -> 17, 48 kHz AAC |
-| prelaunch teaser-called-it / teaser-receipts, feed + story PNGs | still | | ✓ full logo | ✓ phone frame (builder / LOCKED) | Phone-frame app screenshots added |
-| prelaunch teaser-coming-soon feed + story PNGs | still | | ✓ full logo | none (by design: 2 of 3 teasers carry the app) | |
+**Demo-free:** captures run on a scratch server with `GR_MARKETING_CAPTURE=1` (no "Demo" chips, no "You (Demo)"/@demo; account is Jordan / @jordan_calls). `capture-lib.mjs` scans the live DOM (text, attributes, handles) during every
+capture and fails the run if "demo" ever shows. No on-screen text, overlay or caption source contains the word. Monogram avatars only (ESPN blocked), full logo on every end card / emblem bug throughout, no betting or money wording.
+Colour check: the end-card green box decodes to RGB (32,228,137) vs brand #23E58A, so the 601 -> 709 re-matrix is right.
 
-Full per-file technical table (duration/size/resolution/audio) comes from `node marketing/qa.mjs`.
+| Deliverable | Resolution | Duration | Size | Bitrate | Demo-free | Logo | App footage | Notes |
+|---|---|---|---|---|---|---|---|---|
+| out/reddit-4x5-1-he-said-he-called-it.mp4 | 2160x2700 | 22.9 s | 23.0 MB | 8.0 Mbps | yes | yes | yes | 4:5 reframe, phone 1200 px wide from 1950 px capture |
+| out/reddit-4x5-2-10-second-take.mp4 | 2160x2700 | 14.1 s | 17.7 MB | 10.0 Mbps | yes | yes | yes | 4:5 reframe, phone 1200 px wide from 1950 px capture |
+| out/reddit-4x5-3-mvp-pick.mp4 | 2160x2700 | 25.8 s | 22.6 MB | 7.0 Mbps | yes | yes | yes | 4:5 reframe, phone 1200 px wide from 1950 px capture |
+| out/reddit-4x5-4-receipts-dont-lie.mp4 | 2160x2700 | 25.0 s | 39.7 MB | 12.7 Mbps | yes | yes | yes | 4:5 reframe, phone 1200 px wide from 1950 px capture |
+| out/reddit-4x5-5-put-it-on-the-line.mp4 | 2160x2700 | 20.2 s | 21.9 MB | 8.6 Mbps | yes | yes | yes | 4:5 reframe, phone 1200 px wide from 1950 px capture |
+| out/reddit-4x5-6-every-player-every-team.mp4 | 2160x2700 | 25.6 s | 22.9 MB | 7.2 Mbps | yes | yes | yes | 4:5 reframe, phone 1200 px wide from 1950 px capture |
+| out/spot-1-he-said-he-called-it.mp4 | 2160x3840 | 22.9 s | 32.8 MB | 11.4 Mbps | yes | yes | yes | demo-free capture (Jordan/@jordan_calls), 1950x4220 capture scaled down, native 4K overlays |
+| out/spot-2-10-second-take.mp4 | 2160x3840 | 14.1 s | 24.9 MB | 14.1 Mbps | yes | yes | yes | demo-free capture (Jordan/@jordan_calls), 1950x4220 capture scaled down, native 4K overlays |
+| out/spot-3-mvp-pick.mp4 | 2160x3840 | 25.8 s | 32.1 MB | 10.0 Mbps | yes | yes | yes | demo-free capture (Jordan/@jordan_calls), 1950x4220 capture scaled down, native 4K overlays |
+| out/spot-4-receipts-dont-lie.mp4 | 2160x3840 | 25.0 s | 56.4 MB | 18.0 Mbps | yes | yes | yes | demo-free capture (Jordan/@jordan_calls), 1950x4220 capture scaled down, native 4K overlays |
+| out/spot-5-put-it-on-the-line.mp4 | 2160x3840 | 20.2 s | 31.0 MB | 12.2 Mbps | yes | yes | yes | demo-free capture (Jordan/@jordan_calls), 1950x4220 capture scaled down, native 4K overlays |
+| out/spot-6-every-player-every-team.mp4 | 2160x3840 | 25.6 s | 32.2 MB | 10.1 Mbps | yes | yes | yes | demo-free capture (Jordan/@jordan_calls), 1950x4220 capture scaled down, native 4K overlays |
+| prelaunch/assets/teaser-coming-soon-2160x3840.mp4 | 2160x3840 | 13.3 s | 73.0 MB | 43.9 Mbps | yes | yes | yes | Git-ignored (73 MB); real take-builder footage in phone frame |
+| reels/out/A1-mvp-speedrun.mp4 | 2160x3840 | 20.5 s | 112.1 MB | 43.8 Mbps | yes | yes | yes | Top panel = Kling head upscaled x2 from ~1076 px; app panel 2184x4726 capture scaled down; overlays native |
+| reels/out/A2-prove-you-called-it.mp4 | 2160x3840 | 21.5 s | 119.1 MB | 44.3 Mbps | yes | yes | yes | Top panel = Kling head upscaled x2 from ~1076 px; app panel 2184x4726 capture scaled down; overlays native |
+| reels/out/B1-pov-screen-ig.mp4 | 2160x3840 | 22.1 s | 124.0 MB | 44.8 Mbps | yes | yes | yes | Filmed-screen POV, 1950x4220 screen scaled down; IG safe zones, covers B1-cover-2160x3840.jpg / B1-cover-grid-2160x2880.jpg |
+| reels/out/B1-pov-screen.mp4 | 2160x3840 | 22.1 s | 124.1 MB | 44.8 Mbps | yes | yes | yes | Filmed-screen POV, 1950x4220 screen scaled down; grain on |
+| ugc/out/ugc-1-kyle-4x5.mp4 | 2160x2700 | 20.1 s | 97.0 MB | 38.6 Mbps | yes | yes | yes | Talking head upscaled from ~1076x1924 (lanczos x2 + hqdn3d + unsharp); app footage/overlays/end card native 4K |
+| ugc/out/ugc-1-kyle.mp4 | 2160x3840 | 20.1 s | 99.5 MB | 39.6 Mbps | yes | yes | yes | Talking head upscaled from ~1076x1924 (lanczos x2 + hqdn3d + unsharp); app footage/overlays/end card native 4K |
+| ugc/out/ugc-2-mvp-4x5.mp4 | 2160x2700 | 21.1 s | 93.9 MB | 35.6 Mbps | yes | yes | yes | Talking head upscaled from ~1076x1924 (lanczos x2 + hqdn3d + unsharp); app footage/overlays/end card native 4K |
+| ugc/out/ugc-2-mvp.mp4 | 2160x3840 | 21.1 s | 95.7 MB | 36.3 Mbps | yes | yes | yes | Talking head upscaled from ~1076x1924 (lanczos x2 + hqdn3d + unsharp); app footage/overlays/end card native 4K |
+
+Stills (all demo-free, logo present): `out/reddit-carousel-1..3.png` 2160x2700; `reels/out/B1-cover-2160x3840.jpg`, `B1-cover-grid-2160x2880.jpg`; prelaunch: `avatar-2048.png`, `highlight-*-2160x3840.png`, `teaser-*-feed-2160x2700.png`,
+`teaser-*-story-2160x3840.png`, `og-2400x1260.png`, `youtube-banner-2560x1440.png` (platform max). Prelaunch teaser-called-it / receipts carry phone-frame app stills; teaser-coming-soon stills carry none by design.
 
 ## Known limits
-- Spot 3 (story + Reddit) shows the app's own loading skeleton for ~0.3 s right after "Place take" (measured at 30 fps); real app footage, untrimmed.
-- Punch-in zooms (spots 1-4) crop the 1170 px source, so at peak zoom the picture is up to ~1.15x magnified vs native.
-- B1 original is 51.6 MB because of film grain at crf 17; upload `B1-pov-screen-ig.mp4` (use `--target ig` for A1/A2 too) to Instagram.
-- Kling heads are 1076x1924 (not 720p): used 1:1 with a light luma-only unsharp; no upscale.
+- **UGC faces are not true 4K.** Kling clips (~1076x1924) cannot be made real 4K without AI upscaling (credits). They get lanczos x2 + mild hqdn3d denoise + unsharp. Everything else in those ads is native 4K.
+- Capture frame rate: the 8 MP screenshot loop delivers ~21-38 unique fps depending on the page (spot 2 ~20, spot 4 ~27); output is CFR 30 (duplicated frames where the grab was slower).
+- Punch-in zooms (spots 1-4) are capped to the phone's native resolution (story 1.39x, 4:5 1.6x) so the app is never upscaled; the old 2.0x punch is now 1.4-1.6x.
+- Spot 3 shows the app's own loading skeleton for a fraction of a second after "Place take" (real footage, untrimmed).
+- Reel A1/A2 top panel and UGC heads come from the existing Kling masters; hero backgrounds (1170 px art) are only used heavily blurred/dimmed. The avatar logo sits at its native 1254 px inside 2048 px (no upscale), so it fills less of the circle than the old 1080 version.
+- Earlier QA claimed 3x captures: the old capture script actually grabbed 390x844 frames and upscaled them; that is fixed (see README).
+- B1 / A1 / A2 / UGC / teaser files are 70-125 MB each: use `B1-pov-screen-ig.mp4` for Instagram.
