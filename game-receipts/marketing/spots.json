@@ -1,0 +1,665 @@
+{
+ "tagline": "Call it. Lock it. Prove it.",
+ "endCard": {
+  "title": "GAME RECEIPTS",
+  "tagline": "Call it. Lock it. Prove it.",
+  "footer": "Free to play",
+  "seconds": 2
+ },
+ "startUrl": "/feed",
+ "spots": [
+  {
+   "id": 1,
+   "slug": "he-said-he-called-it",
+   "name": "He said he called it",
+   "hook": "Your buddy \"called it.\" Did he though?",
+   "beats": [
+    {
+     "caption": "\"Bro I CALLED it. Written down.\"",
+     "duration": 4.2,
+     "steps": [
+      {
+       "do": "chat",
+       "messages": [
+        [
+         "them",
+         "told u the Leafs would make the Final"
+        ],
+        [
+         "me",
+         "no you didn't lol"
+        ],
+        [
+         "them",
+         "i literally called it in September"
+        ],
+        [
+         "me",
+         "screenshot or it didn't happen"
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "caption": "Now you can prove it",
+     "duration": 2.0,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/create"
+      }
+     ]
+    },
+    {
+     "caption": "Pick your league",
+     "duration": 1.8,
+     "steps": [
+      {
+       "do": "tab",
+       "name": "NHL"
+      }
+     ]
+    },
+    {
+     "caption": "Find your team",
+     "duration": 2.4,
+     "steps": [
+      {
+       "do": "search",
+       "label": "Search NHL",
+       "text": "maple"
+      },
+      {
+       "do": "pick",
+       "name": "Toronto Maple Leafs"
+      }
+     ]
+    },
+    {
+     "caption": "Playoff run: Runner-up",
+     "duration": 2.6,
+     "steps": [
+      {
+       "do": "select",
+       "label": "How far",
+       "option": "Runner-up"
+      }
+     ]
+    },
+    {
+     "caption": "Place take. LOCKED.",
+     "duration": 4.8,
+     "steps": [
+      {
+       "do": "place"
+      },
+      {
+       "do": "wait",
+       "ms": 500
+      },
+      {
+       "do": "punch",
+       "selector": "time[class*=\"border-dashed\"]",
+       "z": 1.6,
+       "label": "stamp",
+       "hold": 1.0
+      }
+     ]
+    },
+    {
+     "caption": "Then see who's really right",
+     "duration": 3.0,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/leaderboards"
+      },
+      {
+       "do": "scroll",
+       "by": 300,
+       "ms": 1500
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "slug": "10-second-take",
+   "name": "10-second take",
+   "hook": "Lock a take in 10 seconds",
+   "beats": [
+    {
+     "caption": "Clock's running",
+     "duration": 1.4,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/create"
+      },
+      {
+       "do": "timerStart"
+      }
+     ]
+    },
+    {
+     "caption": "League",
+     "duration": 1.2,
+     "steps": [
+      {
+       "do": "tab",
+       "name": "NBA"
+      }
+     ]
+    },
+    {
+     "caption": "Search",
+     "duration": 1.6,
+     "steps": [
+      {
+       "do": "search",
+       "label": "Search NBA",
+       "text": "celtics"
+      }
+     ]
+    },
+    {
+     "caption": "Pick the team",
+     "duration": 1.2,
+     "steps": [
+      {
+       "do": "pick",
+       "name": "Boston Celtics"
+      }
+     ]
+    },
+    {
+     "caption": "Pick a take",
+     "duration": 1.6,
+     "steps": [
+      {
+       "do": "select",
+       "label": "Pick a take on",
+       "option": "Regular-season wins"
+      }
+     ]
+    },
+    {
+     "caption": "Place take",
+     "duration": 4.6,
+     "steps": [
+      {
+       "do": "place"
+      },
+      {
+       "do": "wait",
+       "ms": 600
+      },
+      {
+       "do": "punch",
+       "selector": "time[class*=\"border-dashed\"]",
+       "z": 1.6,
+       "label": "stamp",
+       "hold": 1.0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "slug": "mvp-pick",
+   "name": "MVP pick",
+   "hook": "Your MVP pick. Stamped with the date.",
+   "beats": [
+    {
+     "caption": "Call your MVP",
+     "duration": 2.6,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/create"
+      },
+      {
+       "do": "tab",
+       "name": "NBA"
+      },
+      {
+       "do": "search",
+       "label": "Search NBA",
+       "text": "wembanyama"
+      },
+      {
+       "do": "pick",
+       "name": "Victor Wembanyama"
+      }
+     ]
+    },
+    {
+     "caption": "Take on an award",
+     "duration": 2.0,
+     "steps": [
+      {
+       "do": "select",
+       "label": "Pick a take on",
+       "option": "Wins an award"
+      }
+     ]
+    },
+    {
+     "caption": "MVP? Most Improved? Pick the award",
+     "duration": 4.2,
+     "steps": [
+      {
+       "do": "cycle",
+       "label": "Award",
+       "options": [
+        "NBA MVP",
+        "Defensive Player of the Year",
+        "Most Improved Player",
+        "NBA MVP"
+       ],
+       "pause": 850
+      }
+     ]
+    },
+    {
+     "caption": "MVP. Wins it. Place take.",
+     "duration": 1.8,
+     "steps": [
+      {
+       "do": "select",
+       "label": "Finish",
+       "option": "Wins it"
+      }
+     ]
+    },
+    {
+     "caption": "Stamped with the date",
+     "duration": 4.8,
+     "steps": [
+      {
+       "do": "place"
+      },
+      {
+       "do": "wait",
+       "ms": 500
+      },
+      {
+       "do": "punch",
+       "selector": "time[class*=\"border-dashed\"]",
+       "z": 1.6,
+       "label": "stamp",
+       "hold": 1.0
+      }
+     ]
+    },
+    {
+     "caption": "Graded when the season's done",
+     "duration": 3.4,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/leaderboards"
+      },
+      {
+       "do": "scroll",
+       "by": 340,
+       "ms": 1700
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "slug": "receipts-dont-lie",
+   "name": "Receipts don't lie",
+   "hook": "You can't delete a receipt",
+   "beats": [
+    {
+     "caption": "LOCKED. Dated to the minute.",
+     "duration": 2.8,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/p/{CASHED}"
+      },
+      {
+       "do": "punch",
+       "selector": "time[class*=\"border-dashed\"]",
+       "z": 1.6,
+       "label": "stamp",
+       "hold": 1.0,
+       "pause": 1500
+      }
+     ]
+    },
+    {
+     "caption": "Every take becomes a receipt",
+     "duration": 2.6,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/r/{CASHED}"
+      },
+      {
+       "do": "scroll",
+       "by": 220,
+       "ms": 1400
+      }
+     ]
+    },
+    {
+     "caption": "Timestamped. Sealed. Can't be edited.",
+     "duration": 3.0,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/p/{CASHED}"
+      },
+      {
+       "do": "scrollToText",
+       "text": "Record verified",
+       "ms": 1500
+      }
+     ]
+    },
+    {
+     "caption": "Full history stays on the record",
+     "duration": 2.8,
+     "steps": [
+      {
+       "do": "scrollToText",
+       "text": "Original take locked",
+       "ms": 1000,
+       "offset": 160
+      }
+     ]
+    },
+    {
+     "caption": "Graded when it happens: CASHED",
+     "duration": 4.6,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/p/{CASHED}"
+      },
+      {
+       "do": "punch",
+       "selector": "text=Cashed",
+       "z": 2.0,
+       "label": "chip",
+       "hold": 1.0,
+       "pause": 1500
+      },
+      {
+       "do": "scroll",
+       "by": 300,
+       "ms": 1000
+      }
+     ]
+    },
+    {
+     "caption": "Best calls climb the leaderboard",
+     "duration": 2.8,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/leaderboards?board=calls"
+      },
+      {
+       "do": "scroll",
+       "by": 300,
+       "ms": 1500
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "slug": "put-it-on-the-line",
+   "name": "Put it on the line",
+   "hook": "Think you know ball? Prove it.",
+   "beats": [
+    {
+     "caption": "See a take you'd fade?",
+     "duration": 2.8,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/u/lockedin_larry?tab=pending"
+      },
+      {
+       "do": "scroll",
+       "by": 160,
+       "ms": 1000
+      }
+     ]
+    },
+    {
+     "caption": "Challenge it",
+     "duration": 3.0,
+     "steps": [
+      {
+       "do": "clickLink",
+       "name": "Giannis Antetokounmpo is traded"
+      },
+      {
+       "do": "button",
+       "name": "Challenge @lockedin_larry"
+      },
+      {
+       "do": "radio",
+       "name": "Yes"
+      }
+     ]
+    },
+    {
+     "caption": "Send the battle",
+     "duration": 3.0,
+     "steps": [
+      {
+       "do": "button",
+       "name": "Send challenge",
+       "navigates": true
+      },
+      {
+       "do": "wait",
+       "ms": 600
+      }
+     ]
+    },
+    {
+     "caption": "Climb the leaderboards",
+     "duration": 3.4,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/leaderboards"
+      },
+      {
+       "do": "scroll",
+       "by": 380,
+       "ms": 1800
+      }
+     ]
+    },
+    {
+     "caption": "Build a reputation that's real",
+     "duration": 3.6,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/u/darkhorse_dana"
+      },
+      {
+       "do": "scroll",
+       "by": 420,
+       "ms": 2000
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "slug": "every-player-every-team",
+   "name": "Every player. Every team.",
+   "hook": "Every team. Every player. Every league.",
+   "beats": [
+    {
+     "caption": "NFL · NBA · NHL · MLB · NCAA",
+     "duration": 4.4,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/create"
+      },
+      {
+       "do": "tab",
+       "name": "NFL",
+       "pause": 450
+      },
+      {
+       "do": "tab",
+       "name": "NBA",
+       "pause": 450
+      },
+      {
+       "do": "tab",
+       "name": "NHL",
+       "pause": 450
+      },
+      {
+       "do": "tab",
+       "name": "MLB",
+       "pause": 450
+      },
+      {
+       "do": "tab",
+       "name": "NCAAF",
+       "pause": 450
+      },
+      {
+       "do": "tab",
+       "name": "NCAAB",
+       "pause": 450
+      }
+     ]
+    },
+    {
+     "caption": "Search any team or player",
+     "duration": 3.2,
+     "steps": [
+      {
+       "do": "scrollList",
+       "by": 360,
+       "ms": 900
+      },
+      {
+       "do": "tab",
+       "name": "NFL",
+       "pause": 350
+      },
+      {
+       "do": "search",
+       "label": "Search NFL",
+       "text": "mahomes",
+       "pause": 350
+      },
+      {
+       "do": "pick",
+       "name": "Patrick Mahomes",
+       "pause": 350
+      }
+     ]
+    },
+    {
+     "caption": "QB? Passing yards & TDs",
+     "duration": 4.0,
+     "steps": [
+      {
+       "do": "select",
+       "label": "Pick a take on",
+       "option": "Season stat line",
+       "pause": 350
+      },
+      {
+       "do": "cycle",
+       "label": "Stat",
+       "options": [
+        "passing yards",
+        "passing touchdowns",
+        "rushing yards"
+       ],
+       "pause": 600
+      }
+     ]
+    },
+    {
+     "caption": "Goalie? Saves & shutouts",
+     "duration": 4.6,
+     "steps": [
+      {
+       "do": "goto",
+       "url": "/create",
+       "pause": 350
+      },
+      {
+       "do": "tab",
+       "name": "NHL",
+       "pause": 350
+      },
+      {
+       "do": "search",
+       "label": "Search NHL",
+       "text": "hellebuyck",
+       "pause": 350
+      },
+      {
+       "do": "pick",
+       "name": "Connor Hellebuyck",
+       "pause": 350
+      },
+      {
+       "do": "select",
+       "label": "Pick a take on",
+       "option": "Season stat line",
+       "pause": 350
+      },
+      {
+       "do": "cycle",
+       "label": "Stat",
+       "options": [
+        "wins",
+        "save percentage",
+        "shutouts"
+       ],
+       "pause": 600
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "carousel": [
+  {
+   "n": 1,
+   "headline": "Pick a take in seconds",
+   "shot": "builder"
+  },
+  {
+   "n": 2,
+   "headline": "Locked. Dated. Sealed.",
+   "shot": "stamp"
+  },
+  {
+   "n": 3,
+   "headline": "Graded when it happens",
+   "shot": "cashed"
+  }
+ ]
+}

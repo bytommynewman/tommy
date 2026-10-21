@@ -47,3 +47,6 @@ marketing/reels/out/
 
 marketing/ugc/raw/
 marketing/ugc/out/
+
+# ad creative output (large, regenerable: see marketing/README.md)
+marketing/out/

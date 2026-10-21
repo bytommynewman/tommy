@@ -1,6 +1,6 @@
 # Game Receipts — launch ads
 
-**Positioning:** everyone says "I called it." Game Receipts proves it. Lock a take, get a timestamped receipt, get graded when it happens. **No betting, no money** — bragging rights only. Say that in every ad; it's the line that keeps us out of gambling-ad restrictions and in front of under-21s.
+**Positioning:** everyone says "I called it." Game Receipts proves it. Lock a take, get a timestamped receipt, get graded when it happens. Free to play. Say "Free to play" on every end card.
 
 **Tagline:** Call it. Lock it. Prove it.
 
@@ -10,7 +10,7 @@
 - **Hook in the first 1.5 s** — on-screen text, big (Impact/Arial Black, white with black stroke), 3–7 words.
 - Silent-safe: every beat has a caption. No voiceover baked in; music is added in each app from its trending library at post time (licensed per platform).
 - Real app footage only, captured in a phone frame (iPhone 14 viewport, 390×844 scaled up) on the brand background (`public/art/hero-tall.webp`, dimmed).
-- End card (2 s): logo/app name, "Call it. Lock it. Prove it.", "Free · No betting".
+- End card (2 s): logo/app name, "Call it. Lock it. Prove it.", "Free to play".
 - **Legal:** capture with ESPN headshots/team logos blocked (monogram avatars). League and team names appear only as text inside the product UI. Before paid spend, decide whether real player names in ads are OK (see "Open questions").
 
 ## The six spots
@@ -28,10 +28,10 @@ Captions per beat live in `marketing/spots.json` (one source of truth for the re
 
 ## Per-platform copy
 
-- **TikTok / Reels / Shorts caption:** hook line + "Free, no betting — just receipts. Link in bio." Hashtags (3–5, rotate): #sportstok #nba #nfl #nhl #hottakes #icalledit
+- **TikTok / Reels / Shorts caption:** hook line + "Free to play — just receipts. Link in bio." Hashtags (3–5, rotate): #sportstok #nba #nfl #nhl #hottakes #icalledit
 - **Reddit (promoted posts, not organic spam):** most sports subs ban self-promo, so use Reddit Ads targeting r/nba, r/nfl, r/hockey, r/baseball, r/CFB, r/CollegeBasketball communities. Formats: the 9:16 videos cropped to 4:5, plus a 4:5 image carousel (take builder → LOCKED stamp → resolved receipt). Organic posts only in r/SideProject / r/IMadeThis with a founder story.
   - Title A: "Built an app so my group chat can't lie about calling it"
-  - Title B: "Lock your hot take now. Get graded when it happens. No betting."
+  - Title B: "Lock your hot take now. Get graded when it happens. Free to play."
   - Title C: "Every 'I told you so' needs a receipt"
 
 ## Open questions for Tommy
