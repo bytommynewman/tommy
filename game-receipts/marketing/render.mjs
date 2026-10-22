@@ -13,6 +13,7 @@ import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { bug, endLogo } from "./brand.mjs";
 import { encode4k, scaleToBt709 } from "./encode4k.mjs";
+import * as TY from "./type.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
@@ -21,10 +22,7 @@ const RAW = path.join(OUT, "raw");
 const CACHE = path.join(OUT, ".cache");
 fs.mkdirSync(CACHE, { recursive: true });
 const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ffmpeg");
-const IMPACT = "/System/Library/Fonts/Supplemental/Impact.ttf";
-const BLACK = "/System/Library/Fonts/Supplemental/Arial Black.ttf";
 const HERO = path.join(root, "public/art/hero-tall.webp");
-const VOLT = "0x23E58A";
 const cfg = JSON.parse(fs.readFileSync(path.join(here, "spots.json"), "utf8"));
 const only = process.argv.slice(2).map(Number).filter(Boolean);
 const onlyCarousel = process.argv.includes("carousel");
@@ -59,38 +57,17 @@ function roundRect(file, w, h, r, fill, ring = null, ringW = 0) {
   return file;
 }
 
-// ---- text helpers -------------------------------------------------------------------------------------------
-const wrap = (text, max) => {
-  // balance: use as few lines as `max` allows, then even them out (no one-word orphans)
-  const n = Math.ceil(text.length / max);
-  if (n > 1) max = Math.max(Math.ceil(text.length / n) + 3, ...text.split(/\s+/).map((w) => w.length));
-  const lines = []; let cur = "";
-  for (const w of text.split(/\s+/)) { if (cur && (cur + " " + w).length > max) { lines.push(cur); cur = w; } else cur = cur ? cur + " " + w : w; }
-  if (cur) lines.push(cur);
-  return lines;
-};
-const smart = (s) => s.replace(/"([^"]*)"/g, "“$1”").replace(/'/g, "’");
-let tfCount = 0;
-const tf = (text) => { const f = path.join(CACHE, `t${process.pid}-${tfCount++}.txt`); fs.writeFileSync(f, text); return f; };
 const q = (s) => `'${s.replace(/'/g, "'\\''")}'`;
-/** One drawtext per line (each centred), so multi-line blocks stay centred in every ffmpeg version. */
-function lines(text, { font, size, max, y, pitch, color = "white", border = 0, box = null, boxBorder = 0, enable, x = "(w-text_w)/2", upper = false, shadow = 0 }) {
-  return wrap(smart(upper ? text.toUpperCase() : text), max).map((ln, i) => {
-    const parts = [`fontfile=${q(font)}`, `textfile=${q(tf(ln))}`, `fontsize=${size}`, `fontcolor=${color}`, `x=${x}`, `y=${y}+${i * pitch}`];
-    if (border) parts.push(`borderw=${border}`, "bordercolor=black");
-    if (shadow) parts.push(`shadowx=${shadow}`, `shadowy=${shadow}`, "shadowcolor=black@0.7");
-    if (box) parts.push("box=1", `boxcolor=${box}`, `boxborderw=${boxBorder}`);
-    if (enable) parts.push(`enable=${q(enable)}`);
-    return "drawtext=" + parts.join(":");
-  });
-}
+// all visible text comes from type.mjs (Chrome-rendered PNG layers: Saira hooks, Inter caption pills)
+const KEYS = { 1: "called", 2: "10", 3: "MVP", 4: "receipt", 5: "Prove", 6: null };
+const CKEY = { 1: "seconds", 2: "Locked.", 3: "Graded" };
 
 // ---- layouts ------------------------------------------------------------------------------------------------
 // Phone is sized so the caption sits ABOVE it (story) and the emblem bug sits in the free side margin next to the phone:
 // out of the top 220 px, bottom 380 px and right-hand 140 px rail, and never over a caption/hook.
 const LAYOUTS = {
-  story: { W: 2160, H: 3840, pw: 1400, bezel: 28, phoneY: 832, capY: 452, capSize: 104, capMax: 26, capPitch: 180, hookY: 1280, hookSize: 208, hookMax: 15, hookPitch: 256, endLogo: 960, endLogoY: 800, endTagY: 1860, endFootY: 2180, bug: { size: 216, x: 72, y: 880 } },
-  reddit: { W: 2160, H: 2700, pw: 1200, bezel: 24, phoneY: 428, capY: 40, capSize: 88, capBox: 28, capMax: 30, capPitch: 160, hookY: 800, hookSize: 208, hookMax: 15, hookPitch: 256, endLogo: 720, endLogoY: 300, endTagY: 1180, endFootY: 1500, bug: { size: 224, x: 112, y: 460 } },
+  story: { W: 2160, H: 3840, pw: 1400, bezel: 28, phoneY: 832, capY: 420, capSize: 88, capW: 1760, hookCY: 1680, hookSize: 208, endLogo: 960, endLogoY: 800, endTagY: 1860, endFootY: 2090, bug: { size: 216, x: 72, y: 880 } },
+  reddit: { W: 2160, H: 2700, pw: 1200, bezel: 24, phoneY: 428, capY: 36, capSize: 76, capW: 1900, hookCY: 1190, hookSize: 208, endLogo: 720, endLogoY: 300, endTagY: 1180, endFootY: 1400, bug: { size: 224, x: 112, y: 460 } },
 };
 const SRC_W = 1950, SRC_H = 4220; // raw capture size (5x native)
 const ph = (pw) => Math.round((pw * 844) / 390 / 2) * 2;
@@ -139,25 +116,30 @@ async function renderVideo(spot, layoutName, dest) {
   g.push(`[phone0]fade=t=out:st=${(D - 0.15).toFixed(3)}:d=0.35:alpha=1[phone]`);
   g.push(`[1:v]format=rgba[bgv]`, `[bgv][phone]overlay=x=${px - b}:y=${py - b}:format=auto[comp]`);
 
-  const f = [];
   const hookEnd = 1.3; // hook stays >= 1.2 s
-  // hook (first 1.3s) over a dimmed frame
-  f.push(`drawbox=x=0:y=0:w=iw:h=ih:color=black@0.38:t=fill:enable=${q(`between(t,0,${hookEnd})`)}`);
-  f.push(...lines(spot.hook, { font: IMPACT, size: L.hookSize, max: L.hookMax, y: L.hookY, pitch: L.hookPitch, border: 18, shadow: 8, enable: `between(t,0,${hookEnd})`, upper: true }));
-  // flash on punch-in
-  for (const p of punches) f.push(`drawbox=x=0:y=0:w=iw:h=ih:color=white@0.28:t=fill:enable=${q(`between(t,${p.at.toFixed(2)},${(p.at + 0.07).toFixed(2)})`)}`);
-  // beat captions
+  const E = D, ec = cfg.endCard;
+  const hk = await TY.hook(spot.hook, { key: KEYS[spot.id], size: L.hookSize, maxW: 1760 });
+  const caps = [];
   for (const bt of meta.beats) {
     const a = Math.max(bt.start - S, hookEnd + 0.05), z = bt.end - S;
     if (z <= a) continue;
-    f.push(...lines(bt.caption, { font: BLACK, size: L.capSize, max: L.capMax, y: L.capY, pitch: L.capPitch, box: "black@0.84", boxBorder: L.capBox ?? 40, enable: `between(t,${a.toFixed(3)},${z.toFixed(3)})` }));
+    caps.push({ a, z, ...(await TY.pill(bt.caption, { size: L.capSize, maxW: L.capW })) });
   }
-  // end card
-  const E = D, ec = cfg.endCard;
-  f.push(`drawbox=x=0:y=0:w=iw:h=ih:color=black@0.45:t=fill:enable=${q(`gte(t,${E.toFixed(3)})`)}`);
-  f.push(...lines(ec.tagline, { font: IMPACT, size: 140, max: 40, y: L.endTagY, pitch: 160, color: VOLT, border: 10, shadow: 6, enable: `gte(t,${E})` }));
-  f.push(...lines(ec.footer, { font: BLACK, size: 116, max: 40, y: L.endFootY, pitch: 160, color: "black", box: `${VOLT}@1.0`, boxBorder: 44, enable: `gte(t,${E})` }));
-  g.push(`[comp]${f.join(",")}[txt]`);
+  const endL = await TY.endText({ W: L.W, H: L.H, tagY: L.endTagY, footY: L.endFootY, glowY: L.endLogoY + L.endLogo / 2, tagline: ec.tagline, footer: ec.footer });
+  const f = [];
+  // hook (first 1.3s) over a dimmed frame
+  f.push(`drawbox=x=0:y=0:w=iw:h=ih:color=black@0.38:t=fill:enable=${q(`between(t,0,${hookEnd})`)}`);
+  // flash on punch-in
+  for (const p of punches) f.push(`drawbox=x=0:y=0:w=iw:h=ih:color=white@0.28:t=fill:enable=${q(`between(t,${p.at.toFixed(2)},${(p.at + 0.07).toFixed(2)})`)}`);
+  g.push(`[comp]${f.join(",")}[fx0]`);
+  let cur = "fx0", ni = 6;
+  const ov = (png, x, y, en) => { const o = `[${ni}:v]format=rgba[o${ni}]`; g.push(o, `[${cur}][o${ni}]overlay=x=${x}:y=${y}:format=auto:enable=${q(en)}[fx${ni}]`); cur = `fx${ni}`; ni++; };
+  const extraIn = [["-loop", "1", "-framerate", "30", "-i", hk.file]];
+  ov(hk, `(W-w)/2`, Math.round(L.hookCY - hk.h / 2), `between(t,0,${hookEnd})`);
+  for (const c of caps) { extraIn.push(["-loop", "1", "-framerate", "30", "-i", c.file]); ov(c, `(W-w)/2`, L.capY - c.pad, `between(t,${c.a.toFixed(3)},${c.z.toFixed(3)})`); }
+  extraIn.push(["-loop", "1", "-framerate", "30", "-i", endL]);
+  ov(null, 0, 0, `gte(t,${E.toFixed(3)})`);
+  g.push(`[${cur}]null[txt]`);
   // full logo on the end card, emblem bug on every other frame
   g.push(`[5:v]format=rgba,fade=t=in:st=${E.toFixed(3)}:d=0.3:alpha=1[lg]`);
   g.push(`[txt][lg]overlay=x=(W-w)/2:y=${L.endLogoY}:format=auto:enable=${q(`gte(t,${E})`)}[t2]`);
@@ -171,6 +153,7 @@ async function renderVideo(spot, layoutName, dest) {
       ["-loop", "1", "-framerate", "30", "-i", mask],
       ["-loop", "1", "-framerate", "30", "-i", bg_.file],
       ["-loop", "1", "-framerate", "30", "-i", lg_.file],
+      ...extraIn,
     ],
     script: g.join(";\n"), audio: "silent", total: T, dest,
   });
@@ -192,17 +175,15 @@ async function renderCarousel() {
       `[0:v]format=rgba[bgv]`, `[bgv][ph]overlay=x=${(W - pw) / 2 - b}:y=${py - b}:format=auto[c0]`,
       `[4:v]format=rgba[bugv]`, `[c0][bugv]overlay=x=${68 - cb.pad}:y=${680 - cb.pad}:format=auto[c]`,
     ];
-    const f = [
-      ...lines(c.headline, { font: IMPACT, size: 200, max: 20, y: 120, pitch: 224, border: 16, shadow: 6, upper: true }),
-      "drawbox=x=0:y=2360:w=iw:h=340:color=black@0.94:t=fill",
-      ...lines(`GAME RECEIPTS  \u00B7  ${c.n}/3`, { font: BLACK, size: 60, max: 60, y: 2392, pitch: 80 }),
-      ...lines(cfg.endCard.footer, { font: BLACK, size: 80, max: 40, y: 2500, pitch: 120, color: "black", box: `${VOLT}@1.0`, boxBorder: 28 }),
-    ];
-    g.push(`[c]${f.join(",")},format=rgb24[v]`);
+    const hk = await TY.hook(c.headline, { key: CKEY[c.n], size: 200, maxW: 1800, maxLines: 2 });
+    const band = await TY.frame(`<div style="position:absolute;left:0;right:0;top:2360px;height:340px;background:rgba(8,10,12,.985);box-shadow:inset 0 2px 0 rgba(255,255,255,.08)"></div>
+<div class=inter style="position:absolute;left:0;right:0;top:2410px;text-align:center;font-weight:700;font-size:54px;letter-spacing:.14em;color:rgba(255,255,255,.88)">GAME RECEIPTS &nbsp;\u00B7&nbsp; ${c.n}/3</div>
+<div class=inter style="position:absolute;left:0;right:0;top:2510px;text-align:center;font-weight:600;font-size:76px;letter-spacing:.08em;text-transform:uppercase;color:${TY.VOLT}">${cfg.endCard.footer}</div>`, W, H, "carband");
+    g.push(`[c]null[c1]`, `[5:v]format=rgba[hk]`, `[c1][hk]overlay=x=(W-w)/2:y=${Math.round(345 - hk.h / 2)}:format=auto[c2]`, `[6:v]format=rgba[bd]`, `[c2][bd]overlay=0:0:format=auto,format=rgb24[v]`);
     const script = path.join(CACHE, `graph-carousel-${c.n}.txt`);
     fs.writeFileSync(script, g.join(";\n"));
     const dest = path.join(OUT, `reddit-carousel-${c.n}.png`);
-    ff(["-i", bg, "-i", shot, "-i", bezel, "-i", mask, "-i", cb.file, "-filter_complex_script", script, "-map", "[v]", "-frames:v", "1", dest]);
+    ff(["-i", bg, "-i", shot, "-i", bezel, "-i", mask, "-i", cb.file, "-i", hk.file, "-i", band, "-filter_complex_script", script, "-map", "[v]", "-frames:v", "1", dest]);
     console.log(`rendered ${path.relative(root, dest)}`);
   }
 }
@@ -214,4 +195,4 @@ for (const spot of cfg.spots) {
   await renderVideo(spot, "reddit", path.join(OUT, `reddit-4x5-${spot.id}-${spot.slug}.mp4`));
 }
 if ((onlyCarousel || !only.length) && fs.existsSync(path.join(RAW, "carousel-1.png"))) await renderCarousel();
-for (const f of fs.readdirSync(CACHE)) if (/^t\d+-\d+\.txt$/.test(f)) fs.rmSync(path.join(CACHE, f));
+await TY.closeType();

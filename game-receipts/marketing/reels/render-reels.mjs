@@ -15,6 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bug, endLogo } from "../brand.mjs";
 import { encode4k, scaleToBt709 } from "../encode4k.mjs";
+import * as TY from "../type.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
@@ -24,7 +25,6 @@ const TMP = path.join(OUT, "tmp");
 fs.mkdirSync(TMP, { recursive: true });
 const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ffmpeg");
 const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const MONO = "/System/Library/Fonts/Menlo.ttc";
 
 // ---- CLI ---------------------------------------------------------------------------------------------------
 const args = process.argv.slice(2);
@@ -39,12 +39,12 @@ for (let i = 0; i < args.length; i++) {
 // ---- spot definitions --------------------------------------------------------------------------------------
 const SPECS = {
   A1: {
-    format: "A", file: "A1-mvp-speedrun.mp4", topMatch: /mvp/i, faceY: 230,
+    format: "A", file: "A1-mvp-speedrun.mp4", topMatch: /mvp/i, faceY: 230, key: "MVP",
     hook: "Watch me lock my MVP pick in under 10 seconds",
     steps: [["s1", "Step 1: Pick your league"], ["s2", "Step 2: Search your guy"], ["s3", "Step 3: Pick a take (Wins an award · MVP)"], ["s4", "Step 4: Place it. Stamped."], ["board", "Graded when it's done"]],
   },
   A2: {
-    format: "A", file: "A2-prove-you-called-it.mp4", topMatch: /kyle/i, faceY: 190,
+    format: "A", file: "A2-prove-you-called-it.mp4", topMatch: /kyle/i, faceY: 190, key: "called",
     hook: "How to prove you called it (takes 6 seconds)",
     steps: [["s1", "Step 1: Pick your team"], ["s2", "Step 2: Pick how far they go"], ["s3", "Step 3: Place take"], ["s4", "Step 4: Screenshot the receipt when it hits"]],
   },
@@ -109,17 +109,26 @@ async function renderA(id, spec) {
   const fallback = !topClip;
   console.log(`${id}: top panel = ${fallback ? "FALLBACK (hero-tall + big stopwatch)" : topClip}`);
 
-  // overlays
+  // overlays (text = Chrome-rendered PNG layers from type.mjs; no drawtext anywhere)
   const hero = "file://" + path.join(root, "public/art/hero-tall.webp");
-  const pillW = fallback ? 560 : 250, pillH = fallback ? 170 : 84; // CSS px (png() rasterises at 2x)
-  const pill = await png(`${id}-pill.png`, pillW, pillH, `<div style="width:100%;height:100%;background:rgba(0,0,0,.82);border:3px solid rgba(255,255,255,.85);border-radius:${pillH / 2}px"></div>`);
-  const hook = await png(`${id}-hook.png`, 1080, 760, `<div style="position:absolute;left:60px;right:60px;top:330px;display:flex;justify-content:center"><div id=t style="display:inline-block;background:#000;color:#fff;padding:22px 30px;border-radius:12px;font-size:56px;line-height:1.18;text-align:center;max-width:960px;font-weight:900">${esc(spec.hook)}</div></div>`);
+  const swSize = fallback ? 190 : 84;
+  const swMax = Math.floor(TP * 10);
+  const swDir = path.join(TMP, `${id}-sw`); fs.rmSync(swDir, { recursive: true, force: true }); fs.mkdirSync(swDir, { recursive: true });
+  let swBox;
+  for (let k = 0; k <= swMax; k++) { swBox = await TY.stopwatch(k / 10, { size: swSize }); fs.copyFileSync(swBox.file, path.join(swDir, `s${String(k).padStart(3, "0")}.png`)); }
+  const hk = await TY.hook(spec.hook, { key: spec.key, size: 140, maxW: 1700, card: true });
   const fbPanel = fallback ? await png(`${id}-fbtop.png`, 1080, 760, `<div style="width:100%;height:100%;background:linear-gradient(rgba(0,0,0,.62),rgba(0,0,0,.62)),url('${hero}') center 30%/cover"></div>`) : null;
   const bands = [];
-  for (const [i, [, text]] of spec.steps.entries())
-    bands.push(await png(`${id}-band${i}.png`, 1080, 100, `<div style="width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center"><div id=t style="color:#fff;font-size:46px;white-space:nowrap;font-weight:900">${esc(text)}</div></div>${fit("t", 1000, 46)}`));
-  const el = await endLogo(880); // shown at 440 CSS px = 880 px, native to the 1254 px master
-  const end = await png(`${id}-end.png`, 1080, 1920, `<div style="width:100%;height:100%;background:linear-gradient(rgba(5,8,6,.94),rgba(5,8,6,.94)),url('${hero}') center/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px;text-align:center;padding:0 80px"><img src="${dataUri(el.file)}" width="440" height="440" style="display:block"><div style="color:#fff;font-size:70px;line-height:1.2">Comment <span style="color:#23e58a">RECEIPT</span> and I'll send you the link</div><div style="color:#23e58a;font-size:46px;letter-spacing:.04em">Call it. Lock it. Prove it.</div><div style="color:#fff;font-size:38px;letter-spacing:.08em;opacity:.92;margin-top:-24px">GAME RECEIPTS · Free to play</div></div>`);
+  for (const [i, [, text]] of spec.steps.entries()) {
+    const m = /^Step (\d+):\s*(.*)$/.exec(text);
+    bands.push(await TY.pill(m ? m[2] : text, { step: m?.[1], size: 84, maxW: 2000, maxLines: 1 }));
+  }
+  const el = await endLogo(880);
+  const end = await TY.frame(`<div style="position:absolute;inset:0;background:radial-gradient(ellipse 70% 32% at 50% 38%,rgba(34,229,138,.2),transparent 72%),linear-gradient(rgba(5,8,6,.94),rgba(5,8,6,.94)),url('${hero}') center/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:96px;text-align:center;padding:0 160px">
+<img src="${dataUri(el.file)}" width="880" height="880" style="display:block;margin-bottom:-24px">
+<div class=saira style="text-transform:none;font-weight:800;color:#fff;font-size:116px;line-height:1.02;text-wrap:balance;text-shadow:0 8px 40px rgba(0,0,0,.5)">Comment <span class=k>RECEIPT</span> and I\u2019ll send you the link</div>
+<div class=saira style="text-transform:none;font-weight:700;color:rgba(255,255,255,.88);font-size:76px">Call it. Lock it. Prove it.</div>
+<div class=inter style="font-weight:600;font-size:54px;letter-spacing:.08em;text-transform:uppercase;color:#fff;margin-top:-30px">Game Receipts <span class=k>\u00B7 Free to play</span></div></div>`, 2160, 3840, "endA");
   const bg_ = await bug(200);
 
   // step windows
@@ -130,8 +139,8 @@ async function renderA(id, spec) {
   const inputs = [];
   inputs.push(fallback ? loopPng(fbPanel, total) : ["-stream_loop", "-1", "-i", topClip]);   // 0
   inputs.push(["-i", path.join(RAW, `${id}.mp4`)]);                                          // 1
-  inputs.push(loopPng(pill, total), loopPng(hook, total), loopPng(end, total), loopPng(bg_.file, total)); // 2,3,4,5
-  for (const b of bands) inputs.push(loopPng(b, total));                                     // 6..
+  inputs.push(["-framerate", "10", "-i", path.join(swDir, "s%03d.png")], loopPng(hk.file, total), loopPng(end, total), loopPng(bg_.file, total)); // 2,3,4,5
+  for (const b of bands) inputs.push(loopPng(b.file, total));                                     // 6..
   const G = [];
   G.push(fallback ? `[0:v]fps=30,format=yuv420p[top]` : `[0:v]crop=1076:757:0:${spec.faceY},hqdn3d=1.2:1.2:2.5:2.5,scale=2160:1520:flags=lanczos,unsharp=5:5:0.5:5:5:0,fps=30,setsar=1[top]`);
   const SA = SRC.A, scaledH = Math.round((2160 * SA.h) / SA.w / 2) * 2; // 4674 (app width = full frame width, scaled down from 2184)
@@ -140,13 +149,10 @@ async function renderA(id, spec) {
   G.push(`[bg][top]overlay=0:0[v1]`);
   G.push(`[v1][app]overlay=0:1720[v2]`);
   let cur = "v2";
-  wins.forEach(([a, b], i) => { G.push(`[${cur}][${6 + i}:v]overlay=0:1520:enable='between(t,${f(a)},${f(b)})'[b${i}]`); cur = `b${i}`; });
-  const px = (fallback ? 260 : 690) * 2, py = (fallback ? 300 : 230) * 2; // pill stays out of the right-hand 300 px rail (4K)
-  G.push(`[${cur}][2:v]overlay=${px}:${py}:enable='lt(t,${f(D)})'[p1]`);
-  const sz = fallback ? 208 : 104;
-  const sw = `%{eif\\:floor(min(t\\,${f(TP)})/60)\\:d\\:2}\\:%{eif\\:mod(floor(min(t\\,${f(TP)}))\\,60)\\:d\\:2}.%{eif\\:mod(floor(min(t\\,${f(TP)})*10)\\,10)\\:d\\:1}`;
-  G.push(`[p1]drawtext=fontfile=${MONO}:text='${sw}':fontcolor=white:fontsize=${sz}:x=${px}+(${pillW * 2}-text_w)/2:y=${py}+(${pillH * 2}-text_h)/2-4:enable='lt(t,${f(D)})'[p2]`);
-  G.push(`[p2][3:v]overlay=0:0:enable='between(t,0,${HOOK_A})'[h1]`);
+  wins.forEach(([a, b], i) => { G.push(`[${cur}][${6 + i}:v]overlay=x=(W-w)/2:y=${1620 - Math.round(bands[i].h / 2)}:enable='between(t,${f(a)},${f(b)})'[b${i}]`); cur = `b${i}`; });
+  const swX = fallback ? 520 - swBox.pad : 1840 + swBox.pad - swBox.w, swY = (fallback ? 600 : 460) - swBox.pad;
+  G.push(`[${cur}][2:v]overlay=${swX}:${swY}:enable='lt(t,${f(D)})'[p2]`);
+  G.push(`[p2][3:v]overlay=x=(W-w)/2:y=${930 - Math.round(hk.h / 2)}:enable='between(t,0,${HOOK_A})'[h1]`);
   G.push(`[h1][4:v]overlay=0:0:enable='gte(t,${f(D)})'[h2]`);
   G.push(`[h2][5:v]overlay=${68 - bg_.pad}:${452 - bg_.pad}:format=auto:enable='lt(t,${f(D)})',${scaleToBt709}[v]`);
   const out = path.join(OUT, outName(spec));
@@ -169,20 +175,18 @@ async function renderB(id, spec) {
   const bezel = 20, SW = PW - 2 * bezel, SH = PH - 2 * bezel;
   const desk = await png(`${id}-desk.png`, CW / 2, CH / 2, `<div style="width:100%;height:100%;background:radial-gradient(ellipse 70% 45% at 30% 20%,rgba(255,214,160,.16),transparent 70%),radial-gradient(ellipse 80% 60% at 50% 55%,#1b1a1f,#0c0b0e 80%),#0c0b0e"></div>`);
   const glare = await png(`${id}-glare.png`, SW / 2, SH / 2, `<div style="width:100%;height:100%;background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,${IG ? ".045" : ".10"}) 38%,rgba(255,255,255,${IG ? ".015" : ".03"}) 52%,transparent 62%),radial-gradient(ellipse 60% 25% at 80% 8%,rgba(255,255,255,${IG ? ".05" : ".12"}),transparent 70%)"></div>`);
-  const stroke = `-webkit-text-stroke:14px #000;paint-order:stroke fill;text-shadow:0 4px 0 #000`;
   const capImgs = [];
   const times = spec.captions.map(([k]) => {
     const m = /^\+(\w+):([\d.]+)$/.exec(k);
     return m ? cap.marks[m[1]] + Number(m[2]) : cap.marks[k];
   });
   times[0] = 0;
-  for (const [i, [, text]] of spec.captions.entries())
-    capImgs.push(await png(`${id}-cap${i}.png`, 1080, 360, `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 ${IG ? "150px 0 60px" : "70px"}"><div style="color:#fff;font-size:${IG ? 60 : 64}px;line-height:1.16;text-align:center;font-weight:900;${stroke}">${esc(text)}</div></div>`));
+  for (const [i, [, text]] of spec.captions.entries()) capImgs.push(await TY.pov(text, { size: IG ? 96 : 104, maxW: IG ? 1640 : 1800, maxLines: 2 }));
   const el = await endLogo(1040), bgb = await bug(192);
-  const tag = await png(`${id}-tag.png`, 1080, 1920, `<div style="width:100%;height:100%;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px"><img src="${dataUri(el.file)}" width="520" height="520" style="display:block"><div style="color:#23e58a;font-size:${IG ? 52 : 60}px;font-weight:900">Call it. Lock it. Prove it.</div><div style="color:#fff;font-size:40px;font-weight:900;letter-spacing:.06em">Free to play</div></div>`);
+  const tag = await TY.frame(`<div style="position:absolute;inset:0;background:radial-gradient(ellipse 70% 30% at 50% 42%,rgba(34,229,138,.18),transparent 72%),rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:88px"><img src="${dataUri(el.file)}" width="1040" height="1040" style="display:block;margin-bottom:-20px"><div class=saira style="text-transform:none;font-weight:800;color:#fff;font-size:${IG ? 104 : 120}px;text-shadow:0 8px 40px rgba(0,0,0,.5)">Call it. Lock it. Prove it.</div><div class=inter style="font-weight:600;font-size:56px;letter-spacing:.08em;text-transform:uppercase;color:#22e58a">Free to play</div></div>`, 2160, 3840, "tagB");
 
   const inputs = [loopPng(desk, total), ["-i", path.join(RAW, `${id}.mp4`)], loopPng(glare, total), loopPng(tag, total), loopPng(bgb.file, total)];
-  for (const c of capImgs) inputs.push(loopPng(c, total));
+  for (const c of capImgs) inputs.push(loopPng(c.file, total));
   const G = [];
   G.push(`[1:v]fps=30,scale=${SW}:${SH}:flags=lanczos,tpad=stop_mode=clone:stop_duration=4,setsar=1[scr]`);
   G.push(`[scr][2:v]overlay=0:0:format=auto[scrg]`);
@@ -195,7 +199,7 @@ async function renderB(id, spec) {
   let cur = "g";
   times.forEach((a, i) => {
     const b = i + 1 < times.length ? times[i + 1] : D;
-    G.push(`[${cur}][${5 + i}:v]overlay=0:${(1350 - 180) * 2}:enable='between(t,${f(a)},${f(b)})'[c${i}]`); cur = `c${i}`;
+    G.push(`[${cur}][${5 + i}:v]overlay=x=${(IG ? 990 : 1080)}-w/2:y=${2700}-h/2:enable='between(t,${f(a)},${f(b)})'[c${i}]`); cur = `c${i}`;
   });
   G.push(`[${cur}][4:v]overlay=${52 - bgb.pad}:${(IG ? 560 : 500) - bgb.pad}:format=auto:enable='lt(t,${f(D)})'[cb]`);
   G.push(`[cb][3:v]overlay=0:0:enable='gte(t,${f(D)})',${scaleToBt709}[v]`);
@@ -219,4 +223,4 @@ try {
     const out = spec.format === "A" ? await renderA(id, spec) : await renderB(id, spec);
     console.log(`${id}: ${path.relative(root, out)}  ${probeDur(out).toFixed(1)}s  ${(fs.statSync(out).size / 1e6).toFixed(1)}MB`);
   }
-} finally { await browser.close(); }
+} finally { await browser.close(); await TY.closeType(); }

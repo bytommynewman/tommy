@@ -10,6 +10,7 @@ import os from 'node:os';
 import fs from 'node:fs';
 import { bug, endLogo } from '../brand.mjs';
 import { encode4k, scaleToBt709 } from '../encode4k.mjs';
+import * as TY from '../type.mjs';
 // needs marketing/out/raw (run marketing/capture.mjs first): carousel-*.png stills + spot-2.mp4 footage, captured at 5x native (1950x4220)
 const require = createRequire(path.resolve(process.cwd(), 'package.json'));
 const sharp = require('sharp');
@@ -22,14 +23,17 @@ fs.mkdirSync(out, { recursive: true });
 const K = 2; // design units -> pixels
 const px = (n) => Math.round(n * K);
 const VOLT = '#22e58a', VOLT_B = '#5cffb0', INK = '#050607', INK2 = '#0f1215';
-const IMP = "Impact, 'Arial Black', sans-serif", BLK = "'Arial Black', Impact, sans-serif";
+const IMP = "'GR Saira', Saira, sans-serif", BLK = "'GR Inter', Inter, sans-serif"; // IMP = Saira 900/800 italic (display), BLK = Inter (UI)
 const LOGO = path.join(pub, 'brand/game-receipts-logo.webp');
 const HERO_T = path.join(pub, 'art/hero-tall.webp');
 const HERO_W = path.join(pub, 'art/hero-wide.webp');
 const SHARE = path.join(pub, 'art/share-bg.png');
 
+const svgStr = (w, h, body, k = K) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w * k}" height="${h * k}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
+/** text-bearing layers: rendered by headless Chrome (Saira/Inter, kerning, filters) via type.mjs */
+const csvg = (w, h, body, k = K) => TY.svgLayer(svgStr(w, h, body, k), w, h, k);
 const svg = (w, h, body, k = K) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w * k}" height="${h * k}" viewBox="0 0 ${w} ${h}">${body}</svg>`);
-const shadow = `<filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity=".85"/></filter>
+const shadow = `<filter id="sh" x="-20%" y="-30%" width="140%" height="170%"><feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#000" flood-opacity=".5" result="s1"/><feDropShadow in="s1" dx="0" dy="6" stdDeviation="12" flood-color="#000" flood-opacity=".5"/></filter>
 <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
 
 // background: cover-fit image, darkened, with a vertical scrim for text legibility
@@ -45,14 +49,15 @@ async function logo(size, k = K) {
   const mask = svg(size, size, `<defs><radialGradient id="m" cx=".5" cy=".5" r=".5"><stop offset=".80" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect width="${size}" height="${size}" fill="url(#m)"/>`, k);
   return sharp(LOGO).resize(size * k, size * k, { kernel: 'lanczos3' }).ensureAlpha().composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer();
 }
-const text = (lines, { x, y, size, lh, fill = '#fff', font = IMP, anchor = 'middle', ls = 0, stroke = true }) =>
+const text = (lines, { x, y, size, lh, fill = '#fff', font = IMP, anchor = 'middle', weight = 900 }) =>
   lines.map((l, i) => {
     const col = typeof l === 'object' ? l.fill : fill;
     const t = typeof l === 'object' ? l.t : l;
-    return `<text x="${x}" y="${y + i * lh}" font-family="${font}" font-size="${size}" fill="${col}" text-anchor="${anchor}" letter-spacing="${ls}" filter="url(#sh)">${t}</text>`;
+    const sai = font === IMP;
+    return `<text x="${x}" y="${y + i * lh}" font-family="${font}" ${sai ? `font-style="italic" font-weight="${weight}" letter-spacing="${-size * 0.01}"` : `font-weight="${weight}"`} font-size="${size}" fill="${col}" text-anchor="${anchor}" filter="url(#sh)">${t}</text>`;
   }).join('');
-const pill = (cx, cy, w, h, label, size) => `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="${h / 2}" fill="${VOLT}"/><text x="${cx}" y="${cy + size * 0.36}" font-family="${BLK}" font-size="${size}" fill="${INK}" text-anchor="middle" letter-spacing="${size * 0.08}">${label}</text>`;
-const fitSize = (lines, max, width = 940) => Math.round(Math.min(max, width / (0.47 * Math.max(...lines.map(l => (typeof l === 'object' ? l.t : l).length)))));
+const pill = (cx, cy, w, h, label, size) => `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="${h / 2}" fill="${VOLT}"/><text x="${cx}" y="${cy + size * 0.36}" font-family="${BLK}" font-weight="800" font-size="${size}" fill="${INK}" text-anchor="middle" letter-spacing="${size * 0.08}">${label}</text>`;
+const fitSize = (lines, max, width = 940) => Math.round(Math.min(max, width / (0.68 * Math.max(...lines.map(l => (typeof l === 'object' ? l.t : l).length)))));
 const roundedMask = (w, h, r) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" rx="${r}" fill="#fff"/></svg>`);
 const phoneH = (pw) => Math.round((pw * 844) / 390 / 2) * 2;
 /** Phone-framed app screenshot (5x native capture, 1950 px wide, only ever scaled down), cropped to `visibleH` design units from the top. Returns output-pixel W. */
@@ -83,10 +88,10 @@ const save = (buf, name) => sharp(buf).png({ compressionLevel: 9 }).toFile(path.
   const base = await bg(HERO_W, W, H, { dim: 0.7, k: 1 });
   const l = await logo(400, 1);
   const tx = sx + 400 + 40 + (1546 - 440) / 2; // centre of text column
-  const overlay = svg(W, H, `<defs>${shadow}</defs>` +
+  const overlay = await csvg(W, H, `<defs>${shadow}</defs>` +
     text(['CALL IT. LOCK IT.', { t: 'PROVE IT.', fill: VOLT }], { x: tx, y: sy + 118, size: 130, lh: 122, ls: 3 }) +
     pill(tx - 130, sy + 335, 440, 72, 'COMING SOON', 38) +
-    `<text x="${tx + 110}" y="${sy + 348}" font-family="${BLK}" font-size="30" fill="#fff" opacity=".9" filter="url(#sh)">FREE TO PLAY</text>`, 1);
+    `<text x="${tx + 110}" y="${sy + 348}" font-family="${BLK}" font-weight="600" font-size="30" letter-spacing="2.4" fill="#fff" opacity=".9" filter="url(#sh)">FREE TO PLAY</text>`, 1);
   const buf = await sharp(base).composite([
     { input: l, left: Math.round(sx), top: Math.round(sy + 11), },
     { input: overlay }]).png().toBuffer();
@@ -103,7 +108,7 @@ const icons = {
 for (const [name, g] of Object.entries(icons)) {
   const W = 1080, H = 1920;
   const base = await bg(HERO_T, W, H, { dim: 0.6 });
-  const o = svg(W, H, `<defs>${shadow}</defs>
+  const o = await csvg(W, H, `<defs>${shadow}</defs>
     <circle cx="540" cy="880" r="330" fill="${INK}" fill-opacity=".72" stroke="${VOLT}" stroke-width="8"/>
     <g transform="translate(540 860)" filter="url(#glow)">${g}</g>
     ${text([name.toUpperCase()], { x: 540, y: 1450, size: fitSize([name.toUpperCase()], 170, 880), lh: 0, ls: 4 })}`);
@@ -130,8 +135,8 @@ for (const p of posts) {
       const subY = y0 + (n - 1) * lh + (story ? 90 : 76);
       const pw = story ? 620 : 500, pTop = story ? 1240 : 760;
       const ph = await phone(path.join(RAW, p.phone), pw, H - pTop);
-      const o = svg(W, H, `<defs>${shadow}</defs>` + text(p.lines, { x: W / 2, y: y0, size, lh, ls: 2 }) +
-        `<text x="${W / 2}" y="${subY}" font-family="${BLK}" font-size="${story ? 50 : 42}" fill="#fff" text-anchor="middle" filter="url(#sh)">${p.sub}</text>`);
+      const o = await csvg(W, H, `<defs>${shadow}</defs>` + text(p.lines, { x: W / 2, y: y0, size, lh, ls: 2 }) +
+        `<text x="${W / 2}" y="${subY}" font-family="${BLK}" font-weight="700" font-size="${story ? 50 : 42}" fill="#fff" text-anchor="middle" filter="url(#sh)">${p.sub}</text>`);
       const lg = await logo(lgS);
       const glow = svg(W, H, `<defs><radialGradient id="g" cx=".5" cy="${(pTop + 400) / H}" r=".5"><stop offset="0" stop-color="${VOLT}" stop-opacity=".30"/><stop offset="1" stop-color="${VOLT}" stop-opacity="0"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#g)"/>`);
       const buf = await sharp(base).composite([{ input: glow }, { input: lg, left: Math.round((W - lgS) * K / 2), top: lgY * K }, { input: o }, { input: ph.buf, left: Math.round((W * K - ph.W) / 2), top: pTop * K }]).png().toBuffer();
@@ -144,10 +149,10 @@ for (const p of posts) {
     const blockH = n * lh + 130 + (p.tag ? 70 : 0);
     const y0 = areaTop + ((areaBot - areaTop) - blockH) / 2 + size * 0.82;
     const subY = y0 + (n - 1) * lh + 110;
-    const o = svg(W, H, `<defs>${shadow}</defs>` +
+    const o = await csvg(W, H, `<defs>${shadow}</defs>` +
       text(p.lines, { x: W / 2, y: y0, size, lh, ls: 2 }) +
-      `<text x="${W / 2}" y="${subY}" font-family="${BLK}" font-size="${p.sub.length > 22 ? 46 : 58}" fill="#fff" text-anchor="middle" filter="url(#sh)">${p.sub}</text>` +
-      (p.tag ? `<text x="${W / 2}" y="${subY + 80}" font-family="${IMP}" font-size="52" fill="${VOLT}" text-anchor="middle" letter-spacing="3" filter="url(#sh)">${p.tag.toUpperCase()}</text>` : ''));
+      `<text x="${W / 2}" y="${subY}" font-family="${BLK}" font-weight="${p.sub === 'FREE TO PLAY' ? 600 : 700}" ${p.sub === 'FREE TO PLAY' ? `letter-spacing="${58*0.08}" fill="${VOLT}"` : 'fill="#fff"'} font-size="${p.sub.length > 22 ? 46 : 58}" text-anchor="middle" filter="url(#sh)">${p.sub}</text>` +
+      (p.tag ? `<text x="${W / 2}" y="${subY + 80}" font-family="${IMP}" font-style="italic" font-weight="800" font-size="52" fill="#fff" text-anchor="middle" letter-spacing="-0.5" filter="url(#sh)">${p.tag}</text>` : ''));
     const lg = await logo(fmt.top ? 260 : 220);
     const lTop = fmt.top ? 290 : 60;
     const buf = await sharp(base).composite([{ input: lg, left: Math.round((W - (fmt.top ? 260 : 220)) * K / 2), top: lTop * K }, { input: o }]).png().toBuffer();
@@ -160,11 +165,11 @@ for (const p of posts) {
   const W = 1200, H = 630;
   const base = await bg(HERO_W, W, H, { dim: 0.7, pos: 'right' });
   const l = await logo(330);
-  const o = svg(W, H, `<defs>${shadow}</defs>` +
+  const o = await csvg(W, H, `<defs>${shadow}</defs>` +
     text(['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], { x: 400, y: 200, size: 100, lh: 96, anchor: 'start', ls: 2 }) +
-    `<text x="400" y="450" font-family="${BLK}" font-size="36" fill="#fff" filter="url(#sh)">Game Receipts proves it.</text>` +
+    `<text x="400" y="450" font-family="${BLK}" font-weight="700" font-size="36" fill="#fff" filter="url(#sh)">Game Receipts proves it.</text>` +
     pill(555, 525, 330, 64, 'COMING SOON', 30) +
-    `<text x="745" y="535" font-family="${BLK}" font-size="26" fill="#fff" filter="url(#sh)">FREE TO PLAY</text>`);
+    `<text x="745" y="535" font-family="${BLK}" font-weight="600" font-size="26" letter-spacing="2" fill="#fff" filter="url(#sh)">FREE TO PLAY</text>`);
   const buf = await sharp(base).composite([{ input: l, left: 40 * K, top: 150 * K }, { input: o }]).png().toBuffer();
   await save(buf, 'og-2400x1260.png');
   // the waitlist site keeps a conventional 1200x630 og.png (downscaled from the 2400x1260 master)
@@ -175,7 +180,7 @@ for (const p of posts) {
 // 0-1.8 hook 1, 1.8-3.6 hook 2, 3.6-~8.8 real take-builder -> LOCKED footage (spot 2 capture, 1x), then COMING SOON end card.
 {
   const W = 1080, H = 1920, tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gr-teaser-'));
-  const layer = async (name, body) => { await sharp(svg(W, H, `<defs>${shadow}</defs>` + body)).png().toFile(`${tmp}/${name}.png`); };
+  const layer = async (name, body) => { fs.writeFileSync(`${tmp}/${name}.png`, await csvg(W, H, `<defs>${shadow}</defs>` + body)); };
   // app glimpse window from the raw capture: from "Pick a take" to the end of "Place take"
   const meta = JSON.parse(fs.readFileSync(path.join(RAW, 'spot-2.json'), 'utf8'));
   const pickBeat = meta.beats.find((b) => /^search$/i.test(b.caption)) ?? meta.beats.at(-2);
@@ -185,8 +190,8 @@ for (const p of posts) {
   await layer('t1', text(['EVERYONE SAYS', 'THEY', { t: 'CALLED IT.', fill: VOLT }], { x: 540, y: 860, size: fitSize(['EVERYONE SAYS'], 210), lh: 150, ls: 2 }));
   await layer('t2', text(['SOON YOU’LL', 'HAVE THE', { t: 'RECEIPTS.', fill: VOLT }], { x: 540, y: 820, size: 190, lh: 185, ls: 2 }));
   await layer('t3', text(['COMING', { t: 'SOON', fill: VOLT }], { x: 540, y: 1000, size: 250, lh: 235, ls: 2 }) +
-    `<text x="540" y="1330" font-family="${BLK}" font-size="58" fill="#fff" text-anchor="middle" filter="url(#sh)">FREE TO PLAY</text>` +
-    `<text x="540" y="1420" font-family="${IMP}" font-size="56" fill="${VOLT}" text-anchor="middle" letter-spacing="3" filter="url(#sh)">CALL IT. LOCK IT. PROVE IT.</text>`);
+    `<text x="540" y="1330" font-family="${BLK}" font-weight="600" font-size="58" letter-spacing="4.64" fill="${VOLT}" text-anchor="middle" filter="url(#sh)">FREE TO PLAY</text>` +
+    `<text x="540" y="1420" font-family="${IMP}" font-style="italic" font-weight="800" font-size="62" fill="#fff" text-anchor="middle" letter-spacing="-0.6" filter="url(#sh)">Call it. Lock it. Prove it.</text>`);
   await layer('cap', text(['Pick a take. Lock it.'], { x: 540, y: 300, size: 76, lh: 0, ls: 1 }));
   const pw = 700, ph = phoneH(pw), pb = 14, py = 416, pxx = (W - pw) / 2;
   await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${px(pw + 2 * pb)}" height="${px(ph + 2 * pb)}"><rect x="${px(1.25)}" y="${px(1.25)}" width="${px(pw + 2 * pb - 2.5)}" height="${px(ph + 2 * pb - 2.5)}" rx="${px(Math.round(pw * 0.11) + pb)}" fill="#0e0e11" stroke="#46464f" stroke-width="${px(2.5)}"/></svg>`)).png().toFile(`${tmp}/bezel.png`);
@@ -220,4 +225,5 @@ for (const p of posts) {
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log(`teaser video ${TOTAL.toFixed(1)}s, app glimpse ${GD.toFixed(1)}s`);
 }
+await TY.closeType();
 console.log('done');

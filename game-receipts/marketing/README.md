@@ -34,6 +34,10 @@ node marketing/qa.mjs                            # full-res QA frames + contact 
 
 Arguments still work to redo part of the set, e.g. `node marketing/capture.mjs 4` / `node marketing/render.mjs 4`, or `carousel`.
 
+## Typography
+
+All text is Saira + Inter rendered by headless Chrome (`type.mjs`, fonts in `fonts/`), see [TYPE.md](TYPE.md). No ffmpeg drawtext.
+
 ## 4K quality + branding rules (all renderers)
 
 - Captures: iPhone 14 viewport 390x844 at **deviceScaleFactor 5 = 1950x4220** (UGC 412x732 -> 2060x3660; reel A1/A2 DSF 5.6 -> 2184x4726 because the app is full-bleed there).

@@ -12,14 +12,13 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import { bug, endLogo } from "../brand.mjs";
 import { encode4k, scaleToBt709 } from "../encode4k.mjs";
+import * as TY from "../type.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, "../..");
 const RAW = path.join(here, "raw");
 const OUT = path.join(here, "out");
 const FFMPEG = process.env.FFMPEG ?? path.join(os.homedir(), ".local/node/bin/ffmpeg");
-const IMPACT = "/System/Library/Fonts/Supplemental/Impact.ttf";
-const BLACK = "/System/Library/Fonts/Supplemental/Arial Black.ttf";
 const BG = path.join(ROOT, "public/art/hero-tall.webp");
 
 // footage cuts: [start s, end s, speed] from the raw screen capture (2060x3660, 5x native; only ever scaled down).
@@ -27,9 +26,9 @@ const BG = path.join(ROOT, "public/art/hero-tall.webp");
 // The head is the untouched Kling clip (light unsharp on luma only); app footage sits in a phone frame on the blurred hero
 // background, and a small picture-in-picture of the same app flow rides the head's lower third during its second half.
 const SPOTS = [  // pipStart: raw-footage second where the PiP clip (1x) starts
-  { id: 1, slug: "kyle", head: "kyle.mp4", footage: "kyle.mp4", hook: "my buddy \u201Ccalled it\u201D", pipStart: 3.2,
+  { id: 1, slug: "kyle", head: "kyle.mp4", footage: "kyle.mp4", key: "called", hook: "my buddy \u201Ccalled it\u201D", pipStart: 3.2,
     cuts: [[1.5, 2.9, 1.5], [3.2, 6.0, 1.5], [7.0, 7.9, 1.3], [8.0, 9.5, 1], [15.3, 16.3, 1.25]] },
-  { id: 2, slug: "mvp", head: "mvp.mp4", footage: "mvp.mp4", hook: "my MVP pick has a DATE on it", pipStart: 3.0,
+  { id: 2, slug: "mvp", head: "mvp.mp4", footage: "mvp.mp4", key: "DATE", hook: "my MVP pick has a DATE on it", pipStart: 3.0,
     cuts: [[1.7, 2.9, 1.5], [3.0, 4.8, 1.5], [5.6, 7.9, 1.5], [9.0, 9.6, 1.2], [9.8, 11.0, 1], [18.2, 19.2, 1.25]] },
 ];
 
@@ -58,15 +57,8 @@ async function build(spot, W, H, outFile) {
   const story = H === 3840;
   const sc = H / 1920; // px(n): n is the old 1080-wide design number; the scale doubles it for 2160 wide
   const px = (n) => Math.round(n * sc);
-  const hookY = story ? 520 : 380;
-  const words = spot.hook.toUpperCase().split(" ");
-  let hookText = words.join(" ");
-  if (hookText.length > 17) {
-    let best = 1, diff = 1e9;
-    for (let i = 1; i < words.length; i++) { const d = Math.abs(words.slice(0, i).join(" ").length - words.slice(i).join(" ").length); if (d < diff) { diff = d; best = i; } }
-    hookText = words.slice(0, best).join(" ") + "\n" + words.slice(best).join(" ");
-  }
-  const hookDt = hookText.split("\n").map((ln, i) => `drawtext=fontfile='${q(IMPACT)}':textfile='${q(txt(`hook-${spot.id}-${H}-${i}.txt`, ln))}':fontsize=${px(100)}:fontcolor=white:borderw=${px(8)}:bordercolor=black:x=(w-text_w)/2:y=${hookY + i * px(115)}:enable='lt(t,1.3)'`).join(",");
+  const hk = await TY.hook(spot.hook.replace(/\s+/g, " "), { key: spot.key, size: 150, maxW: 1700, maxLines: 2, card: true });
+  const hookCY = story ? 740 : 600;
   const cropY = story ? "0" : "(ih-oh)*0.22";
   const headMs = path.join(RAW, spot.head);
   const footage = path.join(RAW, "footage", spot.footage);
@@ -85,7 +77,7 @@ async function build(spot, W, H, outFile) {
   const lg_ = await endLogo(story ? 880 : 660);
   const SPLIT = 5.0; // PiP appears for the head's second half
   const f = [];
-  f.push(`[0:v]hqdn3d=1.2:1.2:2:2,scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H}:(iw-${W})/2:${cropY},fps=30,setsar=1,unsharp=5:5:0.45:5:5:0,${hookDt},format=yuv420p[head0]`);
+  f.push(`[0:v]hqdn3d=1.2:1.2:2:2,scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H}:(iw-${W})/2:${cropY},fps=30,setsar=1,unsharp=5:5:0.45:5:5:0,format=yuv420p[head00]`, `[head00][11:v]overlay=x=(W-w)/2:y=${hookCY - Math.round(hk.h / 2)}:format=auto:enable='lt(t,1.3)',format=yuv420p[head0]`);
   // pip: first seconds of the app flow, 1x
   f.push(`[1:v]fps=30,split=${n + 1}${["[pipsrc]", ...spot.cuts.map((_, i) => `[s${i}]`)].join("")}`);
   f.push(`[pipsrc]trim=${spot.pipStart ?? spot.cuts[0][0]}:${(spot.pipStart ?? spot.cuts[0][0]) + hd - SPLIT},setpts=PTS-STARTPTS,scale=${pipW}:${pipH}:flags=lanczos,format=rgba[pa]`);
@@ -101,14 +93,11 @@ async function build(spot, W, H, outFile) {
   f.push(`[10:v]format=rgba[bz]`, `[bgf][bz]overlay=${phX}:${phY}:format=auto[pb0]`, `[pb0][fa]overlay=${phX + bz}:${phY + bz}:format=auto[pb1]`);
   f.push(`[5:v]format=rgba[bugv2]`, `[pb1][bugv2]overlay=${phoneBug.x - bg_.pad}:${phoneBug.y - bg_.pad}:format=auto,trim=duration=${footSecs.toFixed(3)},setpts=PTS-STARTPTS,format=yuv420p,setsar=1[app]`);
   // end card: full logo above the tagline + "Free to play"
-  const cardF = (t, y, size, font, col = "white", extra = "") =>
-    `drawtext=fontfile='${q(font)}':textfile='${q(txt(`c${spot.id}-${H}-${y}.txt`, t))}':fontsize=${px(size)}:fontcolor=${col}:x=(w-text_w)/2:y=${y}${extra}`;
   const logoY = story ? 760 : 240;
   const cy = story ? 760 + 880 + 140 : 240 + 660 + 100;
   f.push(`[3:v]scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H},fps=30,eq=brightness=-0.42:saturation=0.9,setsar=1,format=rgba[cbg]`);
-  f.push(`[6:v]format=rgba,fade=t=in:st=0.1:d=0.3:alpha=1[clg]`, `[cbg][clg]overlay=(W-w)/2:${logoY}:format=auto,` +
-    [cardF("Call it. Lock it. Prove it.", cy, 70, IMPACT, "0x22e58b", `:borderw=${px(5)}:bordercolor=black`),
-     cardF("Free to play", cy + (story ? 260 : 200), 50, BLACK, "0xd8dde0", `:borderw=${px(3)}:bordercolor=black`)].join(",") + `,format=yuv420p[card]`);
+  const endL = await TY.endText({ W, H, tagY: cy, footY: cy + (story ? 200 : 150), glowY: logoY + (story ? 440 : 330), tagSize: story ? 124 : 108, footSize: story ? 54 : 46, dim: 0.0 });
+  f.push(`[6:v]format=rgba,fade=t=in:st=0.1:d=0.3:alpha=1[clg]`, `[cbg][clg]overlay=(W-w)/2:${logoY}:format=auto[cl]`, `[cl][12:v]overlay=0:0:format=auto,format=yuv420p[card]`);
   const END = 1.8, total = hd + footSecs + END;
   f.push(`anullsrc=r=48000:cl=stereo,atrim=0:${(footSecs + END).toFixed(3)}[sil]`);
   f.push(`[head][app][card]concat=n=3:v=1:a=0,${scaleToBt709}[v]`);
@@ -116,7 +105,7 @@ async function build(spot, W, H, outFile) {
   const loopImg = (file, t) => ["-loop", "1", "-framerate", "30", "-t", String(t), "-i", file];
   encode4k({
     inputs: [["-i", headMs], ["-i", footage], loopImg(BG, footSecs + 1), loopImg(BG, 3), loopImg(bg_.file, total), loopImg(bg_.file, total), loopImg(lg_.file, 3),
-      loopImg(pip.bezel, total), loopImg(pip.mask, total), loopImg(ph.mask, total), loopImg(ph.bezel, total)],
+      loopImg(pip.bezel, total), loopImg(pip.mask, total), loopImg(ph.mask, total), loopImg(ph.bezel, total), loopImg(hk.file, total), loopImg(endL, 3)],
     script: f.join(";\n"), audio: "graph", total, dest: outFile,
   });
 }
@@ -132,4 +121,5 @@ for (const s of SPOTS.filter((x) => !want.length || want.includes(x.id))) {
     if (!suf) for (const t of [0.8, 5, 12, d - 0.4]) run(["-ss", t.toFixed(2), "-i", o, "-frames:v", "1", path.join(OUT, "frames", `ugc-${s.id}-${s.slug}-${t.toFixed(1)}s.png`)]);
   }
 }
+await TY.closeType();
 fs.rmSync(tmp, { recursive: true, force: true });
