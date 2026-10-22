@@ -11,7 +11,7 @@
 - Silent-safe: every beat has a caption. No voiceover baked in; music is added in each app from its trending library at post time (licensed per platform).
 - Real app footage only, captured in a phone frame (iPhone 14 viewport, 390×844 scaled up) on the brand background (`public/art/hero-tall.webp`, dimmed).
 - End card (2 s): logo/app name, "Call it. Lock it. Prove it.", "Free to play".
-- **Legal:** capture with ESPN headshots/team logos blocked (monogram avatars). League and team names appear only as text inside the product UI. Before paid spend, decide whether real player names in ads are OK (see "Open questions").
+- **Legal:** capture with ESPN headshots/team logos blocked (monogram avatars). League and team names appear only as text inside the product UI. Real player names are approved (Oct 22 2026) as text in the UI; never imply endorsement.
 
 ## The six spots
 
@@ -36,6 +36,6 @@ Captions per beat live in `marketing/spots.json` (one source of truth for the re
 
 ## Open questions for Tommy
 
-1. Real player names in paid ads (publicity rights) — keep, or switch spots to team-only takes?
+1. ~~Real player names in paid ads~~ — **Decided (Tommy, Oct 22 2026): real names are OK.** Keep names as plain text inside the product UI only; never imply a player endorses the app; headshots and team logos stay blocked in ads (ESPN images aren't licensed).
 2. App store / web link for the CTA (currently none — end card says "Link in bio").
 3. Posting: Buffer and Higgsfield need to be re-authorized in claude.ai connector settings before I can schedule posts or generate extra b-roll.
