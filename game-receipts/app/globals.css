@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* Game Receipts design tokens — premium dark by default. */
+@theme {
+  --color-ink-950: #050607;
+  --color-ink-900: #0a0c0e;
+  --color-ink-850: #0f1215;
+  --color-ink-800: #15191d;
+  --color-ink-750: #1b2025;
+  --color-ink-700: #252b31;
+  --color-ink-600: #39424a;
+  --color-ink-500: #5d676f;
+  --color-ink-400: #8a949b;
+  --color-ink-300: #aab3b9;
+  --color-ink-200: #cdd3d7;
+  --color-ink-100: #e9ecee;
+  --color-volt: #22e58a;
+  --color-volt-bright: #5cffb0;
+  --color-volt-deep: #0f9d5c;
+  --color-loss: #ff5d5d;
+  --color-gold: #f5c542;
+  --color-sky: #5b8cff;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --animate-rise: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-stamp: stamp 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes stamp {
+    0% { opacity: 0; transform: scale(1.6) rotate(-8deg); }
+    100% { opacity: 1; transform: scale(1) rotate(-4deg); }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+}
+
+:root {
+  color-scheme: dark;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+html, body { background: var(--color-ink-950); color: var(--color-ink-100); overflow-x: clip; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; }
+
+::selection { background: color-mix(in oklab, var(--color-volt) 35%, transparent); }
+
+/* Subtle stadium glow behind content. */
+.bg-stadium {
+  background:
+    radial-gradient(120% 60% at 50% -10%, color-mix(in oklab, var(--color-volt) 10%, transparent), transparent 60%),
+    var(--color-ink-950);
+}
+
+/* Silver wordmark fill — used sparingly. */
+.text-silver {
+  background: linear-gradient(180deg, #ffffff 0%, #d9dee2 45%, #9aa3aa 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.text-volt-grad {
+  background: linear-gradient(180deg, var(--color-volt-bright), var(--color-volt) 55%, var(--color-volt-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Receipt paper edge. */
+.receipt-edge {
+  --tooth: 10px;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--tooth) 100%;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-ink-800) 0%, var(--color-ink-750) 50%, var(--color-ink-800) 100%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+input[type="range"].gr-range { appearance: none; height: 28px; background: transparent; width: 100%; }
+input[type="range"].gr-range::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--color-volt) var(--fill, 50%), var(--color-ink-700) var(--fill, 50%)); }
+input[type="range"].gr-range::-moz-range-track { height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--color-volt) var(--fill, 50%), var(--color-ink-700) var(--fill, 50%)); }
+input[type="range"].gr-range::-webkit-slider-thumb { appearance: none; width: 26px; height: 26px; margin-top: -10px; border-radius: 999px; background: #fff; box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-volt) 45%, transparent), 0 2px 8px #0008; }
+input[type="range"].gr-range::-moz-range-thumb { width: 26px; height: 26px; border: 0; border-radius: 999px; background: #fff; box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-volt) 45%, transparent); }
+input[type="range"].gr-range:focus-visible { outline: none; }
+input[type="range"].gr-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px var(--color-volt); }
+
+/* Route changes crossfade quickly instead of hard-cutting. */
+::view-transition-old(*), ::view-transition-new(*) { animation-duration: 180ms; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* Native-app feel on touch devices. */
+a, button, [role="button"], input, select, textarea, label { touch-action: manipulation; }
+html { overscroll-behavior-y: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* Custom select chevron: the native arrow hugs the right edge on iOS/Chrome and looks cramped.
+   Unlayered on purpose so it wins over the px-* utilities on inputCls. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa5b1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.95rem center;
+  background-size: 1.05rem;
+  padding-right: 2.75rem;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+select:focus { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322e58a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
