@@ -82,3 +82,7 @@ Dropdown 100% crops checked: new chevrons (grey, green when focused) sit inside 
 - Reel A1/A2 top panel and UGC heads come from the existing Kling masters; hero backgrounds (1170 px art) are only used heavily blurred/dimmed. The avatar logo sits at its native 1254 px inside 2048 px (no upscale), so it fills less of the circle than the old 1080 version.
 - Earlier QA claimed 3x captures: the old capture script actually grabbed 390x844 frames and upscaled them; that is fixed (see README).
 - B1 / A1 / A2 / UGC / teaser files are 70-125 MB each: use `B1-pov-screen-ig.mp4` for Instagram.
+
+## 23 Oct 2026 - UGC-2 replaced (new creator, real Wemby headshot, clearer pitch)
+
+New Kling 15 s head (clear skin, new line), real ESPN headshots for this spot only (unlicensed: swap before paid ads), hook "Everyone laughed at my Wemby MVP pick", 4 caption pills, finish.mjs footage-cut fix. ugc-2-mvp.mp4 / -4x5.mp4: 2160x3840 / 2160x2700, 24.97 s, AAC 48 kHz; speech ends 14.68 s (head 15.04 s), no cutoff. A1 reel re-rendered with the new head (14.6 s). QA frames: `qa/ugc-2-mvp-v2-*.png`, `qa/ugc-2-mvp-v2-contact.png`, `qa/ugc-2-mvp-v2-wemby-photo-crop.png`. Audio pronunciation not verified by ear. Old files in `ugc/out/old/`, `reels/out/old/`.

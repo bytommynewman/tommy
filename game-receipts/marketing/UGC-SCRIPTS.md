@@ -13,17 +13,20 @@ Rules: no team logos, no real jerseys (plain or blank tees/hoodies), no real ath
 - **Cutaway:** take builder → Place take → LOCKED stamp → feed.
 - **On-screen hook (first 1.5 s):** "my buddy 'called it' 🙄"
 
-## UGC-2 · "MVP pick" (woman, couch)
+## UGC-2 · "MVP pick" (woman, couch) — REPLACED 23 Oct 2026
 
-- **Start frame:** handheld selfie, mid-20s woman on a couch in an oversized plain navy tee, game on a blurred TV behind (no readable screen), snacks on the cushion, evening lamp light, confident half-smile.
-- **Line (≈32 words):** "Okay so I locked my MVP pick back in October. The app stamps it with the date, and, like, grades it when the season's done. So yeah — I'm, um, top of the leaderboard."
-- **Cutaway (show off the app):** award take (MVP, "Wins it") → Place take → LOCKED date stamp close-up → feed → leaderboards page.
-- **On-screen hook:** "my MVP pick has a DATE on it"
+- **Start frame:** `ugc/raw/ugc2new/frame1.png` (Nano Banana Pro 9:16): mid-20s woman, confident/sporty, plain navy oversized tee (no logos), blurred TV game behind, evening lamp light, handheld selfie. Skin wording: "natural clear skin with subtle real texture, no acne, no blemishes, no heavy makeup, not airbrushed" (never "visible pores / uneven skin" - it caused the acne in v1).
+- **Line (36 words, M-V-P spelled so it is read as letters):** "Everyone laughed when I said Wemby wins M-V-P. So I locked it in Game Receipts \u2014 it's timestamped, can't edit it. When the season's over, it grades me. And if I'm right? I've got the receipt."
+- **Clip:** `kling3_0 --mode pro --duration 15 --sound on` (37.5 cr; 10 s is too short for the line; speech ends at 14.7 s of 15.04 s). Prompt in `ugc/raw/ugc2new/prompt.txt`. Raw head = `ugc/raw/mvp.mp4` (old one: `ugc/raw/old/mvp-oldhead.mp4`).
+- **Cutaway (real app footage):** search "wemb" -> Victor Wembanyama (real headshot) -> Wins an award -> NBA MVP -> Wins it -> Place take -> feed card with photo + LOCKED date stamp -> receipt page -> leaderboards.
+- **On-screen hook:** "Everyone laughed at my Wemby MVP pick" (Saira card, key word Wemby). **Captions (Inter pills):** "Lock your take" -> "Timestamped. Can't edit it." -> "Graded when the season ends" -> "Climb the leaderboard".
+- **Real headshots enabled for this spot** (`SPOT_OPTS.mvp.allowHeadshots` in `ugc/capture.mjs`; every other ad still blocks ESPN images). ESPN images are unlicensed: swap to a licensed provider before paid ads.
+- finish.mjs now pre-renders the footage cuts into one clip first: the old single multi-trim split graph froze the app footage after the 3rd cut (the v1 UGC-2 and UGC-1 never showed Place take / feed / leaderboards). Re-render UGC-1 with `node marketing/ugc/finish.mjs 1` to pick up the fix.
 
 ## Captions / copy
 
 - UGC-1: "Kyle is 0-for-3 and the receipts prove it 🧾 Free to play · link in bio #sportstok #hottakes #icalledit"
-- UGC-2: "Locked my MVP pick in October. Graded when it's done. 🧾 Free to play #nba #sportstok #mvp"
+- UGC-2: "Everyone laughed at my Wemby MVP pick. Locked it, timestamped, graded when the season ends. 🧾 Free to play #nba #sportstok #mvp"
 
 ---
 

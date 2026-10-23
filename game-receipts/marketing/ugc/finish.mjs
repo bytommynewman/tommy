@@ -28,8 +28,10 @@ const BG = path.join(ROOT, "public/art/hero-tall.webp");
 const SPOTS = [  // pipStart: raw-footage second where the PiP clip (1x) starts
   { id: 1, slug: "kyle", head: "kyle.mp4", footage: "kyle.mp4", key: "called", hook: "my buddy \u201Ccalled it\u201D", pipStart: 3.2,
     cuts: [[1.5, 2.9, 1.5], [3.2, 6.0, 1.5], [7.0, 7.9, 1.3], [8.0, 9.5, 1], [15.3, 16.3, 1.25]] },
-  { id: 2, slug: "mvp", head: "mvp.mp4", footage: "mvp.mp4", key: "DATE", hook: "my MVP pick has a DATE on it", pipStart: 3.0,
-    cuts: [[1.7, 2.9, 1.5], [3.0, 4.8, 1.5], [5.6, 7.9, 1.5], [9.0, 9.6, 1.2], [9.8, 11.0, 1], [18.2, 19.2, 1.25]] },
+  { id: 2, slug: "mvp", head: "mvp.mp4", footage: "mvp.mp4", key: "Wemby", hook: "Everyone laughed at my Wemby MVP pick", pipStart: 3.0, split: 7.5,
+    // captions ride the app footage: [text, start s, end s] on the app-segment clock (real Wemby headshot capture, allowHeadshots in capture.mjs)
+    caps: [["Lock your take", 0.1, 3.7], ["Timestamped. Can\u2019t edit it.", 3.8, 5.5], ["Graded when the season ends", 5.55, 6.9], ["Climb the leaderboard", 6.95, 99]],
+    cuts: [[1.5, 2.9, 1.5], [3.0, 4.8, 1.5], [5.3, 7.8, 1.5], [8.1, 9.3, 1.2], [9.5, 11.3, 1], [16.7, 18.5, 1.2]] },
 ];
 
 const run = (args) => {
@@ -75,23 +77,31 @@ async function build(spot, W, H, outFile) {
   const headBug = story ? { x: 72, y: 1040 } : { x: 56, y: 800 };
   const phoneBug = story ? { x: 72, y: phY + 48 } : { x: 112, y: phY + 32 };
   const lg_ = await endLogo(story ? 880 : 660);
-  const SPLIT = 5.0; // PiP appears for the head's second half
+  const capL = [];
+  for (const [text, a, b] of spot.caps ?? []) capL.push({ a, b, ...(await TY.pill(text, { size: story ? 92 : 80, maxW: story ? 1800 : 1700, maxLines: 1 })) });
+  const SPLIT = spot.split ?? 5.0; // PiP appears for the head's second half
   const f = [];
   f.push(`[0:v]hqdn3d=1.2:1.2:2:2,scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H}:(iw-${W})/2:${cropY},fps=30,setsar=1,unsharp=5:5:0.45:5:5:0,format=yuv420p[head00]`, `[head00][11:v]overlay=x=(W-w)/2:y=${hookCY - Math.round(hk.h / 2)}:format=auto:enable='lt(t,1.3)',format=yuv420p[head0]`);
   // pip: first seconds of the app flow, 1x
-  f.push(`[1:v]fps=30,split=${n + 1}${["[pipsrc]", ...spot.cuts.map((_, i) => `[s${i}]`)].join("")}`);
+  f.push(`[1:v]fps=30[pipsrc]`);
   f.push(`[pipsrc]trim=${spot.pipStart ?? spot.cuts[0][0]}:${(spot.pipStart ?? spot.cuts[0][0]) + hd - SPLIT},setpts=PTS-STARTPTS,scale=${pipW}:${pipH}:flags=lanczos,format=rgba[pa]`);
   f.push(`[8:v]format=rgba,alphaextract[pm]`, `[pa][pm]alphamerge[pb]`, `[7:v]format=rgba[pz]`, `[pz][pb]overlay=${pipB}:${pipB}:format=auto,fade=t=in:st=0:d=0.3:alpha=1,setpts=PTS+${SPLIT}/TB[pipv]`);
   f.push(`[head0][pipv]overlay=${pipX - pipB}:${pipY - pipB}:format=auto:eof_action=pass:enable='gte(t,${SPLIT})'[head1]`);
   f.push(`[4:v]format=rgba[bugv]`, `[head1][bugv]overlay=${headBug.x - bg_.pad}:${headBug.y - bg_.pad}:format=auto,trim=duration=${hd.toFixed(3)},setpts=PTS-STARTPTS,format=yuv420p,setsar=1[head]`);
   f.push(`[0:a]aresample=48000,aformat=channel_layouts=stereo[ha]`);
-  spot.cuts.forEach(([a, b, sp], i) => f.push(`[s${i}]trim=${a}:${b},setpts=(PTS-STARTPTS)/${sp},fps=30,scale=${pw}:${sh}:flags=lanczos[c${i}]`));
   const footSecs = spot.cuts.reduce((t, [a, b, sp]) => t + (b - a) / sp, 0);
-  f.push(`${spot.cuts.map((_, i) => `[c${i}]`).join("")}concat=n=${n}:v=1:a=0,format=rgba[fv]`);
+  f.push(`[13:v]fps=30,scale=${pw}:${sh}:flags=lanczos,format=rgba[fv]`);
   f.push(`[9:v]format=rgba,alphaextract[fm]`, `[fv][fm]alphamerge[fa]`);
   f.push(`[2:v]scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H},gblur=sigma=52,eq=brightness=-0.30:saturation=0.85,fps=30,format=rgba[bgf]`);
   f.push(`[10:v]format=rgba[bz]`, `[bgf][bz]overlay=${phX}:${phY}:format=auto[pb0]`, `[pb0][fa]overlay=${phX + bz}:${phY + bz}:format=auto[pb1]`);
-  f.push(`[5:v]format=rgba[bugv2]`, `[pb1][bugv2]overlay=${phoneBug.x - bg_.pad}:${phoneBug.y - bg_.pad}:format=auto,trim=duration=${footSecs.toFixed(3)},setpts=PTS-STARTPTS,format=yuv420p,setsar=1[app]`);
+  f.push(`[5:v]format=rgba[bugv2]`, `[pb1][bugv2]overlay=${phoneBug.x - bg_.pad}:${phoneBug.y - bg_.pad}:format=auto,trim=duration=${footSecs.toFixed(3)},setpts=PTS-STARTPTS,format=yuv420p,setsar=1[app0]`);
+  let appL = "app0";
+  capL.forEach((c, i) => {
+    const capY = story ? 430 : phY + ph.H - 330;
+    f.push(`[${14 + i}:v]format=rgba[cp${i}]`, `[${appL}][cp${i}]overlay=x=(W-w)/2:y=${capY - c.pad}:format=auto:enable='between(t,${c.a},${Math.min(c.b, footSecs).toFixed(2)})'[ap${i}]`);
+    appL = `ap${i}`;
+  });
+  f.push(`[${appL}]null[app]`);
   // end card: full logo above the tagline + "Free to play"
   const logoY = story ? 760 : 240;
   const cy = story ? 760 + 880 + 140 : 240 + 660 + 100;
@@ -102,10 +112,14 @@ async function build(spot, W, H, outFile) {
   f.push(`anullsrc=r=48000:cl=stereo,atrim=0:${(footSecs + END).toFixed(3)}[sil]`);
   f.push(`[head][app][card]concat=n=3:v=1:a=0,${scaleToBt709}[v]`);
   f.push(`[ha][sil]concat=n=2:v=0:a=1[a]`);
+  // footage cuts are pre-rendered into one clip (a single multi-trim split graph froze the app footage after the 3rd cut)
+  const cutFile = path.join(tmp, `cuts-${story ? "s" : "r"}.mp4`);
+  const cutF = spot.cuts.map(([a, b, sp], i) => `[0:v]trim=${a}:${b},setpts=(PTS-STARTPTS)/${sp},fps=30[c${i}]`);
+  run(["-i", footage, "-filter_complex", `${cutF.join(";")};${spot.cuts.map((_, i) => `[c${i}]`).join("")}concat=n=${n}:v=1:a=0[v]`, "-map", "[v]", "-c:v", "libx264", "-crf", "8", "-preset", "veryfast", "-pix_fmt", "yuv420p", cutFile]);
   const loopImg = (file, t) => ["-loop", "1", "-framerate", "30", "-t", String(t), "-i", file];
   encode4k({
     inputs: [["-i", headMs], ["-i", footage], loopImg(BG, footSecs + 1), loopImg(BG, 3), loopImg(bg_.file, total), loopImg(bg_.file, total), loopImg(lg_.file, 3),
-      loopImg(pip.bezel, total), loopImg(pip.mask, total), loopImg(ph.mask, total), loopImg(ph.bezel, total), loopImg(hk.file, total), loopImg(endL, 3)],
+      loopImg(pip.bezel, total), loopImg(pip.mask, total), loopImg(ph.mask, total), loopImg(ph.bezel, total), loopImg(hk.file, total), loopImg(endL, 3), ["-i", cutFile], ...capL.map((c) => loopImg(c.file, footSecs + 1))],
     script: f.join(";\n"), audio: "graph", total, dest: outFile,
   });
 }

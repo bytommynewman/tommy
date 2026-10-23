@@ -21,9 +21,12 @@ fs.mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: CHROME });
 const VIEW = { width: 412, height: 732 }; // 9:16 so the footage fills the frame
 const base = { ...devices["iPhone 14"], viewport: VIEW, deviceScaleFactor: DSF };
+// ESPN headshots are blocked by default (monogram avatars). A spot opts in with allowHeadshots (ESPN images are unlicensed: swap before paid ads).
+const SPOT_OPTS = { kyle: { allowHeadshots: false }, mvp: { allowHeadshots: true } };
+let allowHeadshots = false;
 const mk = async (extra = {}) => {
   const ctx = await browser.newContext({ ...base, ...extra });
-  await ctx.route(/espncdn\.com/, (r) => r.abort()); // monogram avatars only
+  if (!allowHeadshots) await ctx.route(/espncdn\.com/, (r) => r.abort()); // monogram avatars only
   await ctx.addInitScript(() => { try { localStorage.setItem("gr-install-dismissed", "1"); } catch {} });
   await ctx.addInitScript(lib.demoGuardScript);
   return ctx;
@@ -40,6 +43,7 @@ const slowScroll = async (p, y, steps = 12) => { for (let i = 0; i < steps; i++)
 
 // Frames come from the shared Page.captureScreenshot loop (capture-lib.mjs, device-metrics override, DSF 5) and are stitched to a 30 fps clip.
 async function record(name, fn) {
+  allowHeadshots = !!SPOT_OPTS[name]?.allowHeadshots;
   const ctx = await mk({ storageState: state });
   const page = await ctx.newPage();
   const dir = `${OUT}/_${name}`;
