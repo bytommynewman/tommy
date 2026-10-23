@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+@PROFILE.md
+
 ## What this is
 
 "Tommy" — a personal life OS built with Expo Router: planner, calendar, habit & recovery tracker, journal, goals, fitness, content pipeline, relationships, an AI therapist-mode chat, and an investing/portfolio section. Supabase (Postgres + Auth + Edge Functions) is the only backend; there is no separate server.
 
-The project is built in milestones (M1, M2, M9, M11, M12, ... referenced in migration/code comments); large parts of the tab structure under `app/(tabs)/` are currently placeholder screens (`components/ui/PlaceholderScreen.tsx`) waiting on later milestones. Only auth (M... profiles) and habits/recovery (M2) have real data layers as of now.
+The project is built in milestones (M1, M2, M9, M11, M12, ... referenced in migration/code comments); large parts of the tab structure under `app/(tabs)/` are currently placeholder screens (`components/ui/PlaceholderScreen.tsx`) waiting on later milestones. Real data layers now exist for auth/profiles, habits/recovery (M2), content (M... `lib/api/content.ts`) and invest (market + portfolio); `plan`, `reflect` and `life` are still largely placeholders.
 
 ## Commands
 
@@ -51,6 +53,8 @@ New domains (journal, goals, fitness, etc.) should follow this same `api/` → `
 
 **Database/RLS** — every table has `user_id` and row-level security scoped to `auth.uid() = user_id`; `habits`/`habit_logs`/`relapse_incidents` default `user_id` server-side via `default auth.uid()`. `updated_at` columns are maintained by a shared `set_updated_at()` trigger rather than app code. New tables should follow this same RLS + trigger convention. `profiles` rows are auto-created via a trigger (`handle_new_user`) on `auth.users` insert, so app code should never need to handle a "missing profile" case for a valid session.
 
-**Scratch agent** — supabase/functions/scratch-agent is a Claude tool-use loop (model constant claude-opus-4-8) over the caller's own data: the client is constructed with the caller's JWT so every read/write is RLS-scoped. Tools: upsert_habit_log, create_habit, log_relapse, list_recent_logs. Chat history persists in scratch_messages (migration 0003). The app calls it only through lib/api/scratch.ts → lib/hooks/useScratch.ts; ANTHROPIC_API_KEY exists only as an edge-function secret, and every Scratch surface degrades gracefully when it's unset.
+**Scratch agent** — supabase/functions/scratch-agent is a Claude tool-use loop (model constant claude-sonnet-5) over the caller's own data: the client is constructed with the caller's JWT so every read/write is RLS-scoped. Tools: upsert_habit_log, create_habit, log_relapse, list_recent_logs. Chat history persists in scratch_messages (migration 0003). The app calls it only through lib/api/scratch.ts → lib/hooks/useScratch.ts; ANTHROPIC_API_KEY exists only as an edge-function secret, and every Scratch surface degrades gracefully when it's unset.
+
+**Other edge functions** — `content-agent` (reel-idea generation for the content section, same `claude-sonnet-5` constant and RLS-scoped-JWT pattern as scratch-agent), `render-reel` (auto-cuts uploaded clips into a reel via Shotstack; `SHOTSTACK_API_KEY` secret, free `stage` env watermarks renders), `ig-sync` (pulls real @bytommynewman profile/media stats through the Meta Graph API using the `IG_ACCESS_TOKEN` secret — read-only, expires ~60 days, see `CONNECT-INSTAGRAM.md`), `market-data` (Finnhub quotes for the five majors) and `snaptrade-portfolio` (Wealthsimple holdings via SnapTrade). Like Scratch, each degrades gracefully when its secret is unset.
 
 **Business logic helpers** — pure functions like `lib/streaks.ts` (`buildStreak`, `daysClean`) take already-fetched data (habits/logs/relapses) and compute derived values; keep this kind of logic out of components and out of the query hooks so it stays testable in isolation.
