@@ -129,8 +129,8 @@ const ANCHORS = {
   nub: [{ x: 28, y: 63, w: 12, z: 4 }, { x: 69, y: 63, w: 12, z: 4 }],
   wing: [{ x: 14, y: 66, w: 32, z: 0, flip: true }, { x: 86, y: 58, w: 32, z: 0 }],
   eye: [{ x: 30, y: 7, w: 12, z: 5 }, { x: 67, y: 7, w: 12, z: 5 }],
-  antenna: [{ x: 51, y: -3, w: 17, z: 5 }],
-  hat: [{ x: 48, y: -4, w: 30, z: 6 }],
+  antenna: [{ x: 51, y: -1, w: 17, z: 5 }],
+  hat: [{ x: 48, y: 0, w: 30, z: 6 }],
   face: [{ x: 44, y: 37, w: 30, z: 6 }],
   flower: [{ x: 67, y: 22, w: 14, z: 6 }],
   held: [{ x: 29, y: 93, w: 14, z: 6 }],
@@ -313,9 +313,8 @@ function askHTML(v) {
         <button class="btn lime" type="submit">GO</button>
       </form>
       <p class="tries" aria-live="polite">${tries}</p>
-      <p style="text-align:right"><button id="skip" class="link" type="button">Skip this one</button></p>
-    </section>
-    <section class="nest">${oddlerHTML(v.colour, v.parts, "small")}</section>`;
+      <div class="askfoot"><button id="skip" class="link" type="button">Skip this one</button>${oddlerHTML(v.colour, v.parts, "mini")}</div>
+    </section>`;
 }
 
 function startTimer(v) {

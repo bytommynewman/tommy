@@ -137,7 +137,16 @@
       @keyframes pop { 0% { scale: 0; } 100% { scale: 1; } }
       .oddler .part.new.flip { animation: popflip 500ms cubic-bezier(.2,1.6,.4,1) both; }
       @keyframes popflip { 0% { transform: translate(-50%, -50%) scaleX(-1) scale(0); } 100% { transform: translate(-50%, -50%) scaleX(-1) scale(1); } }
-      .nest { text-align: center; }
+      .nest { text-align: center; padding-top: clamp(28px, 10vw, 48px); }
+      .oddler { isolation: isolate; }
+      /* On the prompt screen the Oddler peeks from the panel's corner so it can
+         never push the question or sit under the keyboard. */
+      .askfoot { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2px; }
+      .oddler.mini { width: 78px; margin: 0; flex: 0 0 auto; }
+      @media (max-height: 600px) {
+        .prompt { font-size: 20px; margin: 6px 0 4px; }
+        .oddler.mini { display: none; }
+      }
 
       /* play */
       .hud { display: flex; justify-content: space-between; align-items: center; font-family: var(--pixel); font-size: 10px; }
