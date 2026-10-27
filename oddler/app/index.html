@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <title>Oddler</title>
-    <meta name="description" content="Only odd answers score. Seven prompts, 10 seconds each — the rarer your correct answer, the odder your Oddler grows." />
+    <meta name="description" content="Only odd answers score. Seven prompts, 10 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
     <meta property="og:title" content="Oddler" />
-    <meta property="og:description" content="Only odd answers score. Seven prompts, 10 seconds each — the rarer your correct answer, the odder your Oddler grows." />
+    <meta property="og:description" content="Only odd answers score. Seven prompts, 10 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/art/cover.png" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -197,6 +197,28 @@
       .tut .ex button[aria-pressed="true"] { border-color: var(--lime); }
       .ladderlist { display: grid; gap: 5px; margin: 10px 0; font-size: 14px; }
       .ladderlist div { display: flex; justify-content: space-between; align-items: center; }
+
+      /* duo */
+      .code { font-family: var(--pixel); font-size: 30px; letter-spacing: 0.18em; color: var(--lime); margin: 8px 0; }
+      .team { display: flex; gap: 10px; justify-content: center; align-items: flex-end; padding-top: clamp(20px, 6vw, 34px); }
+      .team .seat { flex: 1; text-align: center; border-radius: 12px; padding: 6px 4px 2px; border: 2px solid transparent; }
+      .team .seat .oddler { width: min(36vw, 150px); }
+      .team.compact { padding-top: 10px; margin-top: 6px; }
+      .team.compact .seat .oddler.mini { width: 72px; margin: 0 auto; }
+      .team .seat.turn { border-color: var(--lime); background: rgba(184,230,46,0.08); }
+      .seatname { font-size: 9px; color: var(--dim); margin: 6px 0 0; }
+      .seat.turn .seatname { color: var(--lime); }
+      .waiting { display: grid; place-items: center; height: 100%; font-family: var(--pixel); font-size: 9px; line-height: 1.8; color: var(--dim); border: 2px dashed var(--line); border-radius: 12px; text-align: center; }
+      .chip.lime { background: var(--lime); color: var(--plum); }
+      .live { border: 2px solid var(--line); border-radius: 10px; padding: 10px 14px; background: rgba(27,16,38,0.9); min-height: 58px; }
+      .livelabel { font-size: 8px; color: var(--dim); display: block; margin-bottom: 4px; }
+      .livetext { font-size: 18px; color: var(--white); min-height: 1.4em; word-break: break-word; }
+      .caret { display: inline-block; width: 2px; height: 1.1em; background: var(--lime); vertical-align: text-bottom; margin-left: 2px; animation: blink 1s steps(2) infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+      .about { margin: 10px 0 14px; border: 2px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+      .about summary { cursor: pointer; font-weight: 700; }
+      .about p { color: var(--dim); }
+      @media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
 
       .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--lime); color: var(--plum); font-family: var(--pixel); font-size: 10px; padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity 200ms; pointer-events: none; z-index: 10; }
       .toast.show { opacity: 1; }

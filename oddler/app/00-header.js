@@ -11,12 +11,14 @@
  * seeded generator stored in state (`rng`), advanced inside applyAction.
  */
 
-export const meta = { game: "Oddler", minPlayers: 1, maxPlayers: 1 };
+export const meta = { game: "Oddler", minPlayers: 1, maxPlayers: 2 };
 
 export const ROUND_MS = 10_000;
 /** Network slack past the 25s: a late-but-honest answer still counts. */
 export const GRACE_MS = 2_000;
 export const CLASSIC_ROUNDS = 7;
+/** Duo: ten prompts, partners alternate, one team score. */
+export const DUO_ROUNDS = 10;
 export const ENDLESS_STRIKES = 3;
 export const MODES = ["classic", "endless", "practice"];
 export const COLOURS = ["pink", "mint", "lav", "sand", "slate", "char"];

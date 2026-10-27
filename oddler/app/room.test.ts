@@ -215,18 +215,114 @@ describe("isolation and persistence", () => {
     again.ws.close();
   });
 
-  it("seats only one player: a second joiner spectates and cannot act", async () => {
-    const room = uniq("spectator");
-    const { p } = await started(room);
+  it("seats two players in a code room; a third joiner spectates", async () => {
+    const room = uniq("duo-seats");
+    const h = await open(room);
+    h.send({ type: "join", playerId: "host" });
+    await h.phase("lobby");
+    h.send({ type: "action", action: { kind: "sit", colour: "mint" } });
+    await h.phase("duo-lobby");
+    const g = await open(room);
+    g.send({ type: "join", playerId: "guest" });
+    await g.state();
+    g.send({ type: "action", action: { kind: "sit", colour: "sand" } });
+    const seated = await g.next((f) => f?.type === "state" && f.view?.duo?.players?.length === 2, "two seated");
+    expect(seated.view.duo.seated).toBe(true);
+    expect(seated.view.duo.host).toBe("host");
+
     const s = await open(room);
     s.send({ type: "join", playerId: "watcher" });
     const asWatcher = await s.state();
-    expect(asWatcher.seats).toEqual(["tommy"]);
+    expect(asWatcher.seats).toEqual(["host", "guest"]);
+    expect(asWatcher.view.duo.seated).toBe(false);
     s.frames.length = 0;
     s.send({ type: "action", action: { kind: "skip" } });
     expect((await s.error()).error).toBe("spectators cannot act");
-    p.ws.close();
-    s.ws.close();
+    h.ws.close(); g.ws.close(); s.ws.close();
+  });
+});
+
+describe("duo", () => {
+  /** Two seated players in a fresh code room, game started by the host. */
+  async function duoStarted(room: string) {
+    const h = await open(room);
+    h.send({ type: "join", playerId: "host" });
+    await h.phase("lobby");
+    h.send({ type: "action", action: { kind: "sit", colour: "mint" } });
+    await h.phase("duo-lobby");
+    const g = await open(room);
+    g.send({ type: "join", playerId: "guest" });
+    await g.state();
+    g.send({ type: "action", action: { kind: "sit", colour: "sand" } });
+    await g.next((f) => f?.type === "state" && f.view?.duo?.players?.length === 2, "two seated");
+    await h.next((f) => f?.type === "state" && f.view?.duo?.players?.length === 2, "two seated");
+    h.frames.length = 0; g.frames.length = 0;
+    h.send({ type: "action", action: { kind: "start", mode: "duo", seed: 3 } });
+    const hv = await h.phase("ask");
+    const gv = await g.phase("ask");
+    h.frames.length = 0; g.frames.length = 0;
+    return { h, g, hv, gv };
+  }
+
+  it("only the host starts, and only with a partner seated", async () => {
+    const room = uniq("duo-start");
+    const h = await open(room);
+    h.send({ type: "join", playerId: "host" });
+    await h.phase("lobby");
+    h.send({ type: "action", action: { kind: "sit" } });
+    await h.phase("duo-lobby");
+    h.frames.length = 0;
+    h.send({ type: "action", action: { kind: "start", mode: "duo" } });
+    expect((await h.error()).error).toBe("waiting for your partner");
+    h.ws.close();
+  });
+
+  it("alternates turns, shows the partner live typing, and pools the score", async () => {
+    const { h, g, hv, gv } = await duoStarted(uniq("duo-play"));
+    expect(hv.view.totalRounds).toBe(10);
+    expect(hv.view.round.yourTurn).toBe(true);
+    expect(gv.view.round.yourTurn).toBe(false);
+
+    g.send({ type: "action", action: { kind: "answer", text: "France" } });
+    expect((await g.error()).error).toBe("not your turn");
+    g.frames.length = 0;
+
+    h.send({ type: "action", action: { kind: "typing", text: "Liech" } });
+    const typed = await g.next((f) => f?.type === "state" && f.view?.round?.typing === "Liech", "partner typing");
+    expect(typed.view.round.typing).toBe("Liech");
+    const echo = await h.next((f) => f?.type === "state" && f.view?.round, "host state");
+    expect(echo.view.round.typing).toBeNull();
+    h.frames.length = 0; g.frames.length = 0;
+
+    h.send({ type: "action", action: { kind: "skip" } });
+    await h.phase("reveal");
+    await g.phase("reveal");
+    h.frames.length = 0; g.frames.length = 0;
+    g.send({ type: "action", action: { kind: "next" } });
+    const r2 = await g.phase("ask");
+    expect(r2.view.roundNo).toBe(2);
+    expect(r2.view.round.yourTurn).toBe(true);
+    expect(r2.view.duo.players.find((p: any) => p.id === "guest").isTurn).toBe(true);
+    h.ws.close(); g.ws.close();
+  });
+
+  it("finishes after ten rounds with one team score, then the host can go again", async () => {
+    const { h, g } = await duoStarted(uniq("duo-ten"));
+    for (let i = 0; i < 10; i++) {
+      const who = i % 2 === 0 ? h : g;
+      who.send({ type: "action", action: { kind: "skip" } });
+      await who.phase("reveal");
+      h.frames.length = 0; g.frames.length = 0;
+      who.send({ type: "action", action: { kind: "next" } });
+      const after = await who.next((f) => f?.type === "state" && f.view?.phase !== "reveal", "after next");
+      h.frames.length = 0; g.frames.length = 0;
+      if (i < 9) expect(after.view.phase).toBe("ask"); else expect(after.view.phase).toBe("done");
+    }
+    const done = await (async () => { h.send({ type: "action", action: { kind: "start", mode: "duo" } }); return h.phase("ask"); })();
+    // The second game opens on the other partner's turn.
+    expect(done.view.round.yourTurn).toBe(false);
+    expect(done.view.score).toBe(0);
+    h.ws.close(); g.ws.close();
   });
 });
 
