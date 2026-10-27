@@ -91,9 +91,11 @@ async function api(method, body) {
 /** Sign up / log in / log out. On success the browser switches to the account's session token. */
 async function auth(path, body) {
   try {
+    // Plain text on purpose: the hosting edge challenges JSON-typed POSTs from
+    // some clients and the server parses the body as JSON regardless.
     const res = await fetch("/api/" + path, {
       method: "POST",
-      headers: { "x-oddler-token": TOKEN, "content-type": "application/json" },
+      headers: { "x-oddler-token": TOKEN, "content-type": "text/plain" },
       body: JSON.stringify(body || {}),
     });
     const data = await res.json().catch(() => ({}));
