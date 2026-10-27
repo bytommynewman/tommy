@@ -210,7 +210,11 @@ function onState(msg) {
   if (!v) { setStatus(msg.status === "waiting" ? "waiting…" : ""); return; }
   const prev = view;
   view = v;
-  if (!booted) { booted = true; TIERS_CACHE = v.tiers.slice(1); }
+  if (!booted) {
+    booted = true; TIERS_CACHE = v.tiers.slice(1);
+    // A fresh page load after a finished game opens on the lobby, not stale results.
+    if (v.phase === "done" && !v.duo) showingLobby = true;
+  }
 
   const duoRoom = Boolean(roomParam);
   if (duoRoom && !satDown && !(v.duo && v.duo.seated)) {
