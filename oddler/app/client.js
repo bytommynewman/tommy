@@ -480,7 +480,7 @@ function startTimer(v) {
       panel?.classList.remove("shake");
       if (vignette) { vignette.classList.remove("danger"); vignette.style.setProperty("--urg", "0"); }
       sfx.buzz();
-      act({ kind: "skip" });
+      act({ kind: "skip", timeout: true });
     }
   };
   tick();

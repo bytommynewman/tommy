@@ -338,7 +338,8 @@ export function applyAction(state, playerId, action) {
     case "typing":
       return { ...state, round: { ...state.round, typing: action.text } };
     case "skip":
-      return endRound(state, { answer: null, timedOut: timedOut(state, at) });
+      // A client that hit zero says so; the server's own clock also counts.
+      return endRound(state, { answer: null, timedOut: timedOut(state, at) || action.timeout === true });
     case "answer": {
       if (timedOut(state, at)) return endRound(state, { answer: null, typed: action.text, timedOut: true });
       const hit = matchAnswer(BY_ID[state.round.q], action.text);
