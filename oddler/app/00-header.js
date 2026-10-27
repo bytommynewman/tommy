@@ -13,7 +13,7 @@
 
 export const meta = { game: "Oddler", minPlayers: 1, maxPlayers: 2 };
 
-export const ROUND_MS = 5_000;
+export const ROUND_MS = 10_000;
 /** Network slack past the 25s: a late-but-honest answer still counts. */
 export const GRACE_MS = 2_000;
 export const CLASSIC_ROUNDS = 7;

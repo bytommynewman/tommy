@@ -279,7 +279,7 @@ function recordBest(v) {
 }
 
 const MODE_INFO = {
-  classic: ["Classic", "7 prompts · 5s each"],
+  classic: ["Classic", "7 prompts · 10s each"],
   endless: ["Endless", "Until 3 misses"],
   practice: ["Practice", "No clock, same rules"],
 };
@@ -371,7 +371,7 @@ function duoLobbyHTML(v) {
       <p style="margin-top:14px">${isHost
         ? `<button id="start" class="btn" type="button" ${partner ? "" : "disabled"}>${partner ? "▼ START DUO ▼" : "WAITING FOR PARTNER"}</button>`
         : `<p class="px small dim" style="text-align:center">${partner ? "WAITING FOR THE HOST TO START" : "WAITING…"}</p>`}</p>
-      <p class="small dim" style="text-align:center">10 prompts, 5 s each. You take turns; your partner sees you type. Points add up to one team score.</p>
+      <p class="small dim" style="text-align:center">10 prompts, 10 s each. You take turns; your partner sees you type. Points add up to one team score.</p>
       <p style="text-align:center"><a class="link" href="/">Leave room</a></p>
     </section>`;
 }
