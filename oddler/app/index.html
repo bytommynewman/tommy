@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <title>Oddler</title>
-    <meta name="description" content="Only odd answers score. Seven prompts, 10 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
+    <meta name="description" content="Only odd answers score. Seven prompts, 5 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
     <meta property="og:title" content="Oddler" />
-    <meta property="og:description" content="Only odd answers score. Seven prompts, 10 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
+    <meta property="og:description" content="Only odd answers score. Seven prompts, 5 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/art/cover.png" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -154,12 +154,31 @@
       .strikes { letter-spacing: 3px; }
       .chip { display: inline-block; font-family: var(--pixel); font-size: 9px; padding: 5px 8px; border-radius: 6px; background: var(--purple); color: var(--cream); }
       .prompt { font-size: 24px; font-weight: 700; line-height: 1.25; margin: 10px 0 6px; }
-      .timer { display: flex; align-items: center; gap: 12px; margin: 10px 0 8px; }
-      .timer .bar { flex: 1; height: 12px; background: var(--purple); border-radius: 6px; overflow: hidden; border: 2px solid var(--line); }
-      .timer .fill { height: 100%; width: 100%; background: var(--lime); transition: width 250ms linear; }
-      .timer .fill.low { background: var(--rust); }
-      .timer .secs { font-family: var(--pixel); font-size: 18px; min-width: 2.2em; text-align: right; }
-      .timer .secs.low { color: var(--rust); }
+      /* the clock */
+      .clock { display: flex; align-items: center; gap: 14px; margin: 10px 0 10px; }
+      .clock .bar { flex: 1; height: 14px; background: var(--purple); border-radius: 7px; overflow: hidden; border: 2px solid var(--line); }
+      .clock .fill { height: 100%; width: 100%; background: var(--lime); transition: width 60ms linear; }
+      .clock .count { font-family: var(--pixel); font-size: 40px; line-height: 1; min-width: 1.3em; text-align: center; color: var(--lime); text-shadow: 0 0 12px rgba(184,230,46,0.5); }
+      .clock .count.punch { animation: punch 320ms cubic-bezier(.2,1.4,.4,1); }
+      @keyframes punch { 0% { transform: scale(1.7); } 100% { transform: scale(1); } }
+      .clock.warn .fill { background: var(--rust); }
+      .clock.warn .count { color: var(--rust); text-shadow: 0 0 14px rgba(232,116,59,0.7); }
+      .clock.danger .fill { background: #ff3b3b; }
+      .clock.danger .count { color: #ff3b3b; text-shadow: 0 0 18px rgba(255,59,59,0.9); animation: throb 300ms ease-in-out infinite alternate; }
+      @keyframes throb { from { transform: scale(1); } to { transform: scale(1.25); } }
+      .panel.shake { animation: shake 90ms linear infinite; }
+      @keyframes shake { 0% { transform: translate(0,0); } 25% { transform: translate(2px,-1px); } 50% { transform: translate(-2px,1px); } 75% { transform: translate(1px,2px); } 100% { transform: translate(-1px,-2px); } }
+      #vignette { position: fixed; inset: 0; pointer-events: none; z-index: 5; --urg: 0;
+        background: radial-gradient(ellipse at center, rgba(255,40,40,0) 45%, rgba(255,40,40,0.55) 100%);
+        opacity: calc(var(--urg) * 0.8); transition: opacity 120ms linear; }
+      #vignette.danger { animation: flashvig 260ms ease-in-out infinite alternate; }
+      @keyframes flashvig { from { opacity: 0.35; } to { opacity: 0.95; } }
+      /* who is on the clock */
+      .onclock { margin-top: 12px; padding: 12px 10px; border-radius: 10px; text-align: center; font-family: var(--pixel); font-size: 12px; letter-spacing: 0.04em; }
+      .onclock.you { background: var(--lime); color: var(--plum); animation: glow 900ms ease-in-out infinite alternate; }
+      .onclock.them { background: var(--purple); color: var(--cream); border: 2px solid var(--line); }
+      @keyframes glow { from { box-shadow: 0 0 0 0 rgba(184,230,46,0.0); } to { box-shadow: 0 0 22px 4px rgba(184,230,46,0.55); } }
+      .team .seat.turn { border-color: var(--lime); background: rgba(184,230,46,0.10); animation: glow 900ms ease-in-out infinite alternate; }
       .answer { display: flex; gap: 8px; }
       .answer input {
         flex: 1; min-width: 0; border: 2px solid var(--line); border-radius: 10px; padding: 14px 14px;
@@ -205,7 +224,6 @@
       .team .seat .oddler { width: min(36vw, 150px); }
       .team.compact { padding-top: 10px; margin-top: 6px; }
       .team.compact .seat .oddler.mini { width: 72px; margin: 0 auto; }
-      .team .seat.turn { border-color: var(--lime); background: rgba(184,230,46,0.08); }
       .seatname { font-size: 9px; color: var(--dim); margin: 6px 0 0; }
       .seat.turn .seatname { color: var(--lime); }
       .waiting { display: grid; place-items: center; height: 100%; font-family: var(--pixel); font-size: 9px; line-height: 1.8; color: var(--dim); border: 2px dashed var(--line); border-radius: 12px; text-align: center; }
@@ -225,8 +243,8 @@
       #status { font-family: var(--pixel); font-size: 9px; color: var(--dim); text-align: center; }
       #status.error { color: var(--rust); }
       @media (prefers-reduced-motion: reduce) {
-        .oddler.idle, .oddler .part.new { animation: none; }
-        .timer .fill, .oddler { transition: none; }
+        .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake { animation: none; }
+        .clock .fill, .oddler { transition: none; }
       }
       @media (min-width: 700px) {
         body { font-size: 18px; }
@@ -246,6 +264,7 @@
       <main id="screen" aria-live="polite"></main>
       <p id="status"></p>
     </div>
+    <div id="vignette" aria-hidden="true"></div>
     <div id="toast" class="toast" role="status"></div>
     <script type="module" src="/client.js"></script>
   </body>

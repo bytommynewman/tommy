@@ -112,6 +112,8 @@ const sfx = {
   score: (tier) => { for (let i = 0; i <= tier; i++) beep(440 + i * 110, 90, "square", 0.04, i * 0.07); },
   click: () => beep(660, 40, "square", 0.02),
   join: () => { beep(523, 80, "square", 0.04); beep(784, 120, "square", 0.04, 0.09); },
+  beat: (urg) => { const g = 0.05 + 0.08 * urg; beep(70 + 30 * urg, 70, "sine", g); beep(55 + 25 * urg, 90, "sine", g * 0.8, 0.12); },
+  buzz: () => beep(110, 350, "sawtooth", 0.06),
 };
 const muteBtn = $("#mute");
 function drawMute() {
@@ -252,6 +254,7 @@ function render() {
   screen.dataset.phase = v.phase;
   screen.dataset.round = v.round ? String(v.round.startedAt) : "";
   clearInterval(timerHandle);
+  const vig = $("#vignette"); if (vig) { vig.classList.remove("danger"); vig.style.setProperty("--urg", "0"); }
   if (v.duo && !v.duo.seated && (v.duo.players.length >= 2 || v.phase !== "duo-lobby")) screen.innerHTML = spectatorHTML(v);
   else if (v.phase === "duo-lobby") screen.innerHTML = v.duo && v.duo.seated ? duoLobbyHTML(v) : joiningHTML();
   else if (v.phase === "lobby" || v.phase === "done" && showingLobby) screen.innerHTML = lobbyHTML(v);
@@ -272,7 +275,7 @@ function recordBest(v) {
 }
 
 const MODE_INFO = {
-  classic: ["Classic", "7 prompts · 10s each"],
+  classic: ["Classic", "7 prompts · 5s each"],
   endless: ["Endless", "Until 3 misses"],
   practice: ["Practice", "No clock, same rules"],
 };
@@ -364,7 +367,7 @@ function duoLobbyHTML(v) {
       <p style="margin-top:14px">${isHost
         ? `<button id="start" class="btn" type="button" ${partner ? "" : "disabled"}>${partner ? "▼ START DUO ▼" : "WAITING FOR PARTNER"}</button>`
         : `<p class="px small dim" style="text-align:center">${partner ? "WAITING FOR THE HOST TO START" : "WAITING…"}</p>`}</p>
-      <p class="small dim" style="text-align:center">10 prompts, 10 s each. You take turns; your partner sees you type. Points add up to one team score.</p>
+      <p class="small dim" style="text-align:center">10 prompts, 5 s each. You take turns; your partner sees you type. Points add up to one team score.</p>
       <p style="text-align:center"><a class="link" href="/">Leave room</a></p>
     </section>`;
 }
@@ -415,7 +418,7 @@ function askHTML(v) {
   const mine = r.yourTurn;
   const tries = triesHTML(r);
   const timer = timed
-    ? `<div class="timer" aria-hidden="true"><div class="bar"><div class="fill" id="fill"></div></div><span class="secs" id="secs">${Math.ceil(v.roundMs / 1000)}</span></div>`
+    ? `<div class="clock" id="clock" aria-hidden="true"><div class="count" id="secs">${Math.ceil(v.roundMs / 1000)}</div><div class="bar"><div class="fill" id="fill"></div></div></div>`
     : `<p class="small dim">No clock — take your time.</p>`;
   const input = mine
     ? `<form class="answer" id="form" autocomplete="off">
@@ -429,9 +432,10 @@ function askHTML(v) {
     : `<div class="askfoot"><button id="skip" class="link" type="button">Skip this one</button>${oddlerHTML(v.colour, v.parts, "mini")}</div>`;
   const duoSkip = v.duo && mine ? `<p style="text-align:right;margin:0"><button id="skip" class="link" type="button">Skip this one</button></p>` : "";
   return `
-    <section class="panel">
+    <section class="panel ask" id="askpanel">
       ${hudHTML(v)}
-      <p style="margin-top:12px"><span class="chip">${esc(r.category)}</span>${v.duo ? ` <span class="chip ${mine ? "lime" : ""}">${mine ? "YOUR TURN" : "PARTNER'S TURN"}</span>` : ""}</p>
+      ${v.duo ? `<div class="onclock ${mine ? "you" : "them"}">${mine ? "▶ YOU'RE ON THE CLOCK ◀" : "PARTNER IS ON THE CLOCK"}</div>` : ""}
+      <p style="margin-top:${v.duo ? 8 : 12}px"><span class="chip">${esc(r.category)}</span></p>
       <p class="prompt" id="prompt">${esc(r.prompt)}</p>
       ${timer}
       ${input}
@@ -442,31 +446,45 @@ function askHTML(v) {
 }
 
 function startTimer(v) {
-  const fill = $("#fill"), secs = $("#secs");
+  const fill = $("#fill"), secs = $("#secs"), clock = $("#clock"), panel = $("#askpanel");
+  const vignette = $("#vignette");
   if (!fill || v.roundMs == null) return;
   let lastWhole = Infinity;
+  let nextBeat = 0;
   const mine = v.round.yourTurn;
   const tick = () => {
     const elapsed = performance.now() - roundLocalStart;
     const left = Math.max(0, v.roundMs - elapsed);
+    const urg = 1 - left / v.roundMs;            // 0 calm → 1 out of time
     fill.style.width = `${(left / v.roundMs) * 100}%`;
     const whole = Math.ceil(left / 1000);
-    secs.textContent = String(whole);
-    const low = left < 4000;
-    fill.classList.toggle("low", low); secs.classList.toggle("low", low);
-    if (low && whole < lastWhole && whole > 0) sfx.tick();
-    lastWhole = whole;
+    if (whole !== lastWhole) {
+      secs.textContent = String(whole);
+      // Re-trigger the punch animation on every new digit.
+      secs.classList.remove("punch"); void secs.offsetWidth; secs.classList.add("punch");
+      if (whole > 0 && whole <= 3) sfx.tick();
+      lastWhole = whole;
+    }
+    clock.classList.toggle("warn", left < 3000);
+    clock.classList.toggle("danger", left < 1500);
+    panel?.classList.toggle("shake", left < 1200 && left > 0 && !reduced);
+    if (vignette) { vignette.style.setProperty("--urg", urg.toFixed(3)); vignette.classList.toggle("danger", left < 1500 && left > 0); }
+    // Heartbeat that speeds up as the clock runs down.
+    if (left > 0 && elapsed >= nextBeat) { sfx.beat(urg); nextBeat = elapsed + (900 - 600 * urg); }
     // The player on turn closes the round at zero; a partner only steps in
     // after the server's grace has passed too (their skip is refused before).
     const slack = mine ? 0 : 2600;
     if (left <= 0 && elapsed >= v.roundMs + slack && !autoSkipped) {
       autoSkipped = true;
       clearInterval(timerHandle);
+      panel?.classList.remove("shake");
+      if (vignette) { vignette.classList.remove("danger"); vignette.style.setProperty("--urg", "0"); }
+      sfx.buzz();
       act({ kind: "skip" });
     }
   };
   tick();
-  timerHandle = setInterval(tick, 100);
+  timerHandle = setInterval(tick, 50);
 }
 
 // reveal -------------------------------------------------------------------
