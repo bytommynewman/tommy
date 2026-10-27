@@ -239,7 +239,7 @@ function recordBest(v) {
 }
 
 const MODE_INFO = {
-  classic: ["Classic", "7 prompts · 25s each"],
+  classic: ["Classic", "7 prompts · 10s each"],
   endless: ["Endless", "Until 3 misses"],
   practice: ["Practice", "No clock, same rules"],
 };
@@ -306,7 +306,7 @@ function askHTML(v) {
       ${hudHTML(v)}
       <p style="margin-top:12px"><span class="chip">${esc(r.category)}</span></p>
       <p class="prompt" id="prompt">${esc(r.prompt)}</p>
-      ${timed ? `<div class="timer" aria-hidden="true"><div class="bar"><div class="fill" id="fill"></div></div><span class="secs" id="secs">25</span></div>` : `<p class="small dim">No clock — take your time.</p>`}
+      ${timed ? `<div class="timer" aria-hidden="true"><div class="bar"><div class="fill" id="fill"></div></div><span class="secs" id="secs">10</span></div>` : `<p class="small dim">No clock — take your time.</p>`}
       <form class="answer" id="form" autocomplete="off">
         <label class="sr" for="answer">Your answer</label>
         <input id="answer" name="answer" type="text" placeholder="Type an uncommon answer…" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="80" required />
@@ -328,7 +328,7 @@ function startTimer(v) {
     fill.style.width = `${(left / v.roundMs) * 100}%`;
     const whole = Math.ceil(left / 1000);
     secs.textContent = String(whole);
-    const low = left < 6000;
+    const low = left < 4000;
     fill.classList.toggle("low", low); secs.classList.toggle("low", low);
     if (low && whole < lastWhole && whole > 0) sfx.tick();
     lastWhole = whole;
