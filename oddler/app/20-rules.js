@@ -200,7 +200,26 @@ function freshRound(state, at) {
 
 const ACTIONS = new Set(["start", "answer", "skip", "next", "restart", "sit", "colour", "typing"]);
 
+/**
+ * Rooms persist their state on the server, so a room created by an older
+ * version of these rules can arrive without the fields later versions added.
+ * Fill the gaps before reading anything; a fresh state passes straight through.
+ */
+function migrate(state) {
+  if (!state || typeof state !== "object") return setup(["?"]);
+  const fresh = state.kind !== undefined && Array.isArray(state.players) && state.profiles && Array.isArray(state.seen)
+    && Number.isInteger(state.games) && (!state.round || state.round.turn !== undefined);
+  if (fresh) return state;
+  const s = { kind: "solo", players: [], profiles: {}, games: 0, seen: [], ...state };
+  if (!Array.isArray(s.used)) s.used = [];
+  if (!Array.isArray(s.history)) s.history = [];
+  if (!Array.isArray(s.parts)) s.parts = [];
+  if (s.round && s.round.turn === undefined) s.round = { ...s.round, turn: s.player, typing: "" };
+  return s;
+}
+
 export function validateAction(state, playerId, action) {
+  state = migrate(state);
   if (!action || typeof action !== "object") return { ok: false, error: "action must be an object" };
   if (!ACTIONS.has(action.kind)) return { ok: false, error: "unknown action" };
   if (!Number.isFinite(action.at)) return { ok: false, error: "missing clock" };
@@ -311,6 +330,7 @@ function resetKeepingSeats(state, seed) {
 }
 
 export function applyAction(state, playerId, action) {
+  state = migrate(state);
   const at = action.at;
   switch (action.kind) {
     case "sit": {
@@ -375,7 +395,9 @@ function odderPicks(q, tier) {
 }
 
 export function viewFor(state, playerId) {
-  const q = state.round ? BY_ID[state.round.q] : null;
+  state = migrate(state);
+  // A prompt retired from the bank since this room saved it: close the round.
+  const q = state.round && BY_ID[state.round.q] ? BY_ID[state.round.q] : null;
   const duo = state.kind === "duo";
   const view = {
     phase: state.phase,

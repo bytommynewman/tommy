@@ -53,6 +53,13 @@ if (L.viewFor(s).phase !== "done") throw new Error("endless should end after 3 s
   if (ids.includes(L.viewFor(t, "p") && t.round.q)) throw new Error("seen prompt was dealt");
   const bad = L.validateAction(L.setup(["p"]), "p", { kind: "start", mode: "classic", seen: "nope", at: at0 });
   if (bad.ok) throw new Error("seen must be an array"); }
+// old saved rooms (pre-duo shape) keep working
+{ const old = { player: "p", phase: "ask", mode: "classic", colour: "pink", seed: 5, used: [L.QUESTIONS[0].id], round: { q: L.QUESTIONS[0].id, startedAt: at0, tries: [], ended: null }, history: [], score: 0, strikes: 0, parts: [] };
+  const v = L.viewFor(old, "p"); if (!v.round || !v.round.yourTurn) throw new Error("old room: player should be on turn");
+  const ok = L.validateAction(old, "p", { kind: "answer", text: "France", at: at0 + 1 }); if (!ok.ok) throw new Error("old room answer refused: " + ok.error);
+  const lobby = { player: "p", phase: "lobby", mode: null, colour: "pink", seed: 1, used: [], round: null, history: [], score: 0, strikes: 0, parts: [] };
+  const st = L.validateAction(lobby, "p", { kind: "start", mode: "classic", at: at0 }); if (!st.ok) throw new Error("old lobby start refused: " + st.error);
+  const started = L.applyAction(lobby, "p", { kind: "start", mode: "classic", at: at0 }); if (started.phase !== "ask") throw new Error("old lobby start failed"); }
 // duo: two seats, alternating turns, live typing, team score
 let d = L.setup(["h"]);
 const dact = (pid, a) => { const v = L.validateAction(d, pid, a); if (!v.ok) throw new Error(pid + " " + a.kind + ": " + v.error); d = L.applyAction(d, pid, a); };

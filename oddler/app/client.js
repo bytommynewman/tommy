@@ -79,8 +79,12 @@ function toast(text) {
   toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1800);
 }
 const QUIET_ERRORS = new Set(["type an answer", "already seated", "not your turn", "no prompt open"]);
+let resetOnce = false;
 function onError(error) {
   if (QUIET_ERRORS.has(error)) return;
+  // A room whose saved state the rules can no longer read: start it over
+  // (once), rather than leaving the player staring at a dead screen.
+  if (error === "server error" && !resetOnce) { resetOnce = true; send({ type: "reset" }); toast("ROOM RESET"); return; }
   toast(error);
 }
 
