@@ -252,7 +252,7 @@ function render() {
   screen.dataset.round = v.round ? String(v.round.startedAt) : "";
   clearInterval(timerHandle);
   if (v.duo && !v.duo.seated && (v.duo.players.length >= 2 || v.phase !== "duo-lobby")) screen.innerHTML = spectatorHTML(v);
-  else if (v.phase === "duo-lobby") screen.innerHTML = duoLobbyHTML(v);
+  else if (v.phase === "duo-lobby") screen.innerHTML = v.duo && v.duo.seated ? duoLobbyHTML(v) : joiningHTML();
   else if (v.phase === "lobby" || v.phase === "done" && showingLobby) screen.innerHTML = lobbyHTML(v);
   else if (v.phase === "ask") screen.innerHTML = askHTML(v);
   else if (v.phase === "reveal") screen.innerHTML = revealHTML(v);
@@ -366,6 +366,10 @@ function duoLobbyHTML(v) {
       <p class="small dim" style="text-align:center">10 prompts, 10 s each. You take turns; your partner sees you type. Points add up to one team score.</p>
       <p style="text-align:center"><a class="link" href="/">Leave room</a></p>
     </section>`;
+}
+
+function joiningHTML() {
+  return `<section class="panel" style="text-align:center"><h2>Duo room</h2><p class="code">${esc(roomParam)}</p><p class="px small dim">TAKING A SEAT…</p></section>`;
 }
 
 function spectatorHTML(v) {
