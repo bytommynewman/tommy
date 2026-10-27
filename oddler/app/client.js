@@ -229,6 +229,7 @@ function onState(msg) {
     roundKey = null;
   }
   if (v.phase === "reveal" && prev?.phase === "ask") {
+    rememberSeen(v.history.slice(-1));
     const e = v.round.ended;
     if (e.tier) sfx.score(e.tier); else sfx.miss();
     lastNewPart = e.part ? e.part.id : null;
@@ -548,6 +549,14 @@ function shareText(v) {
 
 // wiring -------------------------------------------------------------------
 
+/** Prompts this browser has met, newest last, so later runs avoid them. */
+function seenPrompts() { return store.get("seen", []).slice(-600); }
+function rememberSeen(history) {
+  const seen = store.get("seen", []);
+  for (const h of history) if (h.q && !seen.includes(h.q)) seen.push(h.q);
+  store.set("seen", seen.slice(-600));
+}
+
 function makeCode() {
   const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   let s = "";
@@ -567,8 +576,8 @@ function wire() {
   $("#start")?.addEventListener("click", () => {
     sfx.click();
     showingLobby = false;
-    if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31) });
-    else act({ kind: "start", mode: chosenMode, colour: chosenColour, seed: Math.floor(Math.random() * 2 ** 31) });
+    if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
+    else act({ kind: "start", mode: chosenMode, colour: chosenColour, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
   });
   $("#duo")?.addEventListener("click", () => { sfx.click(); location.href = `/?room=${makeCode()}`; });
   for (const b of document.querySelectorAll("[data-mode]")) {
@@ -615,8 +624,8 @@ function wire() {
   }
   $("#again")?.addEventListener("click", () => {
     sfx.click();
-    if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31) });
-    else act({ kind: "start", mode: v.mode, colour: v.colour, seed: Math.floor(Math.random() * 2 ** 31) });
+    if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
+    else act({ kind: "start", mode: v.mode, colour: v.colour, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
   });
   $("#lobby")?.addEventListener("click", () => { showingLobby = true; render(); });
   $("#share")?.addEventListener("click", async () => {

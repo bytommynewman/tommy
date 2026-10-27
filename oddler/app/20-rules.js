@@ -37,7 +37,7 @@ function parseAnswers(spec) {
 }
 
 /** The parsed bank: one object per prompt, answers with normalized keys. */
-export const QUESTIONS = [...BANK_A, ...BANK_B, ...BANK_C, ...BANK_D].map(([id, category, prompt, spec]) => ({
+export const QUESTIONS = BANKS.map(([id, category, prompt, spec]) => ({
   id, category, prompt, answers: parseAnswers(spec),
 }));
 
@@ -151,6 +151,7 @@ export function setup(players) {
     colour: "pink",
     seed: 1,
     used: [],
+    seen: [],             // prompt ids this player met in earlier runs (sent with `start`)
     round: null,
     history: [],          // finished rounds: { q, prompt, answer, typed, tier, pts, part, timedOut, by }
     score: 0,
@@ -182,7 +183,9 @@ function turnFor(state, n) {
 }
 
 function freshRound(state, at) {
-  const unused = QUESTIONS.filter((q) => !state.used.includes(q.id));
+  let unused = QUESTIONS.filter((q) => !state.used.includes(q.id) && !state.seen.includes(q.id));
+  // Everything already seen: better a repeat than no prompt.
+  if (!unused.length) unused = QUESTIONS.filter((q) => !state.used.includes(q.id));
   if (!unused.length) return null;
   const [q, seed] = pick(state.seed, unused);
   const turn = state.kind === "duo" ? turnFor(state, state.history.length) : state.player;
@@ -231,6 +234,10 @@ export function validateAction(state, playerId, action) {
       if (!MODES.includes(action.mode)) return { ok: false, error: "unknown mode" };
     }
     if (action.colour !== undefined && !COLOURS.includes(action.colour)) return { ok: false, error: "unknown colour" };
+    if (action.seen !== undefined) {
+      if (!Array.isArray(action.seen) || action.seen.length > SEEN_CAP) return { ok: false, error: "bad seen list" };
+      if (!action.seen.every((id) => typeof id === "string" && id.length <= 48)) return { ok: false, error: "bad seen list" };
+    }
     return { ok: true };
   }
   if (kind === "restart") return { ok: true };
@@ -323,7 +330,7 @@ export function applyAction(state, playerId, action) {
       return resetKeepingSeats(state, (at >>> 0) || 1);
     case "start": {
       const seed = ((at ^ (action.seed | 0)) >>> 0) || 1;
-      const base = { ...resetKeepingSeats(state, seed), mode: action.mode };
+      const base = { ...resetKeepingSeats(state, seed), mode: action.mode, seen: Array.isArray(action.seen) ? action.seen : [] };
       if (state.kind === "duo") base.games = state.games + (state.phase === "done" ? 1 : 0);
       else if (action.colour) base.colour = action.colour;
       return freshRound(base, at) ?? { ...base, phase: "done" };

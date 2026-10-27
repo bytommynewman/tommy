@@ -21,6 +21,8 @@ export const CLASSIC_ROUNDS = 7;
 export const DUO_ROUNDS = 10;
 export const ENDLESS_STRIKES = 3;
 export const MODES = ["classic", "endless", "practice"];
+/** Max prompt ids a player may ask us to avoid (seen in earlier runs). */
+export const SEEN_CAP = 600;
 export const COLOURS = ["pink", "mint", "lav", "sand", "slate", "char"];
 
 /** Rarity ladder. `odd` is the one-line reason shown on the reveal screen. */
@@ -68,6 +70,13 @@ export const PARTS = [
   { id: "acc-12", slot: "neck", tier: 3 }, { id: "acc-13", slot: "pack", tier: 3 },
   { id: "acc-14", slot: "neck", tier: 3 }, { id: "acc-15", slot: "pack", tier: 3 },
 ];
+
+/**
+ * The question bank is assembled from every `1*-bank*.js` piece in this
+ * folder (build-logic.sh concatenates them in name order). Each piece appends
+ * its rows here, so an auto-generated file is just another piece.
+ */
+export const BANKS = [];
 
 /** How many of each slot an Oddler can carry. */
 export const SLOT_CAP = {

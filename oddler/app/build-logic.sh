@@ -2,7 +2,7 @@
 # Concatenate the rule pieces into one import-free logic.js and sanity-check it.
 set -euo pipefail
 cd "$(dirname "$0")"
-cat 00-header.js 10-bank-a.js 11-bank-b.js 12-bank-c.js 13-bank-d.js 20-rules.js > logic.js
+cat 00-header.js 1*-bank*.js 20-rules.js > logic.js
 node --input-type=module -e '
 import * as L from "./logic.js";
 const need = ["meta","setup","validateAction","applyAction","isGameOver","viewFor"];
@@ -47,6 +47,12 @@ if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error("nondeterministic s
 s = L.setup(["p1"]); act({ kind: "start", mode: "endless", at: at0 });
 for (let i = 0; i < 3; i++) { act({ kind: "skip", at: at0 + 1 }); act({ kind: "next", at: at0 + 2 }); }
 if (L.viewFor(s).phase !== "done") throw new Error("endless should end after 3 strikes");
+// seen memory: prompts a player already met are avoided
+{ const ids = L.QUESTIONS.slice(0, L.QUESTIONS.length - 2).map((q) => q.id);
+  let t = L.setup(["p"]); t = L.applyAction(t, "p", { kind: "start", mode: "classic", seen: ids, at: at0 });
+  if (ids.includes(L.viewFor(t, "p") && t.round.q)) throw new Error("seen prompt was dealt");
+  const bad = L.validateAction(L.setup(["p"]), "p", { kind: "start", mode: "classic", seen: "nope", at: at0 });
+  if (bad.ok) throw new Error("seen must be an array"); }
 // duo: two seats, alternating turns, live typing, team score
 let d = L.setup(["h"]);
 const dact = (pid, a) => { const v = L.validateAction(d, pid, a); if (!v.ok) throw new Error(pid + " " + a.kind + ": " + v.error); d = L.applyAction(d, pid, a); };
