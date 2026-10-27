@@ -515,10 +515,20 @@ function spectatorHTML(v) {
 
 // ask ----------------------------------------------------------------------
 
-function hudHTML(v) {
+/** Three outs, scoreboard style: a hollow ring is a life left, a red ring with an X through it is a life lost. */
+function livesHTML(strikes, stamp = false) {
+  const life = (i) => {
+    const lost = i < strikes, fresh = stamp && i === strikes - 1;
+    return `<svg class="life${lost ? " lost" : ""}${fresh ? " stamp" : ""}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path class="x" d="M7.5 7.5l9 9M16.5 7.5l-9 9"/></svg>`;
+  };
+  const left = 3 - strikes;
+  return `<span class="lives${strikes >= 3 ? " dead" : ""}" role="img" aria-label="${left} of 3 lives left">${[0, 1, 2].map(life).join("")}</span>`;
+}
+
+function hudHTML(v, stamp = false) {
   let left;
   if (v.duo) left = `DUO · ROUND ${v.roundNo}/${v.totalRounds}`;
-  else if (v.mode === "endless") left = `ENDLESS · ROUND ${v.roundNo} · <span class="strikes" aria-label="${v.strikes} of 3 misses">${"●".repeat(v.strikes)}${"○".repeat(3 - v.strikes)}</span>`;
+  else if (v.mode === "endless") left = `ENDLESS · ROUND ${v.roundNo} ${livesHTML(v.strikes, stamp)}`;
   else if (v.mode === "practice") left = `PRACTICE · ${v.roundNo}/${v.totalRounds}`;
   else left = `ROUND ${v.roundNo}/${v.totalRounds}`;
   return `<div class="hud"><span>${left}</span><span><span class="score">${v.duo ? "TEAM " : ""}${v.score} ODD</span> <button id="quit" class="quit" type="button" aria-label="Quit this game">✕ QUIT</button></span></div>`;
@@ -634,11 +644,16 @@ function revealHTML(v) {
   const last = v.mode !== "endless" && v.history.length >= v.totalRounds;
   const strikeOut = v.mode === "endless" && v.strikes >= 3;
   const foot = v.duo ? teamHTML(v, e.part ? { id: e.part.id, by: e.by } : null) : "";
+  const out = v.mode === "endless" && !tier;
+  const outCall = out
+    ? `<p class="px outcall">${strikeOut ? "THREE OUTS · RUN OVER" : `OUT! ${3 - v.strikes} ${3 - v.strikes === 1 ? "LIFE" : "LIVES"} LEFT`}</p>`
+    : "";
   return `
     <section class="panel">
-      ${hudHTML(v)}
+      ${hudHTML(v, out)}
       <p class="small dim" style="margin-top:12px">${esc(r.prompt)}${v.duo ? ` · <b>${esc(who)}</b>` : ""}</p>
       <p>${title} <span class="pts">${tier ? `+${e.pts}` : "+0"}</span></p>
+      ${outCall}
       ${yours}
       <p class="small">${esc(r.reason)}</p>
       ${earned}
