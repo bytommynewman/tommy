@@ -18,6 +18,7 @@ export interface Profile {
   id: string;
   username: string | null;  // set once the locker belongs to an account
   name: string;
+  banner: string;      // name banner id (see logic.BANNERS)
   colour: string;
   loadout: string[];   // part ids currently worn
   unlocked: string[];  // part ids earned in games (level rewards are implied by xp)
@@ -83,12 +84,24 @@ function sameHex(a: string, b: string): boolean {
 
 // ── levels and parts ───────────────────────────────────────────────────────
 
-/** Level 1 at 0 xp; each level needs 150 × (n-1)² — a good classic run is one early level. */
-export function levelFor(xp: number): number {
-  return Math.floor(Math.sqrt(Math.max(0, xp) / 150)) + 1;
-}
+/**
+ * Level 1 at 0 xp. Each level costs more than the last and the climb steepens:
+ * 140 → 640 → 1,620 → 3,200 → 5,500 … (a good Classic run pays ~500).
+ */
 export function xpForLevel(level: number): number {
-  return 150 * (level - 1) ** 2;
+  const n = Math.max(0, level - 1);
+  return 120 * n * n + 20 * n * n * n;
+}
+export function levelFor(xp: number): number {
+  let level = 1;
+  while (level < 200 && xpForLevel(level + 1) <= Math.max(0, xp)) level++;
+  return level;
+}
+type Banner = { id: string; name: string; level: number };
+const BANNERS = logic.BANNERS as Banner[];
+export function bannerUnlocked(id: string, level: number): boolean {
+  const b = BANNERS.find((x) => x.id === id);
+  return Boolean(b && b.level <= level);
 }
 /** Parts the level alone unlocks (accessories carry a `level`). */
 export function levelUnlocks(level: number): string[] {
@@ -123,7 +136,7 @@ export function cleanLoadout(raw: unknown, owned: Set<string>): string[] {
 // ── profiles ───────────────────────────────────────────────────────────────
 
 export function freshProfile(id: string, now: number): Profile {
-  return { id, username: null, name: "", colour: "pink", loadout: [], unlocked: [], xp: 0, games: 0, best: {}, created: now, updated: now };
+  return { id, username: null, name: "", banner: "plain", colour: "pink", loadout: [], unlocked: [], xp: 0, games: 0, best: {}, created: now, updated: now };
 }
 
 export async function loadProfile(kv: KVNamespace, id: string, now: number): Promise<Profile> {
@@ -136,6 +149,7 @@ export async function loadProfile(kv: KVNamespace, id: string, now: number): Pro
     id,
     username: typeof stored.username === "string" ? stored.username : null,
     name: sanitizeName(stored.name),
+    banner: typeof stored.banner === "string" ? stored.banner : "plain",
     colour: COLOURS.includes(stored.colour as string) ? (stored.colour as string) : "pink",
     loadout: Array.isArray(stored.loadout) ? stored.loadout.filter((x) => typeof x === "string") : [],
     unlocked: Array.isArray(stored.unlocked) ? stored.unlocked.filter((x) => typeof x === "string") : [],
@@ -157,6 +171,8 @@ export function publicProfile(p: Profile) {
     id: p.id,
     username: p.username,
     name: p.name,
+    banner: bannerUnlocked(p.banner, level) ? p.banner : "plain",
+    banners: BANNERS.map((b) => ({ ...b, unlocked: b.level <= level })),
     colour: p.colour,
     loadout: cleanLoadout(p.loadout, owned),
     xp: p.xp,

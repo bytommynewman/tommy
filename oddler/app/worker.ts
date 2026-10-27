@@ -12,8 +12,8 @@
 
 import type { Env } from "./env";
 import {
-  allUnlocked, cleanLoadout, endSession, loadProfile, logIn, publicProfile, resolveToken, sanitizeName, saveProfile,
-  signUp, TOKEN_RE,
+  allUnlocked, bannerUnlocked, cleanLoadout, endSession, levelFor, loadProfile, logIn, publicProfile, resolveToken,
+  sanitizeName, saveProfile, signUp, TOKEN_RE,
 } from "./profile";
 import { Room } from "./room";
 import * as logic from "./logic.js";
@@ -62,6 +62,10 @@ async function handleMe(request: Request, kv: KVNamespace): Promise<Response> {
     if ("colour" in body) {
       if (!(logic.COLOURS as string[]).includes(body.colour as string)) return json({ error: "unknown colour" }, 400);
       profile.colour = body.colour as string;
+    }
+    if ("banner" in body) {
+      if (typeof body.banner !== "string" || !bannerUnlocked(body.banner, levelFor(profile.xp))) return json({ error: "banner not unlocked" }, 400);
+      profile.banner = body.banner;
     }
     if ("loadout" in body) {
       if (!Array.isArray(body.loadout) || body.loadout.length > 24) return json({ error: "bad loadout" }, 400);

@@ -196,6 +196,7 @@ let satDown = false;
 let TIERS_CACHE = [];
 let booted = false;
 let partnerCount = 0;
+let lastNotice = null;
 let fanfare = null;         // { xpGained, levelBefore, levelAfter, newUnlocks } after a game
 let profileBefore = null;   // snapshot at game start, to compute the fanfare
 
@@ -224,6 +225,7 @@ function onState(msg) {
   if (v.duo) {
     if (v.duo.players.length > partnerCount && partnerCount > 0) sfx.join();
     partnerCount = v.duo.players.length;
+    if (v.notice && v.notice.text !== lastNotice && v.notice.by !== v.duo.you) { lastNotice = v.notice.text; toast(v.notice.text.toUpperCase()); sfx.miss(); }
   }
   if (v.mode && v.mode !== "duo") chosenMode = v.mode;
 
@@ -320,13 +322,21 @@ function levelHTML() {
   const span = Math.max(1, me.nextLevelXp - me.levelXp);
   const pct = Math.min(100, Math.round(((me.xp - me.levelXp) / span) * 100));
   return `<div class="levelbar">
-    <div class="levelrow"><span class="px">${esc(displayName().toUpperCase())}${me.username ? ` <span class="dim">@${esc(me.username)}</span>` : ""}</span><span class="px lvl">LV ${me.level}</span></div>
+    <div class="levelrow">${plateHTML(displayName(), me.banner)}<span class="px lvl">LV ${me.level}${me.username ? ` <span class="dim">@${esc(me.username)}</span>` : ""}</span></div>
     <div class="xp"><div class="xpfill" style="width:${pct}%"></div></div>
     <div class="levelrow small dim"><span>${me.xp} xp</span><span>${me.nextLevelXp - me.xp} to level ${me.level + 1}</span></div>
   </div>`;
 }
 
 function myLoadoutParts() { return me ? partsById(me.loadout) : []; }
+
+/** A name on its banner. `banner` ids match the .nameplate.b-* styles. */
+function plateHTML(name, banner, extra = "") {
+  return `<span class="nameplate b-${esc(banner || "plain")}">${esc(String(name || "You").toUpperCase())}${extra}</span>`;
+}
+/** Mirror of the server's curve (profile.ts) so the XP bar can animate across levels. */
+function xpForLevel(level) { const n = Math.max(0, level - 1); return 120 * n * n + 20 * n * n * n; }
+function levelFor(xp) { let l = 1; while (l < 200 && xpForLevel(l + 1) <= xp) l++; return l; }
 
 function lobbyHTML(v) {
   const best = me?.best?.classic ?? store.get(bestKey("classic"), 0);
@@ -418,6 +428,12 @@ function lockerHTML(v) {
       ${grid}
     </section>
     <section class="panel">
+      <h2>Name banners</h2>
+      <p class="small dim">The plate behind your name. New ones unlock as you level up.</p>
+      <div class="banners">${(me.banners || []).map((b) => `<button class="bannerpick ${b.unlocked ? "" : "locked"} ${me.banner === b.id ? "chosen" : ""}" type="button" data-banner="${esc(b.id)}" ${b.unlocked ? "" : "disabled"} aria-pressed="${me.banner === b.id}">
+        ${plateHTML(displayName(), b.id)}<span class="ihow">${b.unlocked ? (me.banner === b.id ? "CHOSEN" : esc(b.name.toUpperCase())) : `LV ${b.level} · ${esc(b.name.toUpperCase())}`}</span></button>`).join("")}</div>
+    </section>
+    <section class="panel">
       ${accountHTML()}
     </section>`;
 }
@@ -467,14 +483,15 @@ function duoLobbyHTML(v) {
       </div>
     </section>
     <section class="panel">
+      ${v.notice ? `<p class="notice px small">${esc(v.notice.text.toUpperCase())}</p>` : ""}
       <div class="team">
         <div class="seat">
           ${oddlerHTML(my.colour, myLoadoutParts(), "", null, seatName(my))}
-          <p class="px seatname">${esc(seatName(my).toUpperCase())}${me ? ` · LV ${me.level}` : ""}</p>
+          <p class="seatname">${plateHTML(seatName(my), my.banner)}${me ? ` <span class="px dim">LV ${me.level}</span>` : ""}</p>
         </div>
         <div class="seat ${partner ? "" : "empty"}">
           ${partner ? oddlerHTML(partner.colour, [], "", null, seatName(partner)) : `<div class="oddler"><div class="waiting">waiting for<br>your partner…</div></div>`}
-          <p class="px seatname">${partner ? esc(seatName(partner).toUpperCase()) : "…"}</p>
+          <p class="seatname">${partner ? plateHTML(seatName(partner), partner.banner) : `<span class="px">…</span>`}</p>
         </div>
       </div>
       <p style="margin-top:14px">${isHost
@@ -490,7 +507,7 @@ function spectatorHTML(v) {
     <section class="panel" style="text-align:center">
       <h2>Room ${esc(roomParam)} is full</h2>
       <p>Two Oddlers are already seated here. You can watch, or <a class="link" href="/">start your own</a>.</p>
-      <div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "")}<p class="px seatname">${esc((p.name || "Player").toUpperCase())} · ${p.pts}</p></div>`).join("")}</div>
+      <div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "")}<p class="seatname">${plateHTML(p.name || "Player", p.banner)} <span class="px dim">${p.pts}</span></p></div>`).join("")}</div>
       ${v.round ? `<p class="small dim">${esc(v.round.prompt)}</p>` : ""}
       <p class="bigscore" style="font-size:22px">${v.score} ODD</p>
     </section>`;
@@ -504,14 +521,14 @@ function hudHTML(v) {
   else if (v.mode === "endless") left = `ENDLESS · ROUND ${v.roundNo} · <span class="strikes" aria-label="${v.strikes} of 3 misses">${"●".repeat(v.strikes)}${"○".repeat(3 - v.strikes)}</span>`;
   else if (v.mode === "practice") left = `PRACTICE · ${v.roundNo}/${v.totalRounds}`;
   else left = `ROUND ${v.roundNo}/${v.totalRounds}`;
-  return `<div class="hud"><span>${left}</span><span class="score">${v.duo ? "TEAM " : ""}${v.score} ODD</span></div>`;
+  return `<div class="hud"><span>${left}</span><span><span class="score">${v.duo ? "TEAM " : ""}${v.score} ODD</span> <button id="quit" class="quit" type="button" aria-label="Quit this game">✕ QUIT</button></span></div>`;
 }
 
 function teamHTML(v, newPart = null) {
   return `<div class="team compact">${v.duo.players.map((p) => `
     <div class="seat ${p.isTurn ? "turn" : ""}">
       ${oddlerHTML(p.colour, p.parts, "mini", newPart && newPart.by === p.id ? newPart.id : null, seatName(p))}
-      <p class="px seatname">${esc(seatName(p).toUpperCase())} · ${p.pts}</p>
+      <p class="seatname">${plateHTML(seatName(p), p.banner)} <span class="px dim">${p.pts}</span></p>
     </div>`).join("")}</div>`;
 }
 
@@ -636,12 +653,54 @@ function revealHTML(v) {
 
 function fanfareHTML() {
   if (!fanfare) return me ? `<p class="px small dim">UPDATING LOCKER…</p>` : "";
-  const up = fanfare.levelAfter > fanfare.levelBefore;
   const unlocks = fanfare.newUnlocks.map((id) => `<span class="unlock"><img src="/art/${esc(id)}.png" alt="">${esc(PART_NAMES[id] || id)}</span>`).join("");
-  return `<div class="fanfare ${up ? "up" : ""}">
-    <p class="px">+${fanfare.xpGained} XP${up ? ` · LEVEL UP! LV ${fanfare.levelAfter}` : ` · LV ${fanfare.levelAfter}`}</p>
-    ${unlocks ? `<p class="small">New in your locker:</p><div class="unlocks">${unlocks}</div>` : ""}
+  const bannerUnlocks = (me?.banners || []).filter((b) => b.unlocked && b.level > fanfare.levelBefore && b.level <= fanfare.levelAfter)
+    .map((b) => `<span class="unlock">${plateHTML(displayName(), b.id)}</span>`).join("");
+  return `<div class="fanfare" id="fanfare">
+    <div class="levelrow"><span class="px" id="xpgain">+0 XP</span><span class="px lvl" id="xplvl">LV ${fanfare.levelBefore}</span></div>
+    <div class="xp"><div class="xpfill" id="xpfill" style="width:0%"></div></div>
+    <div class="levelrow small dim"><span id="xpnow"></span><span id="xpnext"></span></div>
+    <p class="px xpflash" id="xpflash" aria-live="polite"></p>
+    ${unlocks || bannerUnlocks ? `<div class="unlockwrap" id="unlockwrap" hidden><p class="small">New in your locker:</p><div class="unlocks">${unlocks}${bannerUnlocks}</div></div>` : ""}
   </div>`;
+}
+
+/** Fill the XP bar from the old total to the new one, rolling over at each level. */
+function animateXp() {
+  if (!fanfare || !me) return;
+  const fill = $("#xpfill"), gain = $("#xpgain"), lvl = $("#xplvl"), now = $("#xpnow"), next = $("#xpnext"), flash = $("#xpflash"), wrap = $("#unlockwrap");
+  if (!fill) return;
+  const from = me.xp - fanfare.xpGained, to = me.xp;
+  const duration = reduced ? 0 : Math.min(3200, 1200 + fanfare.xpGained * 2);
+  const start = performance.now();
+  let shownLevel = levelFor(from);
+  let lastTick = 0;
+  const draw = (xp) => {
+    const level = levelFor(xp);
+    const lo = xpForLevel(level), hi = xpForLevel(level + 1);
+    fill.style.width = `${Math.min(100, ((xp - lo) / (hi - lo)) * 100)}%`;
+    now.textContent = `${Math.round(xp)} xp`;
+    next.textContent = `${Math.max(0, Math.round(hi - xp))} to level ${level + 1}`;
+    lvl.textContent = `LV ${level}`;
+    gain.textContent = `+${Math.round(xp - from)} XP`;
+    if (level > shownLevel) {
+      shownLevel = level;
+      flash.textContent = `LEVEL UP! LV ${level}`;
+      flash.classList.remove("show"); void flash.offsetWidth; flash.classList.add("show");
+      $("#fanfare")?.classList.add("up");
+      sfx.levelup();
+    }
+  };
+  const step = (t) => {
+    const k = duration ? Math.min(1, (t - start) / duration) : 1;
+    const eased = 1 - Math.pow(1 - k, 3);
+    const xp = from + (to - from) * eased;
+    draw(xp);
+    if (t - lastTick > 90 && k < 1) { lastTick = t; beep(600 + 500 * eased, 30, "square", 0.015); }
+    if (k < 1) requestAnimationFrame(step);
+    else { draw(to); if (wrap) wrap.hidden = false; }
+  };
+  requestAnimationFrame(step);
 }
 
 function doneHTML(v) {
@@ -653,7 +712,7 @@ function doneHTML(v) {
   const label = v.duo ? "Duo" : v.mode === "endless" ? `${v.history.length} rounds` : "Classic";
   const isHost = v.duo && v.duo.host === v.duo.you;
   const creatures = v.duo
-    ? `<div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "", null, seatName(p))}<p class="px seatname">${esc(seatName(p).toUpperCase())} · ${p.pts}</p></div>`).join("")}</div>`
+    ? `<div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "", null, seatName(p))}<p class="seatname">${plateHTML(seatName(p), p.banner)} <span class="px dim">${p.pts}</span></p></div>`).join("")}</div>`
     : oddlerHTML(v.colour, v.parts, "big");
   const earnedCount = v.duo ? v.duo.players.reduce((n, p) => n + (p.earned?.length ?? 0), 0) : (v.earned?.length ?? 0);
   const again = v.duo
@@ -796,6 +855,14 @@ function wire() {
     });
   }
   $("#skip")?.addEventListener("click", () => { sfx.click(); act({ kind: "skip" }); });
+  $("#quit")?.addEventListener("click", () => {
+    const msg = v.duo ? "Quit this game for both of you? Points so far are lost." : "Quit this run? Points so far are lost.";
+    if (!confirm(msg)) return;
+    sfx.click(); fanfare = null; showingLobby = true;
+    act({ kind: "restart", quit: true });
+  });
+  for (const b of document.querySelectorAll("[data-banner]")) b.addEventListener("click", () => { sfx.click(); saveProfile({ banner: b.dataset.banner }); render(); });
+  if (v.phase === "done" && fanfare && !$("#fanfare")?.dataset.ran) { $("#fanfare").dataset.ran = "1"; animateXp(); }
   if (v.phase === "ask") startTimer(v);
   const next = $("#next");
   if (next) {

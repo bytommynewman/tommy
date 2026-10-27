@@ -75,22 +75,24 @@ patch("src/room.ts", '''  /** Turn-based games schedule no timers; override for 
     try {
       if (a.kind === "sit") {
         const p = await loadProfile(this.env.KV, playerId, now);
-        return { ...a, name: p.name, colour: a.colour ?? p.colour };
+        return { ...a, name: p.name, banner: p.banner, colour: a.colour ?? p.colour };
       }
       if (a.kind === "start") {
         const ids = seats.length ? seats : [playerId];
         const names: Record<string, string> = {};
         const loadouts: Record<string, string[]> = {};
         const colours: Record<string, string> = {};
+        const banners: Record<string, string> = {};
         for (const id of ids) {
           const p = await loadProfile(this.env.KV, id, now);
           names[id] = p.name;
           colours[id] = p.colour;
+          banners[id] = p.banner;
           // Only wear what is actually unlocked.
           const { allUnlocked, cleanLoadout } = await import("./profile");
           loadouts[id] = cleanLoadout(p.loadout, allUnlocked(p));
         }
-        return { ...a, names, loadouts, colours };
+        return { ...a, names, loadouts, colours, banners };
       }
     } catch (err) {
       console.error("profile lookup failed:", err instanceof Error ? err.message : String(err));

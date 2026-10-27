@@ -146,6 +146,8 @@ export function setup(players) {
     players: [],          // duo seats, in join order (host first)
     profiles: {},         // duo: id → { name, colour, parts, earned, pts }
     name: "",             // solo: the player's locker name
+    banner: "plain",      // solo: the player's name banner
+    notice: null,         // duo-lobby: "<name> quit the game", shown once
     earned: [],           // solo: parts earned this game (a locker credits these)
     games: 0,             // duo games started (alternates who goes first)
     phase: "lobby",       // lobby → ask → reveal → … → done   (duo: duo-lobby first)
@@ -212,7 +214,7 @@ function migrate(state) {
   const fresh = state.kind !== undefined && Array.isArray(state.players) && state.profiles && Array.isArray(state.seen)
     && Number.isInteger(state.games) && (!state.round || state.round.turn !== undefined);
   if (fresh) return state;
-  const s = { kind: "solo", players: [], profiles: {}, games: 0, seen: [], name: "", earned: [], ...state };
+  const s = { kind: "solo", players: [], profiles: {}, games: 0, seen: [], name: "", banner: "plain", notice: null, earned: [], ...state };
   if (!Array.isArray(s.used)) s.used = [];
   if (!Array.isArray(s.history)) s.history = [];
   if (!Array.isArray(s.parts)) s.parts = [];
@@ -237,6 +239,7 @@ export function validateAction(state, playerId, action) {
     if (duo && state.phase !== "duo-lobby") return { ok: false, error: "room is mid-game" };
     if (action.colour !== undefined && !COLOURS.includes(action.colour)) return { ok: false, error: "unknown colour" };
     if (action.name !== undefined && typeof action.name !== "string") return { ok: false, error: "bad name" };
+    if (action.banner !== undefined && typeof action.banner !== "string") return { ok: false, error: "bad banner" };
     return { ok: true };
   }
   if (!seated) return { ok: false, error: duo ? "you are watching this room" : "not your Oddler" };
@@ -256,7 +259,7 @@ export function validateAction(state, playerId, action) {
       if (!MODES.includes(action.mode)) return { ok: false, error: "unknown mode" };
     }
     if (action.colour !== undefined && !COLOURS.includes(action.colour)) return { ok: false, error: "unknown colour" };
-    for (const k of ["names", "loadouts", "colours"]) {
+    for (const k of ["names", "loadouts", "colours", "banners"]) {
       if (action[k] !== undefined && (typeof action[k] !== "object" || action[k] === null || Array.isArray(action[k]))) return { ok: false, error: "bad " + k };
     }
     if (action.seen !== undefined) {
@@ -332,8 +335,12 @@ function resetKeepingSeats(state, seed) {
   for (const id of state.players) profiles[id] = { ...state.profiles[id], parts: [], earned: [], pts: 0 };
   return {
     ...base, kind: state.kind, players: state.players, profiles, games: state.games,
-    colour: state.colour, name: state.name, seed, phase: state.kind === "duo" ? "duo-lobby" : "lobby",
+    colour: state.colour, name: state.name, banner: state.banner, seed, phase: state.kind === "duo" ? "duo-lobby" : "lobby",
   };
+}
+
+function cleanBanner(raw) {
+  return BANNERS.some((b) => b.id === raw) ? raw : "plain";
 }
 
 function cleanName(raw) {
@@ -365,7 +372,7 @@ export function applyAction(state, playerId, action) {
       const players = [...state.players, playerId];
       return {
         ...state, kind: "duo", phase: "duo-lobby", players,
-        profiles: { ...state.profiles, [playerId]: { name: cleanName(action.name), colour, parts: [], earned: [], pts: 0 } },
+        profiles: { ...state.profiles, [playerId]: { name: cleanName(action.name), banner: cleanBanner(action.banner), colour, parts: [], earned: [], pts: 0 } },
       };
     }
     case "colour":
@@ -373,12 +380,19 @@ export function applyAction(state, playerId, action) {
         return { ...state, profiles: { ...state.profiles, [playerId]: { ...state.profiles[playerId], colour: action.colour } } };
       }
       return { ...state, colour: action.colour };
-    case "restart":
-      return resetKeepingSeats(state, (at >>> 0) || 1);
+    case "restart": {
+      const next = resetKeepingSeats(state, (at >>> 0) || 1);
+      // Quitting mid-game: tell the room who walked, once.
+      if (action.quit && state.kind === "duo" && state.phase !== "duo-lobby") {
+        const who = state.profiles[playerId]?.name || "Your partner";
+        next.notice = { by: playerId, text: `${who} quit the game` };
+      }
+      return next;
+    }
     case "start": {
       const seed = ((at ^ (action.seed | 0)) >>> 0) || 1;
       const base = { ...resetKeepingSeats(state, seed), mode: action.mode, seen: Array.isArray(action.seen) ? action.seen : [] };
-      const names = action.names ?? {}, loadouts = action.loadouts ?? {}, colours = action.colours ?? {};
+      const names = action.names ?? {}, loadouts = action.loadouts ?? {}, colours = action.colours ?? {}, banners = action.banners ?? {};
       if (state.kind === "duo") {
         base.games = state.games + (state.phase === "done" ? 1 : 0);
         for (const id of base.players) {
@@ -386,6 +400,7 @@ export function applyAction(state, playerId, action) {
           base.profiles[id] = {
             ...p,
             name: names[id] !== undefined ? cleanName(names[id]) : p.name,
+            banner: banners[id] !== undefined ? cleanBanner(banners[id]) : (p.banner ?? "plain"),
             colour: COLOURS.includes(colours[id]) ? colours[id] : p.colour,
             parts: wearable(loadouts[id]),
           };
@@ -394,6 +409,7 @@ export function applyAction(state, playerId, action) {
         if (action.colour) base.colour = action.colour;
         else if (COLOURS.includes(colours[state.player])) base.colour = colours[state.player];
         if (names[state.player] !== undefined) base.name = cleanName(names[state.player]);
+        if (banners[state.player] !== undefined) base.banner = cleanBanner(banners[state.player]);
         base.parts = wearable(loadouts[state.player]);
       }
       return freshRound(base, at) ?? { ...base, phase: "done" };
@@ -448,6 +464,8 @@ export function viewFor(state, playerId) {
     mode: state.mode,
     colour: state.colour,
     name: state.name,
+    banner: state.banner,
+    notice: state.notice,
     earned: state.earned,
     score: state.score,
     strikes: state.strikes,
@@ -467,7 +485,7 @@ export function viewFor(state, playerId) {
       seated: state.players.includes(playerId),
       games: state.games,
       players: state.players.map((id) => ({
-        id, name: "", earned: [], ...state.profiles[id], isYou: id === playerId,
+        id, name: "", banner: "plain", earned: [], ...state.profiles[id], isYou: id === playerId,
         isTurn: Boolean(state.round && state.phase === "ask" && state.round.turn === id),
       })),
     };

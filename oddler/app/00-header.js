@@ -66,11 +66,11 @@ export const PARTS = [
   { id: "acc-00", slot: "hat", tier: 0, level: 2 }, { id: "acc-12", slot: "neck", tier: 0, level: 3 },
   { id: "acc-04", slot: "face", tier: 0, level: 4 }, { id: "acc-08", slot: "held", tier: 0, level: 5 },
   { id: "acc-05", slot: "flower", tier: 0, level: 6 }, { id: "acc-03", slot: "hat", tier: 0, level: 7 },
-  { id: "acc-14", slot: "neck", tier: 0, level: 8 }, { id: "acc-10", slot: "held", tier: 0, level: 9 },
-  { id: "acc-13", slot: "pack", tier: 0, level: 10 }, { id: "acc-01", slot: "hat", tier: 0, level: 11 },
-  { id: "acc-06", slot: "hat", tier: 0, level: 12 }, { id: "acc-11", slot: "held", tier: 0, level: 13 },
-  { id: "acc-09", slot: "held", tier: 0, level: 14 }, { id: "acc-07", slot: "hat", tier: 0, level: 15 },
-  { id: "acc-15", slot: "pack", tier: 0, level: 16 }, { id: "acc-02", slot: "hat", tier: 0, level: 17 },
+  { id: "acc-14", slot: "neck", tier: 0, level: 8 }, { id: "acc-10", slot: "held", tier: 0, level: 8 },
+  { id: "acc-13", slot: "pack", tier: 0, level: 9 }, { id: "acc-01", slot: "hat", tier: 0, level: 9 },
+  { id: "acc-06", slot: "hat", tier: 0, level: 10 }, { id: "acc-11", slot: "held", tier: 0, level: 10 },
+  { id: "acc-09", slot: "held", tier: 0, level: 11 }, { id: "acc-07", slot: "hat", tier: 0, level: 11 },
+  { id: "acc-15", slot: "pack", tier: 0, level: 12 }, { id: "acc-02", slot: "hat", tier: 0, level: 12 },
 ];
 
 /**
@@ -79,6 +79,21 @@ export const PARTS = [
  * its rows here, so an auto-generated file is just another piece.
  */
 export const BANKS = [];
+
+/**
+ * Name banners: the plate behind a player's name. Unlocked by level, picked in
+ * the locker. The client owns the look (index.html .nameplate.b-<id>).
+ */
+export const BANNERS = [
+  { id: "plain", name: "Plain", level: 1 },
+  { id: "lime", name: "Lime Edge", level: 2 },
+  { id: "stripe", name: "Hazard Stripe", level: 4 },
+  { id: "ember", name: "Ember", level: 6 },
+  { id: "storm", name: "Storm", level: 8 },
+  { id: "neon", name: "Neon", level: 10 },
+  { id: "holo", name: "Holo", level: 13 },
+  { id: "legend", name: "Legend", level: 16 },
+];
 
 /** How many of each slot an Oddler can carry. */
 export const SLOT_CAP = {

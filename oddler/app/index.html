@@ -156,6 +156,32 @@
       .item.locked img { filter: grayscale(1) brightness(0.6); }
       .authform { display: grid; gap: 8px; }
       .authform input { border: 2px solid var(--line); border-radius: 10px; padding: 12px 14px; background: rgba(27,16,38,0.9); color: var(--white); font-size: 16px; }
+      /* name banners */
+      .nameplate { display: inline-block; font-family: var(--pixel); font-size: 10px; letter-spacing: 0.04em; padding: 6px 10px; border-radius: 6px; color: var(--cream); background: var(--purple); border: 2px solid var(--line); vertical-align: middle; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .nameplate.b-lime { border-color: var(--lime); }
+      .nameplate.b-stripe { background: repeating-linear-gradient(135deg, #4a2d6b 0 8px, #2b1a40 8px 16px); border-color: var(--rust); }
+      .nameplate.b-ember { background: linear-gradient(90deg, #e8743b, #f08ca8); color: var(--plum); border-color: #ffb27a; }
+      .nameplate.b-storm { background: linear-gradient(100deg, #4a5566, #8a94a6, #4a5566); background-size: 200% 100%; border-color: #c9d2e0; animation: shimmer 2.4s linear infinite; }
+      .nameplate.b-neon { background: var(--plum); color: var(--lime); border-color: var(--lime); box-shadow: 0 0 10px rgba(184,230,46,0.6), inset 0 0 8px rgba(184,230,46,0.25); animation: neon 1.2s ease-in-out infinite alternate; }
+      .nameplate.b-holo { background: linear-gradient(90deg, #f08ca8, #b8e62e, #7fe0b0, #b48fe0, #f08ca8); background-size: 300% 100%; color: var(--plum); border-color: #fff; animation: holo 3s linear infinite; }
+      .nameplate.b-legend { background: linear-gradient(90deg, #f5d36b, #fff2b0, #e0a62a); background-size: 200% 100%; color: #3a2a00; border-color: #fff5c2; box-shadow: 0 0 14px rgba(245,211,107,0.7); animation: shimmer 1.8s linear infinite; }
+      @keyframes shimmer { from { background-position: 0% 0; } to { background-position: 200% 0; } }
+      @keyframes holo { from { background-position: 0% 0; } to { background-position: 300% 0; } }
+      @keyframes neon { from { box-shadow: 0 0 6px rgba(184,230,46,0.4), inset 0 0 6px rgba(184,230,46,0.2); } to { box-shadow: 0 0 16px rgba(184,230,46,0.9), inset 0 0 10px rgba(184,230,46,0.35); } }
+      .banners { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+      .bannerpick { background: var(--purple); border: 2px solid transparent; border-radius: 10px; padding: 10px 6px; display: grid; justify-items: center; gap: 6px; }
+      .bannerpick.chosen { border-color: var(--lime); background: rgba(184,230,46,0.14); }
+      .bannerpick.locked { opacity: 0.45; cursor: default; }
+      .bannerpick.locked .nameplate { filter: grayscale(1); animation: none; }
+      .seatname .nameplate { font-size: 9px; padding: 4px 8px; }
+      .notice { text-align: center; color: var(--rust); margin: 0 0 8px; }
+      .quit { background: none; border: 0; color: var(--dim); font-family: var(--pixel); font-size: 9px; padding: 4px 6px; margin-left: 8px; text-decoration: underline; }
+      .quit:hover { color: var(--rust); }
+      .xpflash { min-height: 1.2em; margin: 6px 0 0; color: var(--lime); font-size: 12px; text-align: center; opacity: 0; }
+      .xpflash.show { animation: flashup 1400ms ease-out both; }
+      @keyframes flashup { 0% { opacity: 0; transform: scale(0.6); } 20% { opacity: 1; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+      .fanfare .xp { margin: 8px 0 4px; }
+      .fanfare .xpfill { transition: none; }
       .fanfare { margin: 10px auto; padding: 10px; border-radius: 10px; background: rgba(124,91,166,0.25); max-width: 360px; }
       .fanfare.up { background: rgba(184,230,46,0.16); border: 2px solid var(--lime); animation: glow 900ms ease-in-out infinite alternate; }
       .fanfare .px { font-size: 11px; color: var(--lime); margin: 0; }
@@ -268,7 +294,7 @@
       #status { font-family: var(--pixel); font-size: 9px; color: var(--dim); text-align: center; }
       #status.error { color: var(--rust); }
       @media (prefers-reduced-motion: reduce) {
-        .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up { animation: none; }
+        .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up, .nameplate, .xpflash.show { animation: none; }
         .clock .fill, .oddler { transition: none; }
       }
       @media (min-width: 700px) {

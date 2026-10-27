@@ -93,6 +93,9 @@ if (L.viewFor(d, "g").phase !== "done") throw new Error("duo should end after 10
 dact("h", { kind: "start", mode: "duo", at: at0 + 99_000 });
 if (!L.viewFor(d, "g").round.yourTurn) throw new Error("second game should start with the other player");
 if (L.viewFor(d, "g").score !== 0 || L.viewFor(d, "g").duo.players[1].parts.length !== 0) throw new Error("new game should reset score and parts");
+// quitting mid-game returns a duo room to its lobby and leaves a notice
+dact("g", { kind: "restart", quit: true, at: at0 + 100_001 }); // the second game is mid-round here
+{ const q = L.viewFor(d, "h"); if (q.phase !== "duo-lobby" || !q.notice || !/quit/.test(q.notice.text)) throw new Error("quit should return to the duo lobby with a notice: " + JSON.stringify(q.notice)); }
 console.log("duo checks OK");
 console.log("ALL LOGIC CHECKS PASSED");
 '

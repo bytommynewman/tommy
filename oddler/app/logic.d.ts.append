@@ -6,3 +6,4 @@ export const PARTS: { id: string; slot: string; tier: number; level?: number }[]
 export const SLOT_CAP: Record<string, number>;
 export const COLOURS: string[];
 export const TIERS: ({ id: number; name: string; pts: number; odd: string } | null)[];
+export const BANNERS: { id: string; name: string; level: number }[];
