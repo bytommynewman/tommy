@@ -3,25 +3,37 @@
  * renderer. The server is authoritative — this file sends intents and draws
  * whatever `view` comes back. Server strings are never treated as markup.
  *
- * Rooms: a solo run lives in a room named after the player. Duo rooms are
+ * Identity: the browser keeps a secret account token; its hash is the public
+ * player id used in rooms and the key of the player's locker (/api/me).
+ * Rooms: a solo run lives in a room named after the player id. Duo rooms are
  * named by a short code in `?room=`; two players seat themselves there.
  */
 
-// ── net (keep this) ────────────────────────────────────────────────────────
+import { ANCHORS, BASE, COLOUR_NAMES, SWATCH, SLOT_NAMES, PART_NAMES, oddlerHTML } from "/anchors.js";
+
+// ── identity ───────────────────────────────────────────────────────────────
 
 const roomParam = (new URLSearchParams(location.search).get("room") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-const room = roomParam || playerId();
 
-/** Stable per-browser identity. One solo room per player, so it doubles as the room name. */
-function playerId() {
-  const key = "oddler:playerId";
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = Math.random().toString(36).slice(2, 10);
-    localStorage.setItem(key, id);
+function hex(bytes) { return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join(""); }
+function accountToken() {
+  const key = "oddler:token";
+  let t = localStorage.getItem(key);
+  if (!/^[a-f0-9]{32,64}$/.test(t || "")) {
+    t = hex(crypto.getRandomValues(new Uint8Array(16)));
+    localStorage.setItem(key, t);
   }
-  return id;
+  return t;
 }
+async function hashToken(token) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return hex(new Uint8Array(buf)).slice(0, 16);
+}
+const TOKEN = accountToken();
+let PLAYER_ID = null;   // set at boot from the token
+let room = null;
+
+// ── net (keep this) ────────────────────────────────────────────────────────
 
 const PING = "__ping";
 const PONG = "__pong";
@@ -34,7 +46,7 @@ function connect() {
   socket.addEventListener("open", () => {
     retry = 0;
     setStatus("");
-    send({ type: "join", playerId: playerId() });
+    send({ type: "join", playerId: PLAYER_ID });
   });
   socket.addEventListener("message", (event) => {
     if (event.data === PONG) return;
@@ -57,6 +69,32 @@ function send(msg) {
 function act(action) { send({ type: "action", action }); }
 
 setInterval(() => { if (socket?.readyState === WebSocket.OPEN) socket.send(PING); }, 30_000);
+
+// ── the locker API ─────────────────────────────────────────────────────────
+
+let me = null;          // the public profile from /api/me
+let lockerOk = true;    // false when the deploy has no profile storage
+
+async function api(method, body) {
+  try {
+    const res = await fetch("/api/me", {
+      method,
+      headers: { "x-oddler-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.status === 503) { lockerOk = false; return null; }
+    if (!res.ok) return null;
+    me = await res.json();
+    return me;
+  } catch { return null; }
+}
+let saveTimer = 0;
+function saveProfile(patch) {
+  if (me) Object.assign(me, patch);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => api("PUT", patch), 250);
+}
+function displayName() { return me?.name || "You"; }
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -82,8 +120,6 @@ const QUIET_ERRORS = new Set(["type an answer", "already seated", "not your turn
 let resetOnce = false;
 function onError(error) {
   if (QUIET_ERRORS.has(error)) return;
-  // A room whose saved state the rules can no longer read: start it over
-  // (once), rather than leaving the player staring at a dead screen.
   if (error === "server error" && !resetOnce) { resetOnce = true; send({ type: "reset" }); toast("ROOM RESET"); return; }
   toast(error);
 }
@@ -118,6 +154,7 @@ const sfx = {
   join: () => { beep(523, 80, "square", 0.04); beep(784, 120, "square", 0.04, 0.09); },
   beat: (urg) => { const g = 0.05 + 0.08 * urg; beep(70 + 30 * urg, 70, "sine", g); beep(55 + 25 * urg, 90, "sine", g * 0.8, 0.12); },
   buzz: () => beep(110, 350, "sawtooth", 0.06),
+  levelup: () => { [523, 659, 784, 1047].forEach((f, i) => beep(f, 160, "square", 0.05, i * 0.12)); },
 };
 const muteBtn = $("#mute");
 function drawMute() {
@@ -127,60 +164,6 @@ function drawMute() {
 }
 muteBtn.addEventListener("click", () => { muted = !muted; store.set("muted", muted); drawMute(); if (!muted) sfx.click(); });
 drawMute();
-
-// ── the Oddler ─────────────────────────────────────────────────────────────
-
-const BASE = { pink: "axo-base", mint: "col-mint", lav: "col-lav", sand: "col-sand", slate: "col-slate", char: "col-char" };
-const COLOUR_NAMES = { pink: "Pink", mint: "Mint", lav: "Lavender", sand: "Sand", slate: "Slate", char: "Charcoal" };
-const SWATCH = { pink: "#f08ca8", mint: "#7fe0b0", lav: "#b48fe0", sand: "#e9cfa0", slate: "#8fa4c4", char: "#4a3a4f" };
-/** Where each slot sits on the base sprite, as % of its box. z<1 is behind the body. */
-const ANCHORS = {
-  horn: [{ x: 47, y: 2, w: 17, z: 5 }, { x: 34, y: 5, w: 14, z: 5, flip: true }, { x: 61, y: 5, w: 14, z: 5 }],
-  back: [{ x: 50, y: 54, w: 38, z: 4 }],
-  nub: [{ x: 28, y: 63, w: 12, z: 4 }, { x: 69, y: 63, w: 12, z: 4 }],
-  wing: [{ x: 14, y: 66, w: 32, z: 0, flip: true }, { x: 86, y: 58, w: 32, z: 0 }],
-  eye: [{ x: 30, y: 7, w: 12, z: 5 }, { x: 67, y: 7, w: 12, z: 5 }],
-  antenna: [{ x: 51, y: -1, w: 17, z: 5 }],
-  hat: [{ x: 48, y: 0, w: 30, z: 6 }],
-  face: [{ x: 44, y: 37, w: 30, z: 6 }],
-  flower: [{ x: 67, y: 22, w: 14, z: 6 }],
-  held: [{ x: 29, y: 93, w: 14, z: 6 }],
-  neck: [{ x: 50, y: 53, w: 28, z: 5 }],
-  pack: [{ x: 73, y: 66, w: 22, z: 0 }],
-};
-const PART_NAMES = {
-  "horn-00": "a curved horn", "horn-01": "an orange horn", "horn-02": "a lime horn", "horn-03": "a dark horn",
-  "horn-04": "a spike ridge", "horn-05": "an orange spike ridge", "horn-06": "a lime spike ridge", "horn-07": "a dark spike ridge",
-  "horn-08": "a tall spike", "horn-09": "an orange spike", "horn-10": "a lime spike", "horn-11": "a dark spike",
-  "horn-12": "some grey nubs", "horn-13": "some orange warts", "horn-14": "some lime nubs", "horn-15": "some dark warts",
-  "wing-00": "a bat wing", "wing-01": "an insect wing", "wing-02": "a purple bat wing", "wing-03": "a dragonfly wing",
-  "wing-04": "a lime eye stalk", "wing-05": "a purple eye stalk", "wing-06": "an orange eye stalk", "wing-07": "a green eye stalk",
-  "wing-08": "lime antennae", "wing-09": "a curling tentacle", "wing-10": "bobble antennae", "wing-11": "a lime tentacle",
-  "wing-12": "a tiny crown", "wing-13": "a shark fin", "wing-14": "a mushroom cap", "wing-15": "a tuft of fur",
-  "acc-00": "a party hat", "acc-01": "a bobble hat", "acc-02": "a wizard hat", "acc-03": "a flat cap",
-  "acc-04": "round spectacles", "acc-05": "a flower", "acc-06": "a bandana", "acc-07": "headphones",
-  "acc-08": "a tiny mug", "acc-09": "a lantern", "acc-10": "a little flag", "acc-11": "a magnifying glass",
-  "acc-12": "a scarf", "acc-13": "a backpack", "acc-14": "a bow tie", "acc-15": "a cape",
-};
-
-function oddlerHTML(colour, parts, size = "", newId = null, label = "") {
-  const used = {};
-  const layers = [];
-  for (const p of parts) {
-    const list = ANCHORS[p.slot] || [];
-    const i = used[p.slot] = (used[p.slot] ?? 0);
-    used[p.slot] = i + 1;
-    const a = list[i];
-    if (!a) continue;
-    layers.push(
-      `<img class="part${a.flip ? " flip" : ""}${p.id === newId ? " new" : ""}" src="/art/${esc(p.id)}.png" alt="" ` +
-      `style="left:${a.x}%;top:${a.y}%;width:${a.w}%;z-index:${a.z}">`,
-    );
-  }
-  const idle = reduced ? "" : " idle";
-  return `<div class="oddler ${size}${idle}" aria-label="${esc(label || "Your Oddler")} with ${parts.length} parts">` +
-    `<img class="base" src="/art/${BASE[colour] || BASE.pink}.png" alt="">${layers.join("")}</div>`;
-}
 
 // ── rendering ──────────────────────────────────────────────────────────────
 
@@ -193,10 +176,19 @@ let chosenMode = store.get("mode", "classic");
 let chosenColour = store.get("colour", "pink");
 let lastNewPart = null;
 let showingLobby = false;
+let showingLocker = false;
 let satDown = false;
 let TIERS_CACHE = [];
 let booted = false;
 let partnerCount = 0;
+let fanfare = null;         // { xpGained, levelBefore, levelAfter, newUnlocks } after a game
+let profileBefore = null;   // snapshot at game start, to compute the fanfare
+
+function partsById(ids) {
+  return (ids || []).map((id) => { const p = CATALOGUE_BY_ID[id]; return p ? { id, slot: p.slot } : null; }).filter(Boolean);
+}
+let CATALOGUE_BY_ID = {};
+function indexCatalogue() { CATALOGUE_BY_ID = Object.fromEntries((me?.catalogue || []).map((p) => [p.id, p])); }
 
 function onState(msg) {
   const v = msg.view;
@@ -205,32 +197,28 @@ function onState(msg) {
   view = v;
   if (!booted) { booted = true; TIERS_CACHE = v.tiers.slice(1); }
 
-  // Duo rooms: take a seat the moment we arrive, once.
   const duoRoom = Boolean(roomParam);
   if (duoRoom && !satDown && !(v.duo && v.duo.seated)) {
     const open = (!v.duo && v.phase === "lobby") || (v.duo && v.duo.players.length < 2 && v.phase === "duo-lobby");
-    if (open) { satDown = true; act({ kind: "sit", colour: chosenColour }); }
+    if (open) { satDown = true; act({ kind: "sit", colour: me?.colour || chosenColour }); }
   }
   if (v.duo) {
-    const me = v.duo.players.find((p) => p.isYou);
-    if (me) chosenColour = me.colour;
     if (v.duo.players.length > partnerCount && partnerCount > 0) sfx.join();
     partnerCount = v.duo.players.length;
-  } else if (v.colour) chosenColour = v.colour;
+  }
   if (v.mode && v.mode !== "duo") chosenMode = v.mode;
 
   if (v.phase === "ask") {
-    showingLobby = false;
+    showingLobby = false; showingLocker = false;
     const key = v.round.startedAt;
     if (key !== roundKey) {
       roundKey = key;
       autoSkipped = false;
-      // Fresh round: run a full clock locally. A reload mid-round (startedAt
-      // already old) trusts the server's clock instead so the bar is honest.
       const age = Date.now() - key;
       roundLocalStart = performance.now() - (age > 3000 ? age : 0);
       lastNewPart = null;
     }
+    if (v.roundNo === 1 && prev?.phase !== "ask" && prev?.phase !== "reveal") profileBefore = me ? { ...me } : null;
   } else {
     roundKey = null;
   }
@@ -240,16 +228,33 @@ function onState(msg) {
     if (e.tier) sfx.score(e.tier); else sfx.miss();
     lastNewPart = e.part ? e.part.id : null;
   }
-  if (v.phase === "done" && prev?.phase !== "done") recordBest(v);
+  if (v.phase === "done" && prev?.phase !== "done") { recordBest(v); refreshAfterGame(); }
   render();
+}
+
+/** The room credited the locker when the game ended; fetch it and compute the fanfare. */
+async function refreshAfterGame() {
+  const before = profileBefore || me;
+  await new Promise((r) => setTimeout(r, 400));
+  const after = await api("GET");
+  if (!after) return;
+  indexCatalogue();
+  if (before) {
+    const beforeOwned = new Set((before.catalogue || []).filter((p) => p.unlocked).map((p) => p.id));
+    fanfare = {
+      xpGained: after.xp - before.xp,
+      levelBefore: before.level, levelAfter: after.level,
+      newUnlocks: after.catalogue.filter((p) => p.unlocked && !beforeOwned.has(p.id)).map((p) => p.id),
+    };
+    if (fanfare.levelAfter > fanfare.levelBefore) sfx.levelup();
+  }
+  if (view?.phase === "done") render();
 }
 
 function render() {
   const v = view;
   if (!v) return;
   if (!v.duo && !roomParam && v.phase === "lobby" && !store.get("seenTutorial", false)) { screen.innerHTML = tutorialHTML(); wireTutorial(); return; }
-  // Mid-round updates (a partner's keystrokes, a miss) patch in place so the
-  // typer never loses the input box or the clock.
   if (v.phase === "ask" && screen.dataset.phase === "ask" && screen.dataset.round === String(v.round.startedAt)) {
     const live = $("#livetyping"); if (live) live.textContent = v.round.typing || "";
     const tries = $(".tries"); if (tries) tries.innerHTML = triesHTML(v.round);
@@ -259,7 +264,8 @@ function render() {
   screen.dataset.round = v.round ? String(v.round.startedAt) : "";
   clearInterval(timerHandle);
   const vig = $("#vignette"); if (vig) { vig.classList.remove("danger"); vig.style.setProperty("--urg", "0"); }
-  if (v.duo && !v.duo.seated && (v.duo.players.length >= 2 || v.phase !== "duo-lobby")) screen.innerHTML = spectatorHTML(v);
+  if (showingLocker && (v.phase === "lobby" || v.phase === "done" || v.phase === "duo-lobby")) screen.innerHTML = lockerHTML(v);
+  else if (v.duo && !v.duo.seated && (v.duo.players.length >= 2 || v.phase !== "duo-lobby")) screen.innerHTML = spectatorHTML(v);
   else if (v.phase === "duo-lobby") screen.innerHTML = v.duo && v.duo.seated ? duoLobbyHTML(v) : joiningHTML();
   else if (v.phase === "lobby" || v.phase === "done" && showingLobby) screen.innerHTML = lobbyHTML(v);
   else if (v.phase === "ask") screen.innerHTML = askHTML(v);
@@ -290,19 +296,33 @@ function swatchesHTML(current) {
   </div>`;
 }
 
+function levelHTML() {
+  if (!me) return lockerOk ? `<p class="px small dim">LOADING LOCKER…</p>` : "";
+  const span = Math.max(1, me.nextLevelXp - me.levelXp);
+  const pct = Math.min(100, Math.round(((me.xp - me.levelXp) / span) * 100));
+  return `<div class="levelbar">
+    <div class="levelrow"><span class="px">${esc(displayName().toUpperCase())}</span><span class="px lvl">LV ${me.level}</span></div>
+    <div class="xp"><div class="xpfill" style="width:${pct}%"></div></div>
+    <div class="levelrow small dim"><span>${me.xp} xp</span><span>${me.nextLevelXp - me.xp} to level ${me.level + 1}</span></div>
+  </div>`;
+}
+
+function myLoadoutParts() { return me ? partsById(me.loadout) : []; }
+
 function lobbyHTML(v) {
-  const best = store.get(bestKey("classic"), 0);
-  const bestE = store.get(bestKey("endless"), 0);
-  const bestD = store.get(bestKey("duo"), 0);
-  const parts = v.phase === "done" ? v.parts : [];
+  const best = me?.best?.classic ?? store.get(bestKey("classic"), 0);
+  const bestE = me?.best?.endless ?? store.get(bestKey("endless"), 0);
+  const bestD = me?.best?.duo ?? store.get(bestKey("duo"), 0);
+  const colour = me?.colour || chosenColour;
   return `
     <section class="panel nest">
-      ${oddlerHTML(chosenColour, parts, "big")}
-      ${swatchesHTML(chosenColour)}
+      ${oddlerHTML(colour, myLoadoutParts(), "big")}
+      ${levelHTML()}
+      <p><button id="locker" class="btn ghost" type="button">OPEN LOCKER</button></p>
     </section>
     <section class="panel">
       <h2>The odd dive</h2>
-      <p>Every prompt has lots of right answers. <b>Only the uncommon ones score.</b> Rarer answers grow your Oddler new parts.</p>
+      <p>Every prompt has lots of right answers. <b>Only the uncommon ones score.</b> Rare answers earn your Oddler new parts for its locker.</p>
       <div class="tabs" role="group" aria-label="Mode">
         ${Object.entries(MODE_INFO).map(([m, [name, sub]]) => `<button class="tab" type="button" data-mode="${m}" aria-pressed="${m === chosenMode}">${name}<small>${sub}</small></button>`).join("")}
       </div>
@@ -330,20 +350,73 @@ function tutorialHTML() {
       <div class="ladderlist">${ladder}</div>
       <details class="about">
         <summary>Where do the questions and points come from?</summary>
-        <p class="small">The prompts and their answer lists are written by hand for Oddler — general-knowledge categories (places, food, animals, sport, music, screens, science, everyday stuff), each with everything we could think of that counts, plus nicknames and alternate spellings.</p>
+        <p class="small">The prompts and their answer lists are written by hand for Oddler — general-knowledge categories (places, food, animals, sport, music, screens, science, everyday stuff), each with everything we could think of that counts, plus nicknames and alternate spellings. A fresh batch of prompts is added twice a day.</p>
         <p class="small">Each accepted answer is given a rarity tier by the question writer, judging how quickly an average person would think of it. Plain is the first thing everyone says; One in an Oddlion is something almost nobody says. The tier sets the points (10 to 100). It is editorial, not live player statistics, so the same answer is worth the same to everyone.</p>
-        <p class="small">Spelling slips are forgiven (one typo in a medium word, two in a long one). An answer not on our list keeps the clock running so you can try again. Odd-ish or better grows a part on your Oddler.</p>
+        <p class="small">Spelling slips are forgiven (one typo in a medium word, two in a long one). An answer not on our list keeps the clock running so you can try again. Odd-ish or better grows a mutation on your Oddler, which goes into your locker for keeps; every game also pays XP, and levels unlock hats and other accessories.</p>
       </details>
       <button id="gotit" class="btn lime" type="button">GOT IT</button>
+    </section>`;
+}
+
+// locker ---------------------------------------------------------------------
+
+const SLOT_ORDER = ["hat", "face", "flower", "horn", "eye", "antenna", "back", "wing", "nub", "neck", "pack", "held"];
+
+function lockerHTML(v) {
+  if (!me) return `<section class="panel"><h2>Locker</h2><p class="dim">${lockerOk ? "Loading…" : "Lockers are not available on this deploy."}</p><p><button id="closelocker" class="btn ghost" type="button">BACK</button></p></section>`;
+  const worn = new Set(me.loadout);
+  const bySlot = {};
+  for (const p of me.catalogue) (bySlot[p.slot] ??= []).push(p);
+  const grid = SLOT_ORDER.filter((s) => bySlot[s]).map((slot) => {
+    const cap = ANCHORS[slot]?.length ?? 1;
+    const wearing = me.loadout.filter((id) => CATALOGUE_BY_ID[id]?.slot === slot).length;
+    const items = bySlot[slot].map((p) => {
+      const how = p.level ? `LV ${p.level}` : `${TIERS_CACHE[p.tier - 1]?.name ?? "Rare"}+`;
+      const state = worn.has(p.id) ? "worn" : p.unlocked ? "owned" : "locked";
+      return `<button class="item ${state}" type="button" data-part="${p.id}" ${p.unlocked ? "" : "disabled"} aria-pressed="${worn.has(p.id)}" title="${esc(PART_NAMES[p.id] || p.id)}">
+        <img src="/art/${p.id}.png" alt="">
+        <span class="iname">${esc(PART_NAMES[p.id] || p.id)}</span>
+        <span class="ihow">${p.unlocked ? (worn.has(p.id) ? "WORN" : "TAP TO WEAR") : p.level ? `UNLOCKS AT ${how}` : `EARN: ${esc(how)} ANSWER`}</span>
+      </button>`;
+    }).join("");
+    return `<div class="slotgroup"><div class="slothead"><span class="px">${esc(SLOT_NAMES[slot] || slot)}</span><span class="px dim">${wearing}/${cap}</span></div><div class="items">${items}</div></div>`;
+  }).join("");
+  return `
+    <section class="panel nest">
+      ${oddlerHTML(me.colour, myLoadoutParts(), "big")}
+      ${levelHTML()}
+      <label class="namefield"><span class="px small">NAME</span><input id="name" type="text" maxlength="16" value="${esc(me.name)}" placeholder="Your Oddler's name" autocomplete="nickname" /></label>
+      ${swatchesHTML(me.colour)}
+      <div class="row" style="margin-top:12px">
+        <button id="closelocker" class="btn" type="button">DONE</button>
+        <button id="undress" class="btn ghost" type="button">TAKE ALL OFF</button>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Locker</h2>
+      <p class="small dim">${me.games} game${me.games === 1 ? "" : "s"} played · ${me.catalogue.filter((p) => p.unlocked).length}/${me.catalogue.length} parts unlocked. Mutations come from Odd-ish-or-better answers in games; accessories unlock as you level up.</p>
+      ${grid}
+    </section>
+    <section class="panel">
+      <h2>Use this locker on another device</h2>
+      <p class="small dim">Your locker lives under a private code. Enter it on another phone or computer to bring your name, level and parts with you. Keep it to yourself — anyone with it can use your locker.</p>
+      <p><button id="showcode" class="link" type="button">Show my locker code</button></p>
+      <p id="codebox" class="code small" hidden style="font-size:12px;letter-spacing:0.08em;word-break:break-all"></p>
+      <form id="restore" class="answer"><input id="restorecode" type="text" placeholder="Paste a locker code…" autocapitalize="off" autocorrect="off" spellcheck="false" /><button class="btn ghost" type="submit">USE</button></form>
     </section>`;
 }
 
 // duo lobby ------------------------------------------------------------------
 
 function roomLink() { return `${location.origin}/?room=${encodeURIComponent(roomParam)}`; }
+function seatName(p) { return p.isYou ? (p.name || "You") : (p.name || "Partner"); }
+
+function joiningHTML() {
+  return `<section class="panel" style="text-align:center"><h2>Duo room</h2><p class="code">${esc(roomParam)}</p><p class="px small dim">TAKING A SEAT…</p></section>`;
+}
 
 function duoLobbyHTML(v) {
-  const me = v.duo.players.find((p) => p.isYou);
+  const my = v.duo.players.find((p) => p.isYou);
   const partner = v.duo.players.find((p) => !p.isYou);
   const isHost = v.duo.host === v.duo.you;
   return `
@@ -359,25 +432,20 @@ function duoLobbyHTML(v) {
     <section class="panel">
       <div class="team">
         <div class="seat">
-          ${oddlerHTML(me.colour, [], "", null, "You")}
-          <p class="px seatname">YOU</p>
+          ${oddlerHTML(my.colour, myLoadoutParts(), "", null, seatName(my))}
+          <p class="px seatname">${esc(seatName(my).toUpperCase())}${me ? ` · LV ${me.level}` : ""}</p>
         </div>
         <div class="seat ${partner ? "" : "empty"}">
-          ${partner ? oddlerHTML(partner.colour, [], "", null, "Partner") : `<div class="oddler"><div class="waiting">waiting for<br>your partner…</div></div>`}
-          <p class="px seatname">${partner ? "PARTNER" : "…"}</p>
+          ${partner ? oddlerHTML(partner.colour, [], "", null, seatName(partner)) : `<div class="oddler"><div class="waiting">waiting for<br>your partner…</div></div>`}
+          <p class="px seatname">${partner ? esc(seatName(partner).toUpperCase()) : "…"}</p>
         </div>
       </div>
-      ${swatchesHTML(me.colour)}
       <p style="margin-top:14px">${isHost
         ? `<button id="start" class="btn" type="button" ${partner ? "" : "disabled"}>${partner ? "▼ START DUO ▼" : "WAITING FOR PARTNER"}</button>`
         : `<p class="px small dim" style="text-align:center">${partner ? "WAITING FOR THE HOST TO START" : "WAITING…"}</p>`}</p>
       <p class="small dim" style="text-align:center">10 prompts, 10 s each. You take turns; your partner sees you type. Points add up to one team score.</p>
-      <p style="text-align:center"><a class="link" href="/">Leave room</a></p>
+      <p style="text-align:center"><button id="locker" class="link" type="button">Open locker</button> · <a class="link" href="/">Leave room</a></p>
     </section>`;
-}
-
-function joiningHTML() {
-  return `<section class="panel" style="text-align:center"><h2>Duo room</h2><p class="code">${esc(roomParam)}</p><p class="px small dim">TAKING A SEAT…</p></section>`;
 }
 
 function spectatorHTML(v) {
@@ -385,7 +453,7 @@ function spectatorHTML(v) {
     <section class="panel" style="text-align:center">
       <h2>Room ${esc(roomParam)} is full</h2>
       <p>Two Oddlers are already seated here. You can watch, or <a class="link" href="/">start your own</a>.</p>
-      <div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "")}<p class="px seatname">${p.pts} ODD</p></div>`).join("")}</div>
+      <div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "")}<p class="px seatname">${esc((p.name || "Player").toUpperCase())} · ${p.pts}</p></div>`).join("")}</div>
       ${v.round ? `<p class="small dim">${esc(v.round.prompt)}</p>` : ""}
       <p class="bigscore" style="font-size:22px">${v.score} ODD</p>
     </section>`;
@@ -405,8 +473,8 @@ function hudHTML(v) {
 function teamHTML(v, newPart = null) {
   return `<div class="team compact">${v.duo.players.map((p) => `
     <div class="seat ${p.isTurn ? "turn" : ""}">
-      ${oddlerHTML(p.colour, p.parts, "mini", newPart && newPart.by === p.id ? newPart.id : null, p.isYou ? "You" : "Partner")}
-      <p class="px seatname">${p.isYou ? "YOU" : "PARTNER"} · ${p.pts}</p>
+      ${oddlerHTML(p.colour, p.parts, "mini", newPart && newPart.by === p.id ? newPart.id : null, seatName(p))}
+      <p class="px seatname">${esc(seatName(p).toUpperCase())} · ${p.pts}</p>
     </div>`).join("")}</div>`;
 }
 
@@ -420,6 +488,7 @@ function askHTML(v) {
   const r = v.round;
   const timed = v.roundMs != null;
   const mine = r.yourTurn;
+  const partner = v.duo ? v.duo.players.find((p) => !p.isYou) : null;
   const tries = triesHTML(r);
   const timer = timed
     ? `<div class="clock" id="clock" aria-hidden="true"><div class="count" id="secs">${Math.ceil(v.roundMs / 1000)}</div><div class="bar"><div class="fill" id="fill"></div></div></div>`
@@ -430,15 +499,16 @@ function askHTML(v) {
         <input id="answer" name="answer" type="text" placeholder="Type an uncommon answer…" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="80" required />
         <button class="btn lime" type="submit">GO</button>
       </form>`
-    : `<div class="live" aria-live="polite"><span class="px livelabel">PARTNER IS TYPING</span><div class="livetext"><span id="livetyping">${esc(r.typing || "")}</span><span class="caret"></span></div></div>`;
+    : `<div class="live" aria-live="polite"><span class="px livelabel">${esc((partner?.name || "PARTNER").toUpperCase())} IS TYPING</span><div class="livetext"><span id="livetyping">${esc(r.typing || "")}</span><span class="caret"></span></div></div>`;
   const foot = v.duo
     ? teamHTML(v)
     : `<div class="askfoot"><button id="skip" class="link" type="button">Skip this one</button>${oddlerHTML(v.colour, v.parts, "mini")}</div>`;
   const duoSkip = v.duo && mine ? `<p style="text-align:right;margin:0"><button id="skip" class="link" type="button">Skip this one</button></p>` : "";
+  const who = mine ? "▶ YOU'RE ON THE CLOCK ◀" : `${esc((partner?.name || "PARTNER").toUpperCase())} IS ON THE CLOCK`;
   return `
     <section class="panel ask" id="askpanel">
       ${hudHTML(v)}
-      ${v.duo ? `<div class="onclock ${mine ? "you" : "them"}">${mine ? "▶ YOU'RE ON THE CLOCK ◀" : "PARTNER IS ON THE CLOCK"}</div>` : ""}
+      ${v.duo ? `<div class="onclock ${mine ? "you" : "them"}">${who}</div>` : ""}
       <p style="margin-top:${v.duo ? 8 : 12}px"><span class="chip">${esc(r.category)}</span></p>
       <p class="prompt" id="prompt">${esc(r.prompt)}</p>
       ${timer}
@@ -459,12 +529,11 @@ function startTimer(v) {
   const tick = () => {
     const elapsed = performance.now() - roundLocalStart;
     const left = Math.max(0, v.roundMs - elapsed);
-    const urg = 1 - left / v.roundMs;            // 0 calm → 1 out of time
+    const urg = 1 - left / v.roundMs;
     fill.style.width = `${(left / v.roundMs) * 100}%`;
     const whole = Math.ceil(left / 1000);
     if (whole !== lastWhole) {
       secs.textContent = String(whole);
-      // Re-trigger the punch animation on every new digit.
       secs.classList.remove("punch"); void secs.offsetWidth; secs.classList.add("punch");
       if (whole > 0 && whole <= 3) sfx.tick();
       lastWhole = whole;
@@ -473,10 +542,7 @@ function startTimer(v) {
     clock.classList.toggle("danger", left < 1500);
     panel?.classList.toggle("shake", left < 1200 && left > 0 && !reduced);
     if (vignette) { vignette.style.setProperty("--urg", urg.toFixed(3)); vignette.classList.toggle("danger", left < 1500 && left > 0); }
-    // Heartbeat that speeds up as the clock runs down.
     if (left > 0 && elapsed >= nextBeat) { sfx.beat(urg); nextBeat = elapsed + (900 - 600 * urg); }
-    // The player on turn closes the round at zero; a partner only steps in
-    // after the server's grace has passed too (their skip is refused before).
     const slack = mine ? 0 : 2600;
     if (left <= 0 && elapsed >= v.roundMs + slack && !autoSkipped) {
       autoSkipped = true;
@@ -498,14 +564,15 @@ function tierName(t) { return TIERS_CACHE[t - 1]?.name ?? "Miss"; }
 function revealHTML(v) {
   const r = v.round, e = r.ended;
   const tier = e.tier;
-  const who = v.duo ? (r.yourTurn ? "You" : "Your partner") : "You";
+  const partner = v.duo ? v.duo.players.find((p) => !p.isYou) : null;
+  const who = v.duo ? (r.yourTurn ? "You" : (partner?.name || "Your partner")) : "You";
   const title = tier ? `<span class="tier t${tier}">${esc(tierName(tier))}</span>` : `<span class="tier t0">${autoSkipped || e.timedOut ? "OUT OF TIME" : "SKIPPED"}</span>`;
   const yours = tier
-    ? `<p class="yours">${esc(e.answer)}${e.typed && e.typed.toLowerCase() !== e.answer.toLowerCase() ? ` <span class="small dim">(${v.duo ? who.toLowerCase() : "you"} typed “${esc(e.typed)}”)</span>` : ""}</p>`
+    ? `<p class="yours">${esc(e.answer)}${e.typed && e.typed.toLowerCase() !== e.answer.toLowerCase() ? ` <span class="small dim">(${esc(v.duo ? who : "you")} typed “${esc(e.typed)}”)</span>` : ""}</p>`
     : `<p class="yours dim">No answer landed.</p>`;
-  const owner = v.duo ? (r.yourTurn ? "Your" : "Your partner's") : "Your";
+  const owner = v.duo ? (r.yourTurn ? "Your" : `${esc(who)}'s`) : "Your";
   const earned = e.part
-    ? `<div class="earned"><img src="/art/${esc(e.part.id)}.png" alt=""><div><b>New part!</b><br><span class="small">${owner} Oddler grew ${esc(PART_NAMES[e.part.id] || "something odd")}.</span></div></div>`
+    ? `<div class="earned"><img src="/art/${esc(e.part.id)}.png" alt=""><div><b>New part!</b><br><span class="small">${owner} Oddler grew ${esc((PART_NAMES[e.part.id] || "something odd").toLowerCase())} — it's in the locker for keeps.</span></div></div>`
     : tier ? `<p class="small dim">Odd-ish or better grows a part. This one was ${tier < 3 ? "too plain" : "points only — every slot it fits is full"}.</p>` : "";
   const odder = r.odder.length
     ? `<p class="odder"><span class="dim">Odder picks:</span> ${r.odder.map((o) => `<b>${esc(o.name)}</b> <span class="small dim">(${esc(tierName(o.tier))}, ${TIERS_CACHE[o.tier - 1]?.pts ?? ""})</span>`).join(" · ")}</p>`
@@ -516,7 +583,7 @@ function revealHTML(v) {
   return `
     <section class="panel">
       ${hudHTML(v)}
-      <p class="small dim" style="margin-top:12px">${esc(r.prompt)}${v.duo ? ` · <b>${who}</b>` : ""}</p>
+      <p class="small dim" style="margin-top:12px">${esc(r.prompt)}${v.duo ? ` · <b>${esc(who)}</b>` : ""}</p>
       <p>${title} <span class="pts">${tier ? `+${e.pts}` : "+0"}</span></p>
       ${yours}
       <p class="small">${esc(r.reason)}</p>
@@ -530,17 +597,28 @@ function revealHTML(v) {
 
 // done ---------------------------------------------------------------------
 
+function fanfareHTML() {
+  if (!fanfare) return me ? `<p class="px small dim">UPDATING LOCKER…</p>` : "";
+  const up = fanfare.levelAfter > fanfare.levelBefore;
+  const unlocks = fanfare.newUnlocks.map((id) => `<span class="unlock"><img src="/art/${esc(id)}.png" alt="">${esc(PART_NAMES[id] || id)}</span>`).join("");
+  return `<div class="fanfare ${up ? "up" : ""}">
+    <p class="px">+${fanfare.xpGained} XP${up ? ` · LEVEL UP! LV ${fanfare.levelAfter}` : ` · LV ${fanfare.levelAfter}`}</p>
+    ${unlocks ? `<p class="small">New in your locker:</p><div class="unlocks">${unlocks}</div>` : ""}
+  </div>`;
+}
+
 function doneHTML(v) {
   const newBest = store.get("newbest", false) && v.mode !== "practice";
-  const best = store.get(bestKey(v.mode), 0);
+  const best = me?.best?.[v.mode] ?? store.get(bestKey(v.mode), 0);
   const ladder = v.history.map((h) => `<span class="t${h.tier}" style="background:var(--t${h.tier || 1});${h.tier ? "" : "opacity:.35"}" title="${esc(h.answer || "miss")}">${h.tier || "·"}</span>`).join("");
-  const rows = v.history.map((h) => `<li><span>${esc(h.prompt)}<br><b>${esc(h.answer || (h.timedOut ? "out of time" : "skipped"))}</b>${v.duo ? ` <span class="small dim">· ${h.by === v.duo.you ? "you" : "partner"}</span>` : ""}</span><span>${h.tier ? esc(tierName(h.tier)) : "—"} · ${h.pts}</span></li>`).join("");
+  const nameOf = (id) => { const p = v.duo?.players.find((x) => x.id === id); return p ? seatName(p).toLowerCase() : ""; };
+  const rows = v.history.map((h) => `<li><span>${esc(h.prompt)}<br><b>${esc(h.answer || (h.timedOut ? "out of time" : "skipped"))}</b>${v.duo ? ` <span class="small dim">· ${esc(nameOf(h.by))}</span>` : ""}</span><span>${h.tier ? esc(tierName(h.tier)) : "—"} · ${h.pts}</span></li>`).join("");
   const label = v.duo ? "Duo" : v.mode === "endless" ? `${v.history.length} rounds` : "Classic";
   const isHost = v.duo && v.duo.host === v.duo.you;
   const creatures = v.duo
-    ? `<div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "", null, p.isYou ? "You" : "Partner")}<p class="px seatname">${p.isYou ? "YOU" : "PARTNER"} · ${p.pts}</p></div>`).join("")}</div>`
+    ? `<div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "", null, seatName(p))}<p class="px seatname">${esc(seatName(p).toUpperCase())} · ${p.pts}</p></div>`).join("")}</div>`
     : oddlerHTML(v.colour, v.parts, "big");
-  const partsCount = v.duo ? v.duo.players.reduce((n, p) => n + p.parts.length, 0) : v.parts.length;
+  const earnedCount = v.duo ? v.duo.players.reduce((n, p) => n + (p.earned?.length ?? 0), 0) : (v.earned?.length ?? 0);
   const again = v.duo
     ? (isHost ? `<button id="again" class="btn" type="button">PLAY AGAIN</button>` : `<button class="btn" type="button" disabled>HOST STARTS NEXT</button>`)
     : `<button id="again" class="btn" type="button">PLAY AGAIN</button>`;
@@ -549,13 +627,14 @@ function doneHTML(v) {
       ${creatures}
       <p class="bigscore">${v.score} ODD</p>
       <p class="best ${newBest ? "new" : ""}">${v.mode === "practice" ? "PRACTICE RUN" : newBest ? "★ NEW PERSONAL BEST ★" : `BEST ${v.mode.toUpperCase()}: ${best}`}</p>
+      ${fanfareHTML()}
       <div class="ladder" aria-label="Round tiers" style="justify-content:center">${ladder}</div>
-      <p class="small">${partsCount} part${partsCount === 1 ? "" : "s"} grown · ${label}</p>
+      <p class="small">${earnedCount} part${earnedCount === 1 ? "" : "s"} earned · ${label}</p>
       <div class="row">
         <button id="share" class="btn lime" type="button">SHARE</button>
         ${again}
       </div>
-      <p>${v.duo ? `<a class="link" href="/">Leave room</a>` : `<button id="lobby" class="link" type="button">Change mode or colour</button>`}</p>
+      <p><button id="locker" class="link" type="button">Open locker</button> · ${v.duo ? `<a class="link" href="/">Leave room</a>` : `<button id="lobby" class="link" type="button">Change mode</button>`}</p>
     </section>
     <section class="panel">
       <h2>Your dive</h2>
@@ -566,12 +645,11 @@ function doneHTML(v) {
 function shareText(v) {
   const tiers = v.history.map((h) => "·▁▂▃▅▆█"[h.tier] || "·").join("");
   const mode = v.duo ? "Duo" : v.mode === "endless" ? `Endless (${v.history.length} rounds)` : "Classic";
-  return `ODDLER · ${mode} · ${v.score} odd\n${tiers}\n${location.origin}`;
+  return `ODDLER · ${mode} · ${v.score} odd${me ? ` · ${displayName()} LV ${me.level}` : ""}\n${tiers}\n${location.origin}`;
 }
 
 // wiring -------------------------------------------------------------------
 
-/** Prompts this browser has met, newest last, so later runs avoid them. */
 function seenPrompts() { return store.get("seen", []).slice(-600); }
 function rememberSeen(history) {
   const seen = store.get("seen", []);
@@ -593,22 +671,55 @@ function sendTyping(text) {
   typingTimer = setTimeout(() => act({ kind: "typing", text: text.slice(0, 80) }), 120);
 }
 
+function toggleWear(id) {
+  if (!me) return;
+  const part = CATALOGUE_BY_ID[id];
+  if (!part || !part.unlocked) return;
+  let loadout = me.loadout.slice();
+  if (loadout.includes(id)) loadout = loadout.filter((x) => x !== id);
+  else {
+    const cap = ANCHORS[part.slot]?.length ?? 1;
+    const inSlot = loadout.filter((x) => CATALOGUE_BY_ID[x]?.slot === part.slot);
+    if (inSlot.length >= cap) loadout = loadout.filter((x) => x !== inSlot[0]); // swap out the oldest
+    loadout.push(id);
+  }
+  sfx.click();
+  saveProfile({ loadout });
+  render();
+}
+
 function wire() {
   const v = view;
   $("#start")?.addEventListener("click", () => {
     sfx.click();
     showingLobby = false;
     if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
-    else act({ kind: "start", mode: chosenMode, colour: chosenColour, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
+    else act({ kind: "start", mode: chosenMode, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
   });
   $("#duo")?.addEventListener("click", () => { sfx.click(); location.href = `/?room=${makeCode()}`; });
+  $("#locker")?.addEventListener("click", () => { sfx.click(); showingLocker = true; render(); });
+  $("#closelocker")?.addEventListener("click", () => { sfx.click(); showingLocker = false; showingLobby = v.phase !== "duo-lobby"; render(); });
+  $("#undress")?.addEventListener("click", () => { sfx.click(); saveProfile({ loadout: [] }); render(); });
+  for (const b of document.querySelectorAll("[data-part]")) b.addEventListener("click", () => toggleWear(b.dataset.part));
+  const name = $("#name");
+  if (name) name.addEventListener("input", () => { saveProfile({ name: name.value.slice(0, 16) }); const lv = document.querySelector(".levelrow .px"); if (lv) lv.textContent = (name.value.trim() || "You").toUpperCase(); });
+  $("#showcode")?.addEventListener("click", () => { const box = $("#codebox"); box.hidden = !box.hidden; box.textContent = TOKEN; });
+  $("#restore")?.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const code = $("#restorecode").value.trim().toLowerCase();
+    if (!/^[a-f0-9]{32,64}$/.test(code)) { toast("THAT'S NOT A LOCKER CODE"); return; }
+    localStorage.setItem("oddler:token", code);
+    location.href = "/";
+  });
   for (const b of document.querySelectorAll("[data-mode]")) {
     b.addEventListener("click", () => { chosenMode = b.dataset.mode; store.set("mode", chosenMode); sfx.click(); render(); });
   }
   for (const b of document.querySelectorAll("[data-colour]")) {
     b.addEventListener("click", () => {
       chosenColour = b.dataset.colour; store.set("colour", chosenColour); sfx.click();
-      if (v.duo) act({ kind: "colour", colour: chosenColour }); else render();
+      saveProfile({ colour: chosenColour });
+      if (v.duo) act({ kind: "colour", colour: chosenColour });
+      render();
     });
   }
   $("#how")?.addEventListener("click", () => { screen.innerHTML = tutorialHTML(); wireTutorial(); });
@@ -646,10 +757,11 @@ function wire() {
   }
   $("#again")?.addEventListener("click", () => {
     sfx.click();
+    fanfare = null;
     if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
-    else act({ kind: "start", mode: v.mode, colour: v.colour, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
+    else act({ kind: "start", mode: v.mode, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
   });
-  $("#lobby")?.addEventListener("click", () => { showingLobby = true; render(); });
+  $("#lobby")?.addEventListener("click", () => { showingLobby = true; fanfare = null; render(); });
   $("#share")?.addEventListener("click", async () => {
     const text = shareText(v);
     try {
@@ -657,8 +769,7 @@ function wire() {
       else { await navigator.clipboard.writeText(text); toast("COPIED"); }
     } catch { /* cancelled */ }
   });
-  // Keyboard: Enter advances the reveal.
-  document.onkeydown = (ev) => { if (ev.key === "Enter" && $("#next")) $("#next").click(); };
+  document.onkeydown = (ev) => { if (ev.key === "Enter" && $("#next") && document.activeElement?.tagName !== "INPUT") $("#next").click(); };
 }
 
 function wireTutorial() {
@@ -677,4 +788,14 @@ function wireTutorial() {
   $("#gotit").addEventListener("click", () => { store.set("seenTutorial", true); showingLobby = true; render(); });
 }
 
-connect();
+// ── boot ───────────────────────────────────────────────────────────────────
+
+(async () => {
+  PLAYER_ID = await hashToken(TOKEN);
+  room = roomParam || PLAYER_ID;
+  // Locker first (it decides the name and what the creature wears), then the room.
+  await api("GET");
+  indexCatalogue();
+  if (me && !me.name && store.get("colour", null) && me.colour !== chosenColour) saveProfile({ colour: chosenColour });
+  connect();
+})();

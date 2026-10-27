@@ -122,7 +122,7 @@ function earnPart(seed, tier, owned) {
   const free = (p) => !have.has(p.id) && countSlot(owned, p.slot) < SLOT_CAP[p.slot];
   // Prefer the earned tier, then step down so a late Plain-only run still grows.
   for (let t = tier; t >= 3; t--) {
-    const pool = PARTS.filter((p) => p.tier === t && free(p));
+    const pool = PARTS.filter((p) => p.tier === t && p.level === undefined && free(p));
     if (pool.length) {
       const [part, s] = pick(seed, pool);
       return [{ id: part.id, slot: part.slot }, s];
@@ -144,7 +144,9 @@ export function setup(players) {
     kind: "solo",
     player: players[0],   // solo: the player; duo: the host
     players: [],          // duo seats, in join order (host first)
-    profiles: {},         // duo: id → { colour, parts, pts }
+    profiles: {},         // duo: id → { name, colour, parts, earned, pts }
+    name: "",             // solo: the player's locker name
+    earned: [],           // solo: parts earned this game (a locker credits these)
     games: 0,             // duo games started (alternates who goes first)
     phase: "lobby",       // lobby → ask → reveal → … → done   (duo: duo-lobby first)
     mode: null,
@@ -210,7 +212,7 @@ function migrate(state) {
   const fresh = state.kind !== undefined && Array.isArray(state.players) && state.profiles && Array.isArray(state.seen)
     && Number.isInteger(state.games) && (!state.round || state.round.turn !== undefined);
   if (fresh) return state;
-  const s = { kind: "solo", players: [], profiles: {}, games: 0, seen: [], ...state };
+  const s = { kind: "solo", players: [], profiles: {}, games: 0, seen: [], name: "", earned: [], ...state };
   if (!Array.isArray(s.used)) s.used = [];
   if (!Array.isArray(s.history)) s.history = [];
   if (!Array.isArray(s.parts)) s.parts = [];
@@ -234,6 +236,7 @@ export function validateAction(state, playerId, action) {
     if (duo && state.players.length >= 2) return { ok: false, error: "room is full" };
     if (duo && state.phase !== "duo-lobby") return { ok: false, error: "room is mid-game" };
     if (action.colour !== undefined && !COLOURS.includes(action.colour)) return { ok: false, error: "unknown colour" };
+    if (action.name !== undefined && typeof action.name !== "string") return { ok: false, error: "bad name" };
     return { ok: true };
   }
   if (!seated) return { ok: false, error: duo ? "you are watching this room" : "not your Oddler" };
@@ -253,6 +256,9 @@ export function validateAction(state, playerId, action) {
       if (!MODES.includes(action.mode)) return { ok: false, error: "unknown mode" };
     }
     if (action.colour !== undefined && !COLOURS.includes(action.colour)) return { ok: false, error: "unknown colour" };
+    for (const k of ["names", "loadouts", "colours"]) {
+      if (action[k] !== undefined && (typeof action[k] !== "object" || action[k] === null || Array.isArray(action[k]))) return { ok: false, error: "bad " + k };
+    }
     if (action.seen !== undefined) {
       if (!Array.isArray(action.seen) || action.seen.length > SEEN_CAP) return { ok: false, error: "bad seen list" };
       if (!action.seen.every((id) => typeof id === "string" && id.length <= 48)) return { ok: false, error: "bad seen list" };
@@ -311,9 +317,10 @@ function endRound(state, result) {
   };
   if (state.kind === "duo") {
     const p = state.profiles[by];
-    next.profiles = { ...state.profiles, [by]: { ...p, parts: owned, pts: p.pts + pts } };
+    next.profiles = { ...state.profiles, [by]: { ...p, parts: owned, pts: p.pts + pts, earned: part ? [...(p.earned ?? []), part.id] : (p.earned ?? []) } };
   } else {
     next.parts = owned;
+    next.earned = part ? [...(state.earned ?? []), part.id] : (state.earned ?? []);
   }
   return next;
 }
@@ -322,11 +329,31 @@ function endRound(state, result) {
 function resetKeepingSeats(state, seed) {
   const base = setup([state.player]);
   const profiles = {};
-  for (const id of state.players) profiles[id] = { ...state.profiles[id], parts: [], pts: 0 };
+  for (const id of state.players) profiles[id] = { ...state.profiles[id], parts: [], earned: [], pts: 0 };
   return {
     ...base, kind: state.kind, players: state.players, profiles, games: state.games,
-    colour: state.colour, seed, phase: state.kind === "duo" ? "duo-lobby" : "lobby",
+    colour: state.colour, name: state.name, seed, phase: state.kind === "duo" ? "duo-lobby" : "lobby",
   };
+}
+
+function cleanName(raw) {
+  return typeof raw === "string" ? raw.replace(/[^\p{L}\p{N} _.'-]/gu, "").replace(/\s+/g, " ").trim().slice(0, NAME_MAX) : "";
+}
+
+/** The parts a locker says to wear: known ids only, within slot caps. */
+function wearable(ids) {
+  if (!Array.isArray(ids)) return [];
+  const out = [];
+  const used = {};
+  for (const id of ids) {
+    const part = PARTS.find((p) => p.id === id);
+    if (!part || out.some((o) => o.id === id)) continue;
+    const n = used[part.slot] ?? 0;
+    if (n >= SLOT_CAP[part.slot]) continue;
+    used[part.slot] = n + 1;
+    out.push({ id: part.id, slot: part.slot });
+  }
+  return out;
 }
 
 export function applyAction(state, playerId, action) {
@@ -338,7 +365,7 @@ export function applyAction(state, playerId, action) {
       const players = [...state.players, playerId];
       return {
         ...state, kind: "duo", phase: "duo-lobby", players,
-        profiles: { ...state.profiles, [playerId]: { colour, parts: [], pts: 0 } },
+        profiles: { ...state.profiles, [playerId]: { name: cleanName(action.name), colour, parts: [], earned: [], pts: 0 } },
       };
     }
     case "colour":
@@ -351,8 +378,24 @@ export function applyAction(state, playerId, action) {
     case "start": {
       const seed = ((at ^ (action.seed | 0)) >>> 0) || 1;
       const base = { ...resetKeepingSeats(state, seed), mode: action.mode, seen: Array.isArray(action.seen) ? action.seen : [] };
-      if (state.kind === "duo") base.games = state.games + (state.phase === "done" ? 1 : 0);
-      else if (action.colour) base.colour = action.colour;
+      const names = action.names ?? {}, loadouts = action.loadouts ?? {}, colours = action.colours ?? {};
+      if (state.kind === "duo") {
+        base.games = state.games + (state.phase === "done" ? 1 : 0);
+        for (const id of base.players) {
+          const p = base.profiles[id];
+          base.profiles[id] = {
+            ...p,
+            name: names[id] !== undefined ? cleanName(names[id]) : p.name,
+            colour: COLOURS.includes(colours[id]) ? colours[id] : p.colour,
+            parts: wearable(loadouts[id]),
+          };
+        }
+      } else {
+        if (action.colour) base.colour = action.colour;
+        else if (COLOURS.includes(colours[state.player])) base.colour = colours[state.player];
+        if (names[state.player] !== undefined) base.name = cleanName(names[state.player]);
+        base.parts = wearable(loadouts[state.player]);
+      }
       return freshRound(base, at) ?? { ...base, phase: "done" };
     }
     case "typing":
@@ -404,6 +447,8 @@ export function viewFor(state, playerId) {
     kind: state.kind,
     mode: state.mode,
     colour: state.colour,
+    name: state.name,
+    earned: state.earned,
     score: state.score,
     strikes: state.strikes,
     parts: state.parts,
@@ -422,7 +467,7 @@ export function viewFor(state, playerId) {
       seated: state.players.includes(playerId),
       games: state.games,
       players: state.players.map((id) => ({
-        id, ...state.profiles[id], isYou: id === playerId,
+        id, name: "", earned: [], ...state.profiles[id], isYou: id === playerId,
         isTurn: Boolean(state.round && state.phase === "ask" && state.round.turn === id),
       })),
     };

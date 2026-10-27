@@ -23,6 +23,8 @@ export const ENDLESS_STRIKES = 3;
 export const MODES = ["classic", "endless", "practice"];
 /** Max prompt ids a player may ask us to avoid (seen in earlier runs). */
 export const SEEN_CAP = 600;
+/** Longest display name a locker may carry. */
+export const NAME_MAX = 16;
 export const COLOURS = ["pink", "mint", "lav", "sand", "slate", "char"];
 
 /** Rarity ladder. `odd` is the one-line reason shown on the reveal screen. */
@@ -49,26 +51,26 @@ export const PARTS = [
   { id: "horn-06", slot: "back", tier: 5 }, { id: "horn-07", slot: "back", tier: 5 },
   { id: "horn-08", slot: "horn", tier: 4 }, { id: "horn-09", slot: "horn", tier: 4 },
   { id: "horn-10", slot: "horn", tier: 4 }, { id: "horn-11", slot: "horn", tier: 4 },
-  { id: "horn-12", slot: "nub", tier: 4 }, { id: "horn-13", slot: "nub", tier: 4 },
-  { id: "horn-14", slot: "nub", tier: 4 }, { id: "horn-15", slot: "nub", tier: 4 },
+  { id: "horn-12", slot: "nub", tier: 3 }, { id: "horn-13", slot: "nub", tier: 3 },
+  { id: "horn-14", slot: "nub", tier: 3 }, { id: "horn-15", slot: "nub", tier: 3 },
   // wing sheet — row 1 wings, row 2 eye stalks, row 3 antennae/tentacles, row 4 novelties
   { id: "wing-00", slot: "wing", tier: 6 }, { id: "wing-01", slot: "wing", tier: 6 },
   { id: "wing-02", slot: "wing", tier: 6 }, { id: "wing-03", slot: "wing", tier: 6 },
   { id: "wing-04", slot: "eye", tier: 5 }, { id: "wing-05", slot: "eye", tier: 5 },
   { id: "wing-06", slot: "eye", tier: 5 }, { id: "wing-07", slot: "eye", tier: 5 },
-  { id: "wing-08", slot: "antenna", tier: 5 }, { id: "wing-09", slot: "antenna", tier: 5 },
-  { id: "wing-10", slot: "antenna", tier: 5 }, { id: "wing-11", slot: "antenna", tier: 5 },
+  { id: "wing-08", slot: "antenna", tier: 4 }, { id: "wing-09", slot: "antenna", tier: 5 },
+  { id: "wing-10", slot: "antenna", tier: 4 }, { id: "wing-11", slot: "antenna", tier: 5 },
   { id: "wing-12", slot: "hat", tier: 6 }, { id: "wing-13", slot: "back", tier: 6 },
   { id: "wing-14", slot: "hat", tier: 6 }, { id: "wing-15", slot: "hat", tier: 6 },
-  // accessory sheet — hats, head bits, held items, neck/back wear
-  { id: "acc-00", slot: "hat", tier: 3 }, { id: "acc-01", slot: "hat", tier: 3 },
-  { id: "acc-02", slot: "hat", tier: 3 }, { id: "acc-03", slot: "hat", tier: 3 },
-  { id: "acc-04", slot: "face", tier: 3 }, { id: "acc-05", slot: "flower", tier: 3 },
-  { id: "acc-06", slot: "hat", tier: 3 }, { id: "acc-07", slot: "hat", tier: 3 },
-  { id: "acc-08", slot: "held", tier: 3 }, { id: "acc-09", slot: "held", tier: 3 },
-  { id: "acc-10", slot: "held", tier: 3 }, { id: "acc-11", slot: "held", tier: 3 },
-  { id: "acc-12", slot: "neck", tier: 3 }, { id: "acc-13", slot: "pack", tier: 3 },
-  { id: "acc-14", slot: "neck", tier: 3 }, { id: "acc-15", slot: "pack", tier: 3 },
+  // accessory sheet — level rewards, never earned mid-game (tier 0): one per level from 2
+  { id: "acc-00", slot: "hat", tier: 0, level: 2 }, { id: "acc-12", slot: "neck", tier: 0, level: 3 },
+  { id: "acc-04", slot: "face", tier: 0, level: 4 }, { id: "acc-08", slot: "held", tier: 0, level: 5 },
+  { id: "acc-05", slot: "flower", tier: 0, level: 6 }, { id: "acc-03", slot: "hat", tier: 0, level: 7 },
+  { id: "acc-14", slot: "neck", tier: 0, level: 8 }, { id: "acc-10", slot: "held", tier: 0, level: 9 },
+  { id: "acc-13", slot: "pack", tier: 0, level: 10 }, { id: "acc-01", slot: "hat", tier: 0, level: 11 },
+  { id: "acc-06", slot: "hat", tier: 0, level: 12 }, { id: "acc-11", slot: "held", tier: 0, level: 13 },
+  { id: "acc-09", slot: "held", tier: 0, level: 14 }, { id: "acc-07", slot: "hat", tier: 0, level: 15 },
+  { id: "acc-15", slot: "pack", tier: 0, level: 16 }, { id: "acc-02", slot: "hat", tier: 0, level: 17 },
 ];
 
 /**
@@ -400,7 +402,7 @@ function earnPart(seed, tier, owned) {
   const free = (p) => !have.has(p.id) && countSlot(owned, p.slot) < SLOT_CAP[p.slot];
   // Prefer the earned tier, then step down so a late Plain-only run still grows.
   for (let t = tier; t >= 3; t--) {
-    const pool = PARTS.filter((p) => p.tier === t && free(p));
+    const pool = PARTS.filter((p) => p.tier === t && p.level === undefined && free(p));
     if (pool.length) {
       const [part, s] = pick(seed, pool);
       return [{ id: part.id, slot: part.slot }, s];
@@ -422,7 +424,9 @@ export function setup(players) {
     kind: "solo",
     player: players[0],   // solo: the player; duo: the host
     players: [],          // duo seats, in join order (host first)
-    profiles: {},         // duo: id → { colour, parts, pts }
+    profiles: {},         // duo: id → { name, colour, parts, earned, pts }
+    name: "",             // solo: the player's locker name
+    earned: [],           // solo: parts earned this game (a locker credits these)
     games: 0,             // duo games started (alternates who goes first)
     phase: "lobby",       // lobby → ask → reveal → … → done   (duo: duo-lobby first)
     mode: null,
@@ -488,7 +492,7 @@ function migrate(state) {
   const fresh = state.kind !== undefined && Array.isArray(state.players) && state.profiles && Array.isArray(state.seen)
     && Number.isInteger(state.games) && (!state.round || state.round.turn !== undefined);
   if (fresh) return state;
-  const s = { kind: "solo", players: [], profiles: {}, games: 0, seen: [], ...state };
+  const s = { kind: "solo", players: [], profiles: {}, games: 0, seen: [], name: "", earned: [], ...state };
   if (!Array.isArray(s.used)) s.used = [];
   if (!Array.isArray(s.history)) s.history = [];
   if (!Array.isArray(s.parts)) s.parts = [];
@@ -512,6 +516,7 @@ export function validateAction(state, playerId, action) {
     if (duo && state.players.length >= 2) return { ok: false, error: "room is full" };
     if (duo && state.phase !== "duo-lobby") return { ok: false, error: "room is mid-game" };
     if (action.colour !== undefined && !COLOURS.includes(action.colour)) return { ok: false, error: "unknown colour" };
+    if (action.name !== undefined && typeof action.name !== "string") return { ok: false, error: "bad name" };
     return { ok: true };
   }
   if (!seated) return { ok: false, error: duo ? "you are watching this room" : "not your Oddler" };
@@ -531,6 +536,9 @@ export function validateAction(state, playerId, action) {
       if (!MODES.includes(action.mode)) return { ok: false, error: "unknown mode" };
     }
     if (action.colour !== undefined && !COLOURS.includes(action.colour)) return { ok: false, error: "unknown colour" };
+    for (const k of ["names", "loadouts", "colours"]) {
+      if (action[k] !== undefined && (typeof action[k] !== "object" || action[k] === null || Array.isArray(action[k]))) return { ok: false, error: "bad " + k };
+    }
     if (action.seen !== undefined) {
       if (!Array.isArray(action.seen) || action.seen.length > SEEN_CAP) return { ok: false, error: "bad seen list" };
       if (!action.seen.every((id) => typeof id === "string" && id.length <= 48)) return { ok: false, error: "bad seen list" };
@@ -589,9 +597,10 @@ function endRound(state, result) {
   };
   if (state.kind === "duo") {
     const p = state.profiles[by];
-    next.profiles = { ...state.profiles, [by]: { ...p, parts: owned, pts: p.pts + pts } };
+    next.profiles = { ...state.profiles, [by]: { ...p, parts: owned, pts: p.pts + pts, earned: part ? [...(p.earned ?? []), part.id] : (p.earned ?? []) } };
   } else {
     next.parts = owned;
+    next.earned = part ? [...(state.earned ?? []), part.id] : (state.earned ?? []);
   }
   return next;
 }
@@ -600,11 +609,31 @@ function endRound(state, result) {
 function resetKeepingSeats(state, seed) {
   const base = setup([state.player]);
   const profiles = {};
-  for (const id of state.players) profiles[id] = { ...state.profiles[id], parts: [], pts: 0 };
+  for (const id of state.players) profiles[id] = { ...state.profiles[id], parts: [], earned: [], pts: 0 };
   return {
     ...base, kind: state.kind, players: state.players, profiles, games: state.games,
-    colour: state.colour, seed, phase: state.kind === "duo" ? "duo-lobby" : "lobby",
+    colour: state.colour, name: state.name, seed, phase: state.kind === "duo" ? "duo-lobby" : "lobby",
   };
+}
+
+function cleanName(raw) {
+  return typeof raw === "string" ? raw.replace(/[^\p{L}\p{N} _.'-]/gu, "").replace(/\s+/g, " ").trim().slice(0, NAME_MAX) : "";
+}
+
+/** The parts a locker says to wear: known ids only, within slot caps. */
+function wearable(ids) {
+  if (!Array.isArray(ids)) return [];
+  const out = [];
+  const used = {};
+  for (const id of ids) {
+    const part = PARTS.find((p) => p.id === id);
+    if (!part || out.some((o) => o.id === id)) continue;
+    const n = used[part.slot] ?? 0;
+    if (n >= SLOT_CAP[part.slot]) continue;
+    used[part.slot] = n + 1;
+    out.push({ id: part.id, slot: part.slot });
+  }
+  return out;
 }
 
 export function applyAction(state, playerId, action) {
@@ -616,7 +645,7 @@ export function applyAction(state, playerId, action) {
       const players = [...state.players, playerId];
       return {
         ...state, kind: "duo", phase: "duo-lobby", players,
-        profiles: { ...state.profiles, [playerId]: { colour, parts: [], pts: 0 } },
+        profiles: { ...state.profiles, [playerId]: { name: cleanName(action.name), colour, parts: [], earned: [], pts: 0 } },
       };
     }
     case "colour":
@@ -629,8 +658,24 @@ export function applyAction(state, playerId, action) {
     case "start": {
       const seed = ((at ^ (action.seed | 0)) >>> 0) || 1;
       const base = { ...resetKeepingSeats(state, seed), mode: action.mode, seen: Array.isArray(action.seen) ? action.seen : [] };
-      if (state.kind === "duo") base.games = state.games + (state.phase === "done" ? 1 : 0);
-      else if (action.colour) base.colour = action.colour;
+      const names = action.names ?? {}, loadouts = action.loadouts ?? {}, colours = action.colours ?? {};
+      if (state.kind === "duo") {
+        base.games = state.games + (state.phase === "done" ? 1 : 0);
+        for (const id of base.players) {
+          const p = base.profiles[id];
+          base.profiles[id] = {
+            ...p,
+            name: names[id] !== undefined ? cleanName(names[id]) : p.name,
+            colour: COLOURS.includes(colours[id]) ? colours[id] : p.colour,
+            parts: wearable(loadouts[id]),
+          };
+        }
+      } else {
+        if (action.colour) base.colour = action.colour;
+        else if (COLOURS.includes(colours[state.player])) base.colour = colours[state.player];
+        if (names[state.player] !== undefined) base.name = cleanName(names[state.player]);
+        base.parts = wearable(loadouts[state.player]);
+      }
       return freshRound(base, at) ?? { ...base, phase: "done" };
     }
     case "typing":
@@ -682,6 +727,8 @@ export function viewFor(state, playerId) {
     kind: state.kind,
     mode: state.mode,
     colour: state.colour,
+    name: state.name,
+    earned: state.earned,
     score: state.score,
     strikes: state.strikes,
     parts: state.parts,
@@ -700,7 +747,7 @@ export function viewFor(state, playerId) {
       seated: state.players.includes(playerId),
       games: state.games,
       players: state.players.map((id) => ({
-        id, ...state.profiles[id], isYou: id === playerId,
+        id, name: "", earned: [], ...state.profiles[id], isYou: id === playerId,
         isTurn: Boolean(state.round && state.phase === "ask" && state.round.turn === id),
       })),
     };

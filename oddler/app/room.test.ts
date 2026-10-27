@@ -358,3 +358,51 @@ describe("untrusted input", () => {
     a.ws.close();
   });
 });
+
+describe("the locker (/api/me)", () => {
+  const token = "a".repeat(32);
+  const headers = { "x-oddler-token": token, "content-type": "application/json" };
+
+  it("needs a token", async () => {
+    const res = await SELF.fetch("https://game.test/api/me");
+    expect(res.status).toBe(401);
+  });
+
+  it("creates a fresh profile and lets the owner dress it within what is unlocked", async () => {
+    const me = await (await SELF.fetch("https://game.test/api/me", { headers })).json();
+    expect(me.level).toBe(1);
+    expect(me.loadout).toEqual([]);
+    expect(me.catalogue.some((p: any) => p.id === "acc-00" && p.level === 2 && p.unlocked === false)).toBe(true);
+
+    // Nothing is unlocked at level 1, so a wished loadout is filtered to nothing.
+    const put = await (await SELF.fetch("https://game.test/api/me", { method: "PUT", headers, body: JSON.stringify({ name: "  Tommy <b>!  ", loadout: ["acc-00", "horn-00"] }) })).json();
+    expect(put.name).toBe("Tommy b");
+    expect(put.loadout).toEqual([]);
+
+    const bad = await SELF.fetch("https://game.test/api/me", { method: "PUT", headers, body: JSON.stringify({ colour: "neon" }) });
+    expect(bad.status).toBe(400);
+  });
+
+  it("credits a finished solo game with xp and a game count", async () => {
+    const tok = "b".repeat(32);
+    const id = await (await SELF.fetch("https://game.test/api/me", { headers: { "x-oddler-token": tok } })).json().then((m: any) => m.id);
+    const p = await open(uniq("award"));
+    p.send({ type: "join", playerId: id });
+    await p.phase("lobby");
+    p.frames.length = 0;
+    p.send({ type: "action", action: { kind: "start", mode: "classic", seed: 1 } });
+    await p.phase("ask");
+    for (let i = 0; i < 7; i++) {
+      p.frames.length = 0;
+      p.send({ type: "action", action: { kind: "skip" } });
+      await p.phase("reveal");
+      p.frames.length = 0;
+      p.send({ type: "action", action: { kind: "next" } });
+      await p.next((f) => f?.type === "state" && f.view?.phase !== "reveal", "after next");
+    }
+    const after = await (await SELF.fetch("https://game.test/api/me", { headers: { "x-oddler-token": tok } })).json();
+    expect(after.games).toBe(1);
+    expect(after.xp).toBe(20);
+    p.ws.close();
+  });
+});

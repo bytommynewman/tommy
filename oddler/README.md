@@ -10,7 +10,11 @@ the hand-written parts so they survive outside that sandbox.
   platform forbids imports in the rules file) and runs the rule checks with node.
   Bank pieces `10`–`13` are hand-written; `14-bank-auto-*` files are added by the
   12-hourly refresh described in `AUTOGEN.md`.
-- `app/client.js`, `app/index.html` — the screen.
+- `app/client.js`, `app/anchors.js`, `app/index.html` — the screen; `anchors.js` holds the
+  part placement and the one creature-drawing function.
+- `app/profile.ts`, `app/worker.ts`, `app/backend.patch.py` — the locker: accounts keyed by a
+  secret token, profiles in KV, `/api/me`, and the room-side XP/unlock awards
+  (the patch script wires room.ts, env.ts, the manifest and wrangler config).
 - `app/room.test.ts` — the platform room tests, rewritten for Oddler.
 - `app/room.patch.sh` — stamps the room clock onto each action (rules stay pure).
 - `design/higgsfield-designs.json` — the Higgsfield generations the art came from.

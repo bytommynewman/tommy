@@ -23,6 +23,8 @@ export const ENDLESS_STRIKES = 3;
 export const MODES = ["classic", "endless", "practice"];
 /** Max prompt ids a player may ask us to avoid (seen in earlier runs). */
 export const SEEN_CAP = 600;
+/** Longest display name a locker may carry. */
+export const NAME_MAX = 16;
 export const COLOURS = ["pink", "mint", "lav", "sand", "slate", "char"];
 
 /** Rarity ladder. `odd` is the one-line reason shown on the reveal screen. */
@@ -49,26 +51,26 @@ export const PARTS = [
   { id: "horn-06", slot: "back", tier: 5 }, { id: "horn-07", slot: "back", tier: 5 },
   { id: "horn-08", slot: "horn", tier: 4 }, { id: "horn-09", slot: "horn", tier: 4 },
   { id: "horn-10", slot: "horn", tier: 4 }, { id: "horn-11", slot: "horn", tier: 4 },
-  { id: "horn-12", slot: "nub", tier: 4 }, { id: "horn-13", slot: "nub", tier: 4 },
-  { id: "horn-14", slot: "nub", tier: 4 }, { id: "horn-15", slot: "nub", tier: 4 },
+  { id: "horn-12", slot: "nub", tier: 3 }, { id: "horn-13", slot: "nub", tier: 3 },
+  { id: "horn-14", slot: "nub", tier: 3 }, { id: "horn-15", slot: "nub", tier: 3 },
   // wing sheet — row 1 wings, row 2 eye stalks, row 3 antennae/tentacles, row 4 novelties
   { id: "wing-00", slot: "wing", tier: 6 }, { id: "wing-01", slot: "wing", tier: 6 },
   { id: "wing-02", slot: "wing", tier: 6 }, { id: "wing-03", slot: "wing", tier: 6 },
   { id: "wing-04", slot: "eye", tier: 5 }, { id: "wing-05", slot: "eye", tier: 5 },
   { id: "wing-06", slot: "eye", tier: 5 }, { id: "wing-07", slot: "eye", tier: 5 },
-  { id: "wing-08", slot: "antenna", tier: 5 }, { id: "wing-09", slot: "antenna", tier: 5 },
-  { id: "wing-10", slot: "antenna", tier: 5 }, { id: "wing-11", slot: "antenna", tier: 5 },
+  { id: "wing-08", slot: "antenna", tier: 4 }, { id: "wing-09", slot: "antenna", tier: 5 },
+  { id: "wing-10", slot: "antenna", tier: 4 }, { id: "wing-11", slot: "antenna", tier: 5 },
   { id: "wing-12", slot: "hat", tier: 6 }, { id: "wing-13", slot: "back", tier: 6 },
   { id: "wing-14", slot: "hat", tier: 6 }, { id: "wing-15", slot: "hat", tier: 6 },
-  // accessory sheet — hats, head bits, held items, neck/back wear
-  { id: "acc-00", slot: "hat", tier: 3 }, { id: "acc-01", slot: "hat", tier: 3 },
-  { id: "acc-02", slot: "hat", tier: 3 }, { id: "acc-03", slot: "hat", tier: 3 },
-  { id: "acc-04", slot: "face", tier: 3 }, { id: "acc-05", slot: "flower", tier: 3 },
-  { id: "acc-06", slot: "hat", tier: 3 }, { id: "acc-07", slot: "hat", tier: 3 },
-  { id: "acc-08", slot: "held", tier: 3 }, { id: "acc-09", slot: "held", tier: 3 },
-  { id: "acc-10", slot: "held", tier: 3 }, { id: "acc-11", slot: "held", tier: 3 },
-  { id: "acc-12", slot: "neck", tier: 3 }, { id: "acc-13", slot: "pack", tier: 3 },
-  { id: "acc-14", slot: "neck", tier: 3 }, { id: "acc-15", slot: "pack", tier: 3 },
+  // accessory sheet — level rewards, never earned mid-game (tier 0): one per level from 2
+  { id: "acc-00", slot: "hat", tier: 0, level: 2 }, { id: "acc-12", slot: "neck", tier: 0, level: 3 },
+  { id: "acc-04", slot: "face", tier: 0, level: 4 }, { id: "acc-08", slot: "held", tier: 0, level: 5 },
+  { id: "acc-05", slot: "flower", tier: 0, level: 6 }, { id: "acc-03", slot: "hat", tier: 0, level: 7 },
+  { id: "acc-14", slot: "neck", tier: 0, level: 8 }, { id: "acc-10", slot: "held", tier: 0, level: 9 },
+  { id: "acc-13", slot: "pack", tier: 0, level: 10 }, { id: "acc-01", slot: "hat", tier: 0, level: 11 },
+  { id: "acc-06", slot: "hat", tier: 0, level: 12 }, { id: "acc-11", slot: "held", tier: 0, level: 13 },
+  { id: "acc-09", slot: "held", tier: 0, level: 14 }, { id: "acc-07", slot: "hat", tier: 0, level: 15 },
+  { id: "acc-15", slot: "pack", tier: 0, level: 16 }, { id: "acc-02", slot: "hat", tier: 0, level: 17 },
 ];
 
 /**
