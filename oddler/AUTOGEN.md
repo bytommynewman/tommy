@@ -54,13 +54,23 @@ Format of one row (see any existing piece for examples):
   (at least 15 plausible ones). Never a prompt with one right answer.
 - `answers spec`: entries separated by `|`; each entry is
   `Name=alias=alias:tier`. Tier is 1–6:
-  1 Plain (the first thing anyone says), 2 Too Clever (technically right but
-  cheeky/edge-case — use sparingly), 3 Odd-ish, 4 Rare, 5 Deep Cut,
-  6 One in an Oddlion (almost nobody says it). Aim per prompt for roughly
-  2–4 tier-1, 0–2 tier-2, 4–8 tier-3, 4–8 tier-4, 4–8 tier-5, 4–10 tier-6.
+  1 Plain (ANY answer an average person could name within a few seconds —
+  not just the top three; if it is well known, it is Plain), 2 Too Clever
+  (technically right but cheeky/edge-case — use sparingly), 3 Odd-ish (you
+  need a moment to find it), 4 Rare (a real dig), 5 Deep Cut (properly
+  obscure — most people have never heard of it), 6 One in an Oddlion
+  (almost nobody says it). Be strict: Deep Cut and One in an Oddlion are
+  for the bottom of the list, never for anything a casual player might say.
+  Aim per prompt for roughly 10–20 tier-1, 0–3 tier-2, 6–10 tier-3,
+  6–10 tier-4, 4–8 tier-5, 3–8 tier-6 (scale up for long lists).
+- Prefer prompts that make people THINK: a constraint to work around
+  (letters, rhymes, borders, "ends in", numbers, synonyms, "that lays eggs"),
+  a bounded set with famous members and obscure ones (prime ministers,
+  Best Picture winners, Shakespeare plays), or a narrow category. Avoid
+  wide-open lists where almost every answer is obscure ("Name a job").
 - Include common nicknames/abbreviations/spellings as aliases
   (`United Kingdom=UK=Britain=England:1`). Avoid `:` and `|` inside names.
-- 20–40 answers per prompt. Keep every answer factually correct for the
+- 25–80 answers per prompt. Keep every answer factually correct for the
   prompt; when unsure, leave it out.
 - Spread categories: no more than 12 prompts in any one category per file;
   include some Canada-flavoured prompts (the players are in Toronto) and keep
