@@ -406,3 +406,53 @@ describe("the locker (/api/me)", () => {
     p.ws.close();
   });
 });
+
+describe("accounts", () => {
+  const jsonHeaders = (tok: string) => ({ "x-oddler-token": tok, "content-type": "application/json" });
+
+  it("adopts the guest locker on signup and finds it again from another device", async () => {
+    const guest = "e".repeat(32);
+    // The guest earns something first.
+    const id = ((await (await SELF.fetch("https://game.test/api/me", { headers: jsonHeaders(guest) })).json()) as any).id;
+    const p = await open(uniq("adopt"));
+    p.send({ type: "join", playerId: id });
+    await p.phase("lobby");
+    p.send({ type: "action", action: { kind: "start", mode: "classic", seed: 1 } });
+    await p.phase("ask");
+    for (let i = 0; i < 7; i++) {
+      p.frames.length = 0;
+      p.send({ type: "action", action: { kind: "skip" } });
+      await p.phase("reveal");
+      p.frames.length = 0;
+      p.send({ type: "action", action: { kind: "next" } });
+      await p.next((f) => f?.type === "state" && f.view?.phase !== "reveal", "after next");
+    }
+    p.ws.close();
+
+    const bad = await SELF.fetch("https://game.test/api/signup", { method: "POST", headers: jsonHeaders(guest), body: JSON.stringify({ username: "x", password: "short" }) });
+    expect(bad.status).toBe(400);
+    const up = (await (await SELF.fetch("https://game.test/api/signup", { method: "POST", headers: jsonHeaders(guest), body: JSON.stringify({ username: "Tommy_1", password: "hunter22" }) })).json()) as any;
+    expect(up.token).toMatch(/^[a-f0-9]{32}$/);
+    expect(up.profile.username).toBe("tommy_1");
+    expect(up.profile.xp).toBe(20);
+    expect(up.profile.id).toBe(id);
+
+    const dup = await SELF.fetch("https://game.test/api/signup", { method: "POST", headers: jsonHeaders("f".repeat(32)), body: JSON.stringify({ username: "tommy_1", password: "whatever1" }) });
+    expect(dup.status).toBe(409);
+
+    // Another device: a different guest token, then log in.
+    const wrong = await SELF.fetch("https://game.test/api/login", { method: "POST", headers: jsonHeaders("9".repeat(32)), body: JSON.stringify({ username: "tommy_1", password: "nope-nope" }) });
+    expect(wrong.status).toBe(401);
+    const login = (await (await SELF.fetch("https://game.test/api/login", { method: "POST", headers: jsonHeaders("9".repeat(32)), body: JSON.stringify({ username: "TOMMY_1", password: "hunter22" }) })).json()) as any;
+    expect(login.profile.id).toBe(id);
+    const there = (await (await SELF.fetch("https://game.test/api/me", { headers: jsonHeaders(login.token) })).json()) as any;
+    expect(there.username).toBe("tommy_1");
+    expect(there.games).toBe(1);
+
+    // Log out: the session token stops resolving to the account.
+    await SELF.fetch("https://game.test/api/logout", { method: "POST", headers: jsonHeaders(login.token) });
+    const after = (await (await SELF.fetch("https://game.test/api/me", { headers: jsonHeaders(login.token) })).json()) as any;
+    expect(after.username).toBeNull();
+    expect(after.id).not.toBe(id);
+  });
+});

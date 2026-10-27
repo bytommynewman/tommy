@@ -88,6 +88,19 @@ async function api(method, body) {
     return me;
   } catch { return null; }
 }
+/** Sign up / log in / log out. On success the browser switches to the account's session token. */
+async function auth(path, body) {
+  try {
+    const res = await fetch("/api/" + path, {
+      method: "POST",
+      headers: { "x-oddler-token": TOKEN, "content-type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: data.error || `error ${res.status}` };
+    return data;
+  } catch { return { error: "network error" }; }
+}
 let saveTimer = 0;
 function saveProfile(patch) {
   if (me) Object.assign(me, patch);
@@ -301,7 +314,7 @@ function levelHTML() {
   const span = Math.max(1, me.nextLevelXp - me.levelXp);
   const pct = Math.min(100, Math.round(((me.xp - me.levelXp) / span) * 100));
   return `<div class="levelbar">
-    <div class="levelrow"><span class="px">${esc(displayName().toUpperCase())}</span><span class="px lvl">LV ${me.level}</span></div>
+    <div class="levelrow"><span class="px">${esc(displayName().toUpperCase())}${me.username ? ` <span class="dim">@${esc(me.username)}</span>` : ""}</span><span class="px lvl">LV ${me.level}</span></div>
     <div class="xp"><div class="xpfill" style="width:${pct}%"></div></div>
     <div class="levelrow small dim"><span>${me.xp} xp</span><span>${me.nextLevelXp - me.xp} to level ${me.level + 1}</span></div>
   </div>`;
@@ -319,6 +332,7 @@ function lobbyHTML(v) {
       ${oddlerHTML(colour, myLoadoutParts(), "big")}
       ${levelHTML()}
       <p><button id="locker" class="btn ghost" type="button">OPEN LOCKER</button></p>
+      ${me && !me.username ? `<p class="small dim" style="margin:0">Guest locker — <button id="locker2" class="link" type="button" style="font-size:14px;padding:0">create an account</button> to save it and use it anywhere.</p>` : ""}
     </section>
     <section class="panel">
       <h2>The odd dive</h2>
@@ -398,12 +412,29 @@ function lockerHTML(v) {
       ${grid}
     </section>
     <section class="panel">
-      <h2>Use this locker on another device</h2>
-      <p class="small dim">Your locker lives under a private code. Enter it on another phone or computer to bring your name, level and parts with you. Keep it to yourself — anyone with it can use your locker.</p>
-      <p><button id="showcode" class="link" type="button">Show my locker code</button></p>
-      <p id="codebox" class="code small" hidden style="font-size:12px;letter-spacing:0.08em;word-break:break-all"></p>
-      <form id="restore" class="answer"><input id="restorecode" type="text" placeholder="Paste a locker code…" autocapitalize="off" autocorrect="off" spellcheck="false" /><button class="btn ghost" type="submit">USE</button></form>
+      ${accountHTML()}
     </section>`;
+}
+
+let authMode = "signup";
+function accountHTML() {
+  if (me?.username) {
+    return `<h2>Account</h2>
+      <p>Logged in as <b>@${esc(me.username)}</b>. Your locker is saved to this account — log in on any phone or computer to bring it with you.</p>
+      <p><button id="logout" class="btn ghost" type="button">LOG OUT</button></p>`;
+  }
+  const signup = authMode === "signup";
+  return `<h2>${signup ? "Save your locker" : "Log in"}</h2>
+    <p class="small dim">${signup
+      ? "Right now this locker only lives in this browser. Create an account and it's saved for good — everything you've earned comes with it, and you can log in on any device."
+      : "Already have an account? Log in and this device switches to that locker."}</p>
+    <form id="authform" class="authform">
+      <input id="authuser" type="text" placeholder="username" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="username" maxlength="16" required />
+      <input id="authpass" type="password" placeholder="${signup ? "password (6+ characters)" : "password"}" autocomplete="${signup ? "new-password" : "current-password"}" minlength="6" required />
+      <button class="btn lime" type="submit">${signup ? "CREATE ACCOUNT" : "LOG IN"}</button>
+      <p id="autherr" class="tries" aria-live="polite"></p>
+    </form>
+    <p class="small"><button id="authswitch" class="link" type="button">${signup ? "I already have an account" : "I need an account"}</button></p>`;
 }
 
 // duo lobby ------------------------------------------------------------------
@@ -698,18 +729,28 @@ function wire() {
   });
   $("#duo")?.addEventListener("click", () => { sfx.click(); location.href = `/?room=${makeCode()}`; });
   $("#locker")?.addEventListener("click", () => { sfx.click(); showingLocker = true; render(); });
+  $("#locker2")?.addEventListener("click", () => { sfx.click(); showingLocker = true; render(); setTimeout(() => $("#authuser")?.focus(), 50); });
   $("#closelocker")?.addEventListener("click", () => { sfx.click(); showingLocker = false; showingLobby = v.phase !== "duo-lobby"; render(); });
   $("#undress")?.addEventListener("click", () => { sfx.click(); saveProfile({ loadout: [] }); render(); });
   for (const b of document.querySelectorAll("[data-part]")) b.addEventListener("click", () => toggleWear(b.dataset.part));
   const name = $("#name");
   if (name) name.addEventListener("input", () => { saveProfile({ name: name.value.slice(0, 16) }); const lv = document.querySelector(".levelrow .px"); if (lv) lv.textContent = (name.value.trim() || "You").toUpperCase(); });
-  $("#showcode")?.addEventListener("click", () => { const box = $("#codebox"); box.hidden = !box.hidden; box.textContent = TOKEN; });
-  $("#restore")?.addEventListener("submit", (ev) => {
-    ev.preventDefault();
-    const code = $("#restorecode").value.trim().toLowerCase();
-    if (!/^[a-f0-9]{32,64}$/.test(code)) { toast("THAT'S NOT A LOCKER CODE"); return; }
-    localStorage.setItem("oddler:token", code);
+  $("#authswitch")?.addEventListener("click", () => { authMode = authMode === "signup" ? "login" : "signup"; render(); });
+  $("#logout")?.addEventListener("click", async () => {
+    await auth("logout");
+    localStorage.removeItem("oddler:token");   // a fresh guest token is minted on reload
     location.href = "/";
+  });
+  $("#authform")?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const err = $("#autherr"); err.textContent = "";
+    const btn = ev.target.querySelector("button"); btn.disabled = true;
+    const r = await auth(authMode, { username: $("#authuser").value.trim(), password: $("#authpass").value });
+    btn.disabled = false;
+    if (r.error) { err.textContent = r.error; return; }
+    localStorage.setItem("oddler:token", r.token);
+    toast(authMode === "signup" ? "ACCOUNT CREATED" : "LOGGED IN");
+    setTimeout(() => { location.href = "/"; }, 500);
   });
   for (const b of document.querySelectorAll("[data-mode]")) {
     b.addEventListener("click", () => { chosenMode = b.dataset.mode; store.set("mode", chosenMode); sfx.click(); render(); });
@@ -791,11 +832,12 @@ function wireTutorial() {
 // ── boot ───────────────────────────────────────────────────────────────────
 
 (async () => {
-  PLAYER_ID = await hashToken(TOKEN);
-  room = roomParam || PLAYER_ID;
-  // Locker first (it decides the name and what the creature wears), then the room.
+  // Locker first: it says who we are (an account's locker or this browser's
+  // guest locker), what the creature wears and what it's called.
   await api("GET");
   indexCatalogue();
+  PLAYER_ID = me?.id || await hashToken(TOKEN);
+  room = roomParam || PLAYER_ID;
   if (me && !me.name && store.get("colour", null) && me.colour !== chosenColour) saveProfile({ colour: chosenColour });
   connect();
 })();
