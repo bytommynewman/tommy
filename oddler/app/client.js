@@ -862,7 +862,8 @@ function wire() {
     act({ kind: "restart", quit: true });
   });
   for (const b of document.querySelectorAll("[data-banner]")) b.addEventListener("click", () => { sfx.click(); saveProfile({ banner: b.dataset.banner }); render(); });
-  if (v.phase === "done" && fanfare && !$("#fanfare")?.dataset.ran) { $("#fanfare").dataset.ran = "1"; animateXp(); }
+  const fan = $("#fanfare");
+  if (v.phase === "done" && fanfare && fan && !fan.dataset.ran) { fan.dataset.ran = "1"; animateXp(); }
   if (v.phase === "ask") startTimer(v);
   const next = $("#next");
   if (next) {
