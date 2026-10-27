@@ -119,4 +119,8 @@ patch("src/room.ts", '''  /** Turn-based games schedule no timers; override for 
       console.error("award failed:", err instanceof Error ? err.message : String(err));
     }
   }''')
+# 3. logic.d.ts: the extra exports the locker reads
+dts = os.path.join(app, "src/logic.d.ts"); s = open(dts).read()
+if "export const PARTS" not in s:
+    open(dts, "a").write(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "logic.d.ts.append")).read()); print("patched: src/logic.d.ts")
 print("backend patch complete")

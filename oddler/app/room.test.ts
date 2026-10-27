@@ -369,13 +369,13 @@ describe("the locker (/api/me)", () => {
   });
 
   it("creates a fresh profile and lets the owner dress it within what is unlocked", async () => {
-    const me = await (await SELF.fetch("https://game.test/api/me", { headers })).json();
+    const me = (await (await SELF.fetch("https://game.test/api/me", { headers })).json()) as any;
     expect(me.level).toBe(1);
     expect(me.loadout).toEqual([]);
     expect(me.catalogue.some((p: any) => p.id === "acc-00" && p.level === 2 && p.unlocked === false)).toBe(true);
 
     // Nothing is unlocked at level 1, so a wished loadout is filtered to nothing.
-    const put = await (await SELF.fetch("https://game.test/api/me", { method: "PUT", headers, body: JSON.stringify({ name: "  Tommy <b>!  ", loadout: ["acc-00", "horn-00"] }) })).json();
+    const put = (await (await SELF.fetch("https://game.test/api/me", { method: "PUT", headers, body: JSON.stringify({ name: "  Tommy <b>!  ", loadout: ["acc-00", "horn-00"] }) })).json()) as any;
     expect(put.name).toBe("Tommy b");
     expect(put.loadout).toEqual([]);
 
@@ -400,7 +400,7 @@ describe("the locker (/api/me)", () => {
       p.send({ type: "action", action: { kind: "next" } });
       await p.next((f) => f?.type === "state" && f.view?.phase !== "reveal", "after next");
     }
-    const after = await (await SELF.fetch("https://game.test/api/me", { headers: { "x-oddler-token": tok } })).json();
+    const after = (await (await SELF.fetch("https://game.test/api/me", { headers: { "x-oddler-token": tok } })).json()) as any;
     expect(after.games).toBe(1);
     expect(after.xp).toBe(20);
     p.ws.close();
