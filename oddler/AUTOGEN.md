@@ -1,9 +1,10 @@
 # Oddler — automatic prompt refresh
 
-A scheduled task runs this procedure every 12 hours in a fresh Claude session.
-The goal: add **100 new prompts** to the live game so regular players stop
-seeing repeats, then ship them. Everything below is self-contained; follow it
-top to bottom and report at the end.
+Two scheduled tasks run this procedure every 12 hours. The first (a fresh
+Claude session) does §0–§3: it adds **100 new prompts** so regular players stop
+seeing repeats, and pushes them. The second (the session that holds the
+Higgsfield connection) does §4 about 45 minutes later and ships them.
+Everything below is self-contained; each task reports at the end.
 
 ## 0. Ground rules
 
@@ -81,7 +82,7 @@ until it is.
 Commit with a message like `Oddler: 100 auto prompts (2026-10-28 06:00 UTC)`
 plus the usual attribution lines, and push the branch.
 
-## 4. Ship to the live game
+## 4. Ship to the live game (deploy task only)
 
 Use the Higgsfield tools (load them with ToolSearch if deferred):
 
