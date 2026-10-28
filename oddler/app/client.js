@@ -14,6 +14,19 @@ import { ANCHORS, BASE, COLOUR_NAMES, SWATCH, SLOT_NAMES, PART_NAMES, oddlerHTML
 // ── identity ───────────────────────────────────────────────────────────────
 
 const roomParam = (new URLSearchParams(location.search).get("room") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+// ?challenge=CODE&by=NAME&s=SCORE — a friend's "same 7 prompts, beat me" link. Name and score are display only.
+const PARAMS = new URLSearchParams(location.search);
+const challengeParam = (PARAMS.get("challenge") || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
+const challengeBy = (PARAMS.get("by") || "").replace(/[^\p{L}\p{N} _.'-]/gu, "").trim().slice(0, 16);
+const challengeScore = Math.max(0, Math.min(9999, parseInt(PARAMS.get("s") || "0", 10) || 0));
+const DAILY_EPOCH = 20754, DAY_MS = 86_400_000;
+function todayNo() { return Math.floor(Date.now() / DAY_MS); }
+function dailyNo(day) { return day - DAILY_EPOCH + 1; }
+function untilNextDaily() { const ms = (todayNo() + 1) * DAY_MS - Date.now(); const h = Math.floor(ms / 3_600_000), m = Math.floor((ms % 3_600_000) / 60_000); return h ? `${h}h ${m}m` : `${m}m`; }
+const TIER_EMOJI = ["⬛", "⬜", "🟦", "🟩", "🟨", "🟧", "🟪"];
+function gridOf(history) { return history.map((h) => TIER_EMOJI[h.tier] || "⬛").join(""); }
+function makeChallengeCode() { const a = "abcdefghjkmnpqrstuvwxyz23456789"; const b = crypto.getRandomValues(new Uint8Array(8)); return [...b].map((x) => a[x % a.length]).join(""); }
+function challengeLink(code, score) { const u = new URL(location.origin + "/"); u.searchParams.set("challenge", code); if (me?.name) u.searchParams.set("by", me.name); u.searchParams.set("s", String(score)); return u.toString(); }
 
 function hex(bytes) { return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join(""); }
 function accountToken() {
@@ -227,7 +240,7 @@ function onState(msg) {
     partnerCount = v.duo.players.length;
     if (v.notice && v.notice.text !== lastNotice && v.notice.by !== v.duo.you) { lastNotice = v.notice.text; toast(v.notice.text.toUpperCase()); sfx.miss(); }
   }
-  if (v.mode && v.mode !== "duo") chosenMode = v.mode;
+  if (v.mode && v.mode !== "duo" && v.mode !== "daily") chosenMode = v.mode;
 
   if (v.phase === "ask") {
     showingLobby = false; showingLocker = false;
@@ -342,6 +355,37 @@ function levelFor(xp) { let l = 1; while (l < MAX_LEVEL && xpForLevel(l + 1) <= 
 function bandLabel(level) { const lo = Math.floor((level - 1) / BAND) * BAND + 1; return `LV ${lo}–${Math.min(MAX_LEVEL, lo + BAND - 1)}`; }
 function toNextText(level, xp, nextXp) { return level >= MAX_LEVEL ? "MAX LEVEL" : `${nextXp - xp} to level ${level + 1}`; }
 
+function dailyCardHTML(v) {
+  const day = todayNo();
+  const saved = store.get("daily:" + day, null);
+  const done = saved || (v.dailyDone === day ? { score: v.mode === "daily" ? v.score : null, grid: v.mode === "daily" ? gridOf(v.history) : "" } : null);
+  const no = dailyNo(day);
+  if (done) {
+    return `<section class="panel daily">
+      <h2>Daily #${no}</h2>
+      <p class="px small dim">DONE · ${done.score ?? "—"} ODD · NEXT IN ${untilNextDaily()}</p>
+      ${done.grid ? `<p class="grid" aria-label="Your daily result">${done.grid}</p>` : ""}
+      <p><button id="sharedaily" class="btn lime" type="button">SHARE RESULT</button></p>
+    </section>`;
+  }
+  return `<section class="panel daily">
+    <h2>Daily #${no}</h2>
+    <p class="small">Same 7 prompts for everyone today. One go. Share your grid.</p>
+    <p><button id="daily" class="btn" type="button">▼ PLAY DAILY #${no} ▼</button></p>
+    <p class="px small dim">RESETS IN ${untilNextDaily()}</p>
+  </section>`;
+}
+
+function challengeCardHTML(v) {
+  if (!challengeParam || (!challengeBy && !challengeScore)) return "";
+  const who = challengeBy || "A friend";
+  return `<section class="panel challenge">
+    <h2>Challenge from ${esc(who)}</h2>
+    <p class="small">${challengeScore ? `<b>${esc(who)}</b> scored <b class="px">${challengeScore}</b> on 7 prompts. You get the exact same 7.` : `<b>${esc(who)}</b> sent you 7 prompts.`}</p>
+    <p><button id="acceptchallenge" class="btn" type="button">▼ ${challengeScore ? "BEAT IT" : "TAKE IT ON"} ▼</button></p>
+  </section>`;
+}
+
 function lobbyHTML(v) {
   const best = me?.best?.classic ?? store.get(bestKey("classic"), 0);
   const bestE = me?.best?.endless ?? store.get(bestKey("endless"), 0);
@@ -354,6 +398,8 @@ function lobbyHTML(v) {
       <p><button id="locker" class="btn ghost" type="button">OPEN LOCKER</button></p>
       ${me && !me.username ? `<p class="small dim" style="margin:0">Guest locker — <button id="locker2" class="link" type="button" style="font-size:14px;padding:0">create an account</button> to save it and use it anywhere.</p>` : ""}
     </section>
+    ${challengeCardHTML(v)}
+    ${dailyCardHTML(v)}
     <section class="panel">
       <h2>The odd dive</h2>
       <p>Every prompt has lots of right answers. <b>Only the uncommon ones score.</b> Rare answers earn your Oddler new parts for its locker.</p>
@@ -363,6 +409,8 @@ function lobbyHTML(v) {
       <p style="margin-top:14px"><button id="start" class="btn" type="button">▼ GO ODD ▼</button></p>
       <p><button id="duo" class="btn ghost" type="button">PLAY WITH A FRIEND</button></p>
       <p class="small dim" style="text-align:center;margin-top:-4px">Duo: 10 prompts, you take turns, one team score.</p>
+      <p><button id="challenge" class="btn ghost" type="button">CHALLENGE A FRIEND</button></p>
+      <p class="small dim" style="text-align:center;margin-top:-4px">Play 7 prompts, then send the link — they get the exact same 7 and your score to beat.</p>
       <p class="best">BEST CLASSIC: ${best} &nbsp;·&nbsp; ENDLESS: ${bestE} &nbsp;·&nbsp; DUO: ${bestD}</p>
       <p><button id="how" class="link" type="button">How does scoring work?</button></p>
     </section>`;
@@ -386,7 +434,7 @@ function tutorialHTML() {
         <summary>Where do the questions and points come from?</summary>
         <p class="small">The prompts and their answer lists are written by hand for Oddler — general-knowledge categories (places, food, animals, sport, music, screens, science, everyday stuff), each with everything we could think of that counts, plus nicknames and alternate spellings. Some prompts have a twist to think around (letters, rhymes, borders, numbers). A fresh batch of prompts is added twice a day.</p>
         <p class="small">Each accepted answer is given a rarity tier by the question writer, judging how quickly an average person would think of it. Anything most people could name is Plain and worth 10, full stop. Odd-ish takes a moment to find, Rare is a real dig, Deep Cut is properly obscure, and One in an Oddlion is something almost nobody says (100). It is editorial, not live player statistics, so the same answer is worth the same to everyone.</p>
-        <p class="small">Spelling slips are forgiven (one typo in a medium word, two in a long one). An answer not on our list keeps the clock running so you can try again. Odd-ish or better grows a mutation on your Oddler, which goes into your locker for keeps; every game also pays XP, and levels unlock hats and other accessories.</p>
+        <p class="small">The Daily deals everyone the same 7 prompts each day (one go, resets at midnight UTC) and a challenge link deals your friend the exact 7 you just played. Spelling slips are forgiven (one typo in a medium word, two in a long one). An answer not on our list keeps the clock running so you can try again. Odd-ish or better grows a mutation on your Oddler, which goes into your locker for keeps; every game also pays XP, and levels unlock hats and other accessories.</p>
       </details>
       <button id="gotit" class="btn lime" type="button">GOT IT</button>
     </section>`;
@@ -729,7 +777,12 @@ function doneHTML(v) {
   const ladder = v.history.map((h) => `<span class="t${h.tier}" style="background:var(--t${h.tier || 1});${h.tier ? "" : "opacity:.35"}" title="${esc(h.answer || "miss")}">${h.tier || "·"}</span>`).join("");
   const nameOf = (id) => { const p = v.duo?.players.find((x) => x.id === id); return p ? seatName(p).toLowerCase() : ""; };
   const rows = v.history.map((h) => `<li><span>${esc(h.prompt)}<br><b>${esc(h.answer || (h.timedOut ? "out of time" : "skipped"))}</b>${v.duo ? ` <span class="small dim">· ${esc(nameOf(h.by))}</span>` : ""}</span><span>${h.tier ? esc(tierName(h.tier)) : "—"} · ${h.pts}</span></li>`).join("");
-  const label = v.duo ? "Duo" : v.mode === "endless" ? `${v.history.length} rounds` : "Classic";
+  const label = v.duo ? "Duo" : v.mode === "endless" ? `${v.history.length} rounds` : v.mode === "daily" ? `Daily #${dailyNo(v.day ?? todayNo())}` : v.challenge ? "Challenge" : "Classic";
+  const daily = v.mode === "daily";
+  if (daily && v.day !== null) store.set("daily:" + v.day, { score: v.score, grid: gridOf(v.history) });
+  const verdict = v.challenge && challengeParam === v.challenge && challengeScore
+    ? `<p class="best ${v.score > challengeScore ? "new" : ""}">${v.score > challengeScore ? `★ YOU BEAT ${esc((challengeBy || "THEM").toUpperCase())}'S ${challengeScore} ★` : v.score === challengeScore ? `TIED WITH ${esc((challengeBy || "THEM").toUpperCase())} AT ${challengeScore}` : `${esc((challengeBy || "THEY").toUpperCase())} STILL LEADS: ${challengeScore}`}</p>`
+    : "";
   const isHost = v.duo && v.duo.host === v.duo.you;
   const creatures = v.duo
     ? `<div class="team">${v.duo.players.map((p) => `<div class="seat">${oddlerHTML(p.colour, p.parts, "", null, seatName(p))}<p class="seatname">${plateHTML(seatName(p), p.banner)} <span class="px dim">${p.pts}</span></p></div>`).join("")}</div>`
@@ -737,17 +790,20 @@ function doneHTML(v) {
   const earnedCount = v.duo ? v.duo.players.reduce((n, p) => n + (p.earned?.length ?? 0), 0) : (v.earned?.length ?? 0);
   const again = v.duo
     ? (isHost ? `<button id="again" class="btn" type="button">PLAY AGAIN</button>` : `<button class="btn" type="button" disabled>HOST STARTS NEXT</button>`)
-    : `<button id="again" class="btn" type="button">PLAY AGAIN</button>`;
+    : daily ? `<button class="btn" type="button" disabled>NEXT DAILY IN ${untilNextDaily()}</button>`
+    : `<button id="again" class="btn" type="button">${v.challenge ? "TRY AGAIN" : "PLAY AGAIN"}</button>`;
   return `
     <section class="panel nest">
       ${creatures}
       <p class="bigscore">${v.score} ODD</p>
       <p class="best ${newBest ? "new" : ""}">${v.mode === "practice" ? "PRACTICE RUN" : newBest ? "★ NEW PERSONAL BEST ★" : `BEST ${v.mode.toUpperCase()}: ${best}`}</p>
+      ${verdict}
+      ${daily ? `<p class="grid" aria-label="Your daily grid">${gridOf(v.history)}</p>` : ""}
       ${fanfareHTML()}
       <div class="ladder" aria-label="Round tiers" style="justify-content:center">${ladder}</div>
       <p class="small">${earnedCount} part${earnedCount === 1 ? "" : "s"} earned · ${label}</p>
       <div class="row">
-        <button id="share" class="btn lime" type="button">SHARE</button>
+        <button id="share" class="btn lime" type="button">${daily ? "SHARE GRID" : v.challenge ? "SEND CHALLENGE" : "SHARE"}</button>
         ${again}
       </div>
       <p><button id="locker" class="link" type="button">Open locker</button> · ${v.duo ? `<a class="link" href="/">Leave room</a>` : `<button id="lobby" class="link" type="button">Change mode</button>`}</p>
@@ -759,6 +815,8 @@ function doneHTML(v) {
 }
 
 function shareText(v) {
+  if (v.mode === "daily") return `Oddler Daily #${dailyNo(v.day ?? todayNo())} · ${v.score} odd\n${gridOf(v.history)}\nOnly uncommon answers score. ${location.origin}`;
+  if (v.challenge) return `I scored ${v.score} on Oddler. Same 7 prompts, your turn — beat me: ${challengeLink(v.challenge, v.score)}`;
   const tiers = v.history.map((h) => "·▁▂▃▅▆█"[h.tier] || "·").join("");
   const mode = v.duo ? "Duo" : v.mode === "endless" ? `Endless (${v.history.length} rounds)` : "Classic";
   return `ODDLER · ${mode} · ${v.score} odd${me ? ` · ${displayName()} LV ${me.level}` : ""}\n${tiers}\n${location.origin}`;
@@ -813,6 +871,19 @@ function wire() {
     else act({ kind: "start", mode: chosenMode, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
   });
   $("#duo")?.addEventListener("click", () => { sfx.click(); location.href = `/?room=${makeCode()}`; });
+  $("#daily")?.addEventListener("click", () => { sfx.click(); showingLobby = false; act({ kind: "start", mode: "daily", seed: 1, seen: [] }); });
+  $("#challenge")?.addEventListener("click", () => {
+    sfx.click(); showingLobby = false;
+    const code = makeChallengeCode();
+    history.replaceState(null, "", `/?challenge=${code}`);
+    act({ kind: "start", mode: "classic", challenge: code, seed: 1, seen: [] });
+  });
+  $("#acceptchallenge")?.addEventListener("click", () => { sfx.click(); showingLobby = false; act({ kind: "start", mode: "classic", challenge: challengeParam, seed: 1, seen: [] }); });
+  $("#sharedaily")?.addEventListener("click", async () => {
+    const saved = store.get("daily:" + todayNo(), null);
+    const text = `Oddler Daily #${dailyNo(todayNo())} · ${saved?.score ?? "?"} odd\n${saved?.grid ?? ""}\nOnly uncommon answers score. ${location.origin}`;
+    try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast("COPIED"); } } catch { /* cancelled */ }
+  });
   $("#locker")?.addEventListener("click", () => { sfx.click(); showingLocker = true; render(); });
   $("#locker2")?.addEventListener("click", () => { sfx.click(); showingLocker = true; render(); setTimeout(() => $("#authuser")?.focus(), 50); });
   $("#closelocker")?.addEventListener("click", () => { sfx.click(); showingLocker = false; showingLobby = v.phase !== "duo-lobby"; render(); });
@@ -894,13 +965,14 @@ function wire() {
     sfx.click();
     fanfare = null;
     if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
+    else if (v.challenge) act({ kind: "start", mode: "classic", challenge: v.challenge, seed: 1, seen: [] });
     else act({ kind: "start", mode: v.mode, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
   });
   $("#lobby")?.addEventListener("click", () => { showingLobby = true; fanfare = null; render(); });
   $("#share")?.addEventListener("click", async () => {
     const text = shareText(v);
     try {
-      if (navigator.share) await navigator.share({ text });
+      if (navigator.share) await navigator.share(v.challenge ? { text, url: challengeLink(v.challenge, v.score) } : { text });
       else { await navigator.clipboard.writeText(text); toast("COPIED"); }
     } catch { /* cancelled */ }
   });

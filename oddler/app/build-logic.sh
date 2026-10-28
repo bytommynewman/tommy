@@ -97,6 +97,25 @@ if (L.viewFor(d, "g").score !== 0 || L.viewFor(d, "g").duo.players[1].parts.leng
 dact("g", { kind: "restart", quit: true, at: at0 + 100_001 }); // the second game is mid-round here
 { const q = L.viewFor(d, "h"); if (q.phase !== "duo-lobby" || !q.notice || !/quit/.test(q.notice.text)) throw new Error("quit should return to the duo lobby with a notice: " + JSON.stringify(q.notice)); }
 console.log("duo checks OK");
+// daily + challenge: fixed, shared prompt sets
+{
+  const day = L.dayOf(at0);
+  const run = (mode, extra) => { let st = L.setup(["px"]); st = L.applyAction(st, "px", { kind: "start", mode, seed: Math.random() * 1e9 | 0, seen: L.QUESTIONS.slice(0, 50).map(q => q.id), ...extra, at: at0 }); const ids = [st.round.q]; for (let i = 0; i < 6; i++) { st = L.applyAction(st, "px", { kind: "skip", at: at0 + 60_000 }); st = L.applyAction(st, "px", { kind: "next", at: at0 + 60_000 }); ids.push(st.round?.q); } st = L.applyAction(st, "px", { kind: "skip", at: at0 + 60_000 }); st = L.applyAction(st, "px", { kind: "next", at: at0 + 60_000 }); return [ids, st]; };
+  const [d1, s1] = run("daily", {}); const [d2] = run("daily", {});
+  if (d1.join() !== d2.join() || d1.some((x) => !x)) throw new Error("daily sets differ: " + d1 + " vs " + d2);
+  if (d1.join() !== L.dailyPrompts(day).join()) throw new Error("daily set is not dailyPrompts(day)");
+  if (s1.phase !== "done" || s1.dailyDone !== day) throw new Error("daily did not finish or record the day");
+  const v = L.validateAction(s1, "px", { kind: "start", mode: "daily", at: at0 + 1000 });
+  if (v.ok) throw new Error("daily replay should be refused");
+  if (!L.validateAction(s1, "px", { kind: "start", mode: "daily", at: at0 + 86_400_000 }).ok) throw new Error("the next day daily should be allowed");
+  if (!L.validateAction(s1, "px", { kind: "start", mode: "classic", at: at0 + 1000 }).ok) throw new Error("classic after daily should be allowed");
+  const [c1] = run("classic", { challenge: "abc123" }); const [c2] = run("classic", { challenge: "abc123" }); const [c3] = run("classic", { challenge: "abc124" });
+  if (c1.join() !== c2.join()) throw new Error("challenge sets differ");
+  if (c1.join() === c3.join()) throw new Error("different codes gave the same set");
+  if (L.validateAction(L.setup(["px"]), "px", { kind: "start", mode: "classic", challenge: "BAD CODE!", at: at0 }).ok) throw new Error("bad challenge code accepted");
+  if (new Set(L.dailyPrompts(day).concat(L.dailyPrompts(day + 1))).size !== 14) throw new Error("consecutive dailies overlap");
+  console.log("daily/challenge checks OK —", d1.join(","));
+}
 console.log("ALL LOGIC CHECKS PASSED");
 '
 wc -c logic.js

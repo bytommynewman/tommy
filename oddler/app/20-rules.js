@@ -37,11 +37,13 @@ function parseAnswers(spec) {
 }
 
 /** The parsed bank: one object per prompt, answers with normalized keys. */
-export const QUESTIONS = BANKS.map(([id, category, prompt, spec]) => ({
-  id, category, prompt, answers: parseAnswers(spec),
+export const QUESTIONS = BANKS.map(([id, category, prompt, spec, core]) => ({
+  id, category, prompt, answers: parseAnswers(spec), core: Boolean(core),
 }));
 
 const BY_ID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
+/** The hand-written prompts: a stable pool, so a daily or a challenge code means the same 7 prompts for everyone. */
+const CORE = QUESTIONS.filter((q) => q.core).map((q) => q.id).sort();
 
 // ── matching ───────────────────────────────────────────────────────────────
 
@@ -109,6 +111,43 @@ function pick(seed, list) {
   return [list[Math.floor(value * list.length)], s];
 }
 
+/** Fisher–Yates with the seeded generator: the same seed always gives the same order. */
+function shuffle(seed, list) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const r = nextRand(seed); seed = r.seed;
+    const j = Math.floor(r.value * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/** 32-bit FNV-1a of a string, for turning a challenge code or a day into a seed. */
+function hashCode(text) {
+  let h = 2166136261;
+  for (const ch of String(text)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return (h >>> 0) || 1;
+}
+
+export function dayOf(at) { return Math.floor(at / DAY_MS); }
+
+/**
+ * Today's seven. The core pool is dealt in rounds so a prompt cannot come
+ * back until every other core prompt has had its day.
+ */
+export function dailyPrompts(day) {
+  const per = CLASSIC_ROUNDS, cycle = Math.max(1, Math.floor(CORE.length / per));
+  const deck = shuffle(hashCode("daily:" + Math.floor(day / cycle)), CORE);
+  const start = (((day % cycle) + cycle) % cycle) * per;
+  return deck.slice(start, start + per);
+}
+
+/** A challenge code's seven prompts: same code, same prompts, for anyone. */
+export function challengePrompts(code) {
+  return shuffle(hashCode("challenge:" + code), CORE).slice(0, CLASSIC_ROUNDS);
+}
+const CHALLENGE_RE = /^[a-z0-9]{4,12}$/;
+
 // ── parts ──────────────────────────────────────────────────────────────────
 
 function countSlot(parts, slot) {
@@ -154,6 +193,10 @@ export function setup(players) {
     mode: null,
     colour: "pink",
     seed: 1,
+    fixed: null,          // daily/challenge: the exact prompt ids to deal, in order
+    day: null,            // daily: UTC day number
+    challenge: null,      // challenge code this game was dealt from
+    dailyDone: null,      // the last daily day this room finished (kept across games)
     used: [],
     seen: [],             // prompt ids this player met in earlier runs (sent with `start`)
     round: null,
@@ -187,6 +230,15 @@ function turnFor(state, n) {
 }
 
 function freshRound(state, at) {
+  if (state.fixed) {
+    const id = state.fixed[state.history.length];
+    const q = id ? BY_ID[id] : null;
+    if (!q) return null;
+    return {
+      ...state, used: [...state.used, q.id], phase: "ask",
+      round: { q: q.id, startedAt: at, tries: [], ended: null, turn: state.player, typing: "" },
+    };
+  }
   let unused = QUESTIONS.filter((q) => !state.used.includes(q.id) && !state.seen.includes(q.id));
   // Everything already seen: better a repeat than no prompt.
   if (!unused.length) unused = QUESTIONS.filter((q) => !state.used.includes(q.id));
@@ -257,6 +309,11 @@ export function validateAction(state, playerId, action) {
       if (action.mode !== "duo") return { ok: false, error: "this room plays Duo" };
     } else {
       if (!MODES.includes(action.mode)) return { ok: false, error: "unknown mode" };
+      if (action.mode === "daily" && state.dailyDone === dayOf(action.at)) return { ok: false, error: "you have played today's daily — back tomorrow" };
+    }
+    if (action.challenge !== undefined) {
+      if (duo || action.mode !== "classic") return { ok: false, error: "challenges are Classic, solo" };
+      if (typeof action.challenge !== "string" || !CHALLENGE_RE.test(action.challenge)) return { ok: false, error: "bad challenge code" };
     }
     if (action.colour !== undefined && !COLOURS.includes(action.colour)) return { ok: false, error: "unknown colour" };
     for (const k of ["names", "loadouts", "colours", "banners"]) {
@@ -336,6 +393,7 @@ function resetKeepingSeats(state, seed) {
   return {
     ...base, kind: state.kind, players: state.players, profiles, games: state.games,
     colour: state.colour, name: state.name, banner: state.banner, seed, phase: state.kind === "duo" ? "duo-lobby" : "lobby",
+    dailyDone: state.dailyDone ?? null,
   };
 }
 
@@ -392,6 +450,8 @@ export function applyAction(state, playerId, action) {
     case "start": {
       const seed = ((at ^ (action.seed | 0)) >>> 0) || 1;
       const base = { ...resetKeepingSeats(state, seed), mode: action.mode, seen: Array.isArray(action.seen) ? action.seen : [] };
+      if (action.mode === "daily") { base.day = dayOf(at); base.fixed = dailyPrompts(base.day); }
+      else if (action.challenge) { base.challenge = action.challenge; base.fixed = challengePrompts(action.challenge); }
       const names = action.names ?? {}, loadouts = action.loadouts ?? {}, colours = action.colours ?? {}, banners = action.banners ?? {};
       if (state.kind === "duo") {
         base.games = state.games + (state.phase === "done" ? 1 : 0);
@@ -431,7 +491,7 @@ export function applyAction(state, playerId, action) {
     }
     case "next": {
       const finished = state.history.length;
-      if (finished >= roundLimit(state)) return { ...state, phase: "done", round: null };
+      if (finished >= roundLimit(state)) return { ...state, phase: "done", round: null, dailyDone: state.mode === "daily" ? state.day : state.dailyDone ?? null };
       if (state.mode === "endless" && state.strikes >= ENDLESS_STRIKES) return { ...state, phase: "done", round: null };
       return freshRound(state, at) ?? { ...state, phase: "done", round: null };
     }
@@ -462,6 +522,9 @@ export function viewFor(state, playerId) {
     phase: state.phase,
     kind: state.kind,
     mode: state.mode,
+    day: state.day ?? null,
+    challenge: state.challenge ?? null,
+    dailyDone: state.dailyDone ?? null,
     colour: state.colour,
     name: state.name,
     banner: state.banner,

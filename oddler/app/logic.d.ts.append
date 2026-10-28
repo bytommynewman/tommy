@@ -9,3 +9,8 @@ export const TIERS: ({ id: number; name: string; pts: number; odd: string } | nu
 export const BANNERS: { id: string; name: string; level: number }[];
 export const MAX_LEVEL: number;
 export const BAND: number;
+export const DAILY_EPOCH: number;
+export const DAY_MS: number;
+export function dayOf(at: number): number;
+export function dailyPrompts(day: number): string[];
+export function challengePrompts(code: string): string[];

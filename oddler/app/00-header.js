@@ -20,7 +20,10 @@ export const CLASSIC_ROUNDS = 7;
 /** Duo: ten prompts, partners alternate, one team score. */
 export const DUO_ROUNDS = 10;
 export const ENDLESS_STRIKES = 3;
-export const MODES = ["classic", "endless", "practice"];
+export const MODES = ["classic", "endless", "practice", "daily"];
+/** Daily #1 was 2026-10-28 (UTC day number); dailies roll over at midnight UTC. */
+export const DAILY_EPOCH = 20754;
+export const DAY_MS = 86_400_000;
 /** Max prompt ids a player may ask us to avoid (seen in earlier runs). */
 export const SEEN_CAP = 600;
 /** Longest display name a locker may carry. */
