@@ -319,9 +319,9 @@ function recordBest(v) {
 }
 
 const MODE_INFO = {
-  classic: ["Classic", "7 prompts · 10s each"],
-  endless: ["Endless", "Until 3 misses"],
-  practice: ["Practice", "No clock, same rules"],
+  classic: ["Classic", "Seven prompts, ten seconds each."],
+  endless: ["Endless", "Keep going until your third miss."],
+  practice: ["Practice", "No clock, same scoring, nothing recorded."],
 };
 
 function swatchesHTML(current) {
@@ -361,13 +361,13 @@ function dailyCardHTML(v) {
   const no = dailyNo(day);
   if (done) {
     return `<section class="panel soft">
-      <div class="headrow"><h2>Daily #${no}</h2><span class="small dim">done · ${done.score ?? "—"} odd · next in ${untilNextDaily()}</span></div>
+      <div class="headrow"><h2>Daily #${no}</h2><span class="small dim">Done · ${done.score ?? "—"} odd · next in ${untilNextDaily()}</span></div>
       <div class="row" style="align-items:center;margin-top:10px">${done.grid ? `<p class="grid" aria-label="Your daily result" style="margin:0">${done.grid}</p>` : "<span></span>"}<button id="sharedaily" class="btn lime slim" type="button">SHARE</button></div>
     </section>`;
   }
   return `<section class="panel soft">
-    <div class="headrow"><h2>Daily #${no}</h2><span class="small dim">same 7 for everyone · resets in ${untilNextDaily()}</span></div>
-    <p style="margin:10px 0 0"><button id="daily" class="btn lime" type="button">PLAY TODAY'S DAILY</button></p>
+    <div class="headrow"><h2>Daily #${no}</h2><span class="small dim">Same seven for everyone · resets in ${untilNextDaily()}</span></div>
+    <p style="margin:10px 0 0"><button id="daily" class="btn lime" type="button">Play today's Daily</button></p>
   </section>`;
 }
 
@@ -395,12 +395,12 @@ function lobbyHTML(v) {
         ${Object.entries(MODE_INFO).map(([m, [name, sub]]) => `<button class="tab" type="button" data-mode="${m}" aria-pressed="${m === chosenMode}" title="${esc(sub)}">${name}</button>`).join("")}
       </div>
       <p class="small dim center" style="margin:8px 0 12px">${esc(MODE_INFO[chosenMode]?.[1] ?? "")}</p>
-      <p style="margin:0"><button id="start" class="btn" type="button">GO ODD</button></p>
+      <p style="margin:0"><button id="start" class="btn" type="button">Go odd</button></p>
       <div class="row" style="margin-top:12px">
-        <button id="duo" class="btn ghost slim" type="button">DUO</button>
-        <button id="challenge" class="btn ghost slim" type="button">CHALLENGE</button>
+        <button id="duo" class="btn ghost slim" type="button">Duo</button>
+        <button id="challenge" class="btn ghost slim" type="button">Challenge</button>
       </div>
-      <p class="small dim center" style="margin:10px 0 0">Duo: play together, one score. Challenge: send a friend your exact 7.</p>
+      <p class="small dim center" style="margin:10px 0 0">Duo pairs you with a friend for one shared score. Challenge sends a friend the exact seven you just played.</p>
     </section>
     <p class="center" style="margin:0"><button id="how" class="link quiet" type="button">How does scoring work?</button></p>`;
 }

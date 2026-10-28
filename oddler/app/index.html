@@ -33,6 +33,9 @@
         --line: rgba(245, 230, 200, 0.14);
         --pixel: "Press Start 2P", ui-monospace, monospace;
         --body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+        /* UI labels: the body face, bold, spaced caps — crisp at any size. */
+        --label: 700 13px/1.4 var(--body);
+        --track: 0.08em;
         --t1: #8a94a6; --t2: #a98ad1; --t3: #7c5ba6; --t4: #e8743b; --t5: #f08ca8; --t6: #b8e62e;
       }
       * { box-sizing: border-box; }
@@ -52,7 +55,7 @@
         background: radial-gradient(ellipse at 50% 30%, rgba(27,16,38,0.15), rgba(27,16,38,0.75) 75%);
         pointer-events: none;
       }
-      img, button, input { image-rendering: pixelated; }
+      img { image-rendering: pixelated; }
       button, input { font: inherit; color: inherit; }
       button { cursor: pointer; }
       button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
@@ -66,19 +69,18 @@
         display: flex; flex-direction: column; gap: 18px;
         min-height: 100dvh;
       }
-      header.top {
-        display: flex; align-items: center; justify-content: space-between; gap: 10px;
-        font-family: var(--pixel); font-size: 10px; letter-spacing: 0.02em;
-      }
-      header.top .brand { display: flex; align-items: center; gap: 10px; }
-      header.top .brand img { height: 22px; width: auto; }
-      header.top .tag { color: var(--dim); font-family: var(--body); font-size: 13px; }
+      header.top { position: relative; display: grid; place-items: center; padding: 10px 0 2px; }
+      header.top .brand { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      header.top .brand img { height: 58px; width: auto; image-rendering: auto; filter: drop-shadow(0 4px 0 rgba(0,0,0,0.35)); }
+      header.top .tag { color: var(--dim); font: var(--label); letter-spacing: var(--track); text-transform: uppercase; font-size: 11px; }
+      header.top #mute { position: absolute; right: 0; top: 10px; }
       .iconbtn {
         background: var(--panel); border: 2px solid var(--line); border-radius: 8px;
-        padding: 6px 9px; font-family: var(--pixel); font-size: 10px; color: var(--cream);
+        padding: 6px 10px; font: var(--label); color: var(--cream);
       }
       .iconbtn[aria-pressed="true"] { border-color: var(--lime); color: var(--lime); }
 
+      #screen { display: flex; flex-direction: column; gap: 14px; }
       .panel {
         background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
         padding: 20px; backdrop-filter: blur(3px);
@@ -88,17 +90,17 @@
       .center { text-align: center; }
       .link.quiet { color: var(--dim); text-decoration: none; font-size: 14px; }
       .link.quiet:hover { color: var(--cream); }
-      .btn.slim { padding: 12px 14px; font-size: 11px; }
-      .px { font-family: var(--pixel); line-height: 1.6; }
-      h1, h2 { margin: 0; font-family: var(--pixel); font-weight: 400; }
-      h1 { font-size: 18px; } h2 { font-size: 12px; color: var(--lime); letter-spacing: 0.04em; }
+      .btn.slim { padding: 13px 14px; font-size: 14px; }
+      .px { font: var(--label); letter-spacing: var(--track); text-transform: uppercase; }
+      h1 { margin: 0; font-family: var(--pixel); font-weight: 400; font-size: 18px; }
+      h2 { margin: 0; font: var(--label); font-size: 14px; color: var(--lime); letter-spacing: var(--track); text-transform: uppercase; }
       p { margin: 0.35em 0; }
       .dim { color: var(--dim); }
       .small { font-size: 14px; }
 
       .btn {
         display: block; width: 100%; border: 0; border-radius: 10px;
-        padding: 16px 18px; font-family: var(--pixel); font-size: 13px; letter-spacing: 0.03em;
+        padding: 16px 18px; font: var(--label); font-size: 16px; letter-spacing: var(--track); text-transform: uppercase;
         color: var(--plum); background: var(--pink);
         box-shadow: 0 5px 0 #b45a78; transform: translateY(0);
         transition: transform 80ms ease, box-shadow 80ms ease;
@@ -117,7 +119,7 @@
       .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
       .tab {
         background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 11px 6px;
-        font-family: var(--pixel); font-size: 10px; color: var(--dim); line-height: 1.5;
+        font: var(--label); font-size: 14px; color: var(--dim);
       }
       .tab small { display: block; font-family: var(--body); font-size: 12px; color: var(--dim); margin-top: 4px; }
       .tab[aria-pressed="true"] { background: var(--purple); border-color: var(--lime); color: var(--cream); }
@@ -155,7 +157,7 @@
       .item { background: var(--purple); border: 2px solid transparent; border-radius: 10px; padding: 8px 4px; color: var(--cream); display: grid; justify-items: center; gap: 4px; }
       .item img { width: 44px; height: 44px; object-fit: contain; }
       .item .iname { font-size: 12px; line-height: 1.2; text-align: center; }
-      .item .ihow { font-family: var(--pixel); font-size: 7px; color: var(--dim); text-align: center; line-height: 1.5; }
+      .item .ihow { font: var(--label); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dim); text-align: center; }
       .item.worn { border-color: var(--lime); background: rgba(184,230,46,0.14); }
       .item.worn .ihow { color: var(--lime); }
       .item.locked { opacity: 0.45; cursor: default; }
@@ -185,7 +187,7 @@
       .bannerpick.locked .nameplate { filter: grayscale(1); animation: none; }
       .seatname .nameplate { font-size: 9px; padding: 4px 8px; }
       .notice { text-align: center; color: var(--rust); margin: 0 0 8px; }
-      .quit { background: none; border: 0; color: var(--dim); font-family: var(--pixel); font-size: 9px; padding: 4px 6px; margin-left: 8px; text-decoration: underline; }
+      .quit { background: none; border: 0; color: var(--dim); font: var(--label); font-size: 12px; letter-spacing: var(--track); text-transform: uppercase; padding: 4px 6px; margin-left: 8px; text-decoration: underline; }
       .quit:hover { color: var(--rust); }
       .xpflash { min-height: 1.2em; margin: 6px 0 0; color: var(--lime); font-size: 12px; text-align: center; opacity: 0; }
       .xpflash.show { animation: flashup 1400ms ease-out both; }
@@ -210,7 +212,7 @@
       }
 
       /* play */
-      .hud { display: flex; justify-content: space-between; align-items: center; font-family: var(--pixel); font-size: 10px; }
+      .hud { display: flex; justify-content: space-between; align-items: center; font: var(--label); letter-spacing: var(--track); text-transform: uppercase; }
       .hud .score { color: var(--lime); }
       /* lives (Endless): big rings, an X stamped through each one lost */
       .lives { display: inline-flex; gap: 5px; vertical-align: middle; margin-left: 6px; }
@@ -224,7 +226,7 @@
       .lives.dead .life.lost circle { fill: rgba(255, 59, 59, 0.45); }
       .outcall { color: #ff3b3b; text-shadow: 0 0 10px rgba(255, 59, 59, 0.6); margin: 4px 0 8px; animation: outcall 600ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
       @keyframes outcall { 0% { transform: scale(1.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-      .chip { display: inline-block; font-family: var(--pixel); font-size: 9px; padding: 5px 8px; border-radius: 6px; background: var(--purple); color: var(--cream); }
+      .chip { display: inline-block; font: var(--label); font-size: 11px; letter-spacing: var(--track); text-transform: uppercase; padding: 5px 9px; border-radius: 6px; background: var(--purple); color: var(--cream); }
       .prompt { font-size: 24px; font-weight: 700; line-height: 1.25; margin: 10px 0 6px; }
       /* the clock */
       .clock { display: flex; align-items: center; gap: 14px; margin: 10px 0 10px; }
@@ -246,7 +248,7 @@
       #vignette.danger { animation: flashvig 260ms ease-in-out infinite alternate; }
       @keyframes flashvig { from { opacity: 0.35; } to { opacity: 0.95; } }
       /* who is on the clock */
-      .onclock { margin-top: 12px; padding: 12px 10px; border-radius: 10px; text-align: center; font-family: var(--pixel); font-size: 12px; letter-spacing: 0.04em; }
+      .onclock { margin-top: 12px; padding: 12px 10px; border-radius: 10px; text-align: center; font: var(--label); font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; }
       .onclock.you { background: var(--lime); color: var(--plum); animation: glow 900ms ease-in-out infinite alternate; }
       .onclock.them { background: var(--purple); color: var(--cream); border: 2px solid var(--line); }
       @keyframes glow { from { box-shadow: 0 0 0 0 rgba(184,230,46,0.0); } to { box-shadow: 0 0 22px 4px rgba(184,230,46,0.55); } }
@@ -262,7 +264,7 @@
       .tries .ok { color: var(--dim); }
 
       /* reveal */
-      .tier { display: inline-block; font-family: var(--pixel); font-size: 11px; padding: 8px 10px; border-radius: 8px; color: var(--plum); }
+      .tier { display: inline-block; font: var(--label); font-size: 13px; letter-spacing: var(--track); text-transform: uppercase; padding: 8px 12px; border-radius: 8px; color: var(--plum); }
       .tier.t0 { background: var(--slate); } .tier.t1 { background: var(--t1); } .tier.t2 { background: var(--t2); }
       .tier.t3 { background: var(--t3); color: var(--cream); } .tier.t4 { background: var(--t4); } .tier.t5 { background: var(--t5); } .tier.t6 { background: var(--t6); }
       .yours { font-size: 22px; font-weight: 700; }
@@ -275,12 +277,12 @@
       /* results */
       .bigscore { font-family: var(--pixel); font-size: 34px; color: var(--lime); line-height: 1.2; }
       .ladder { display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0; }
-      .ladder span { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font-family: var(--pixel); font-size: 9px; color: var(--plum); }
+      .ladder span { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font: var(--label); font-size: 12px; color: var(--plum); }
       .history { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
       .history li { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid rgba(124,91,166,0.35); padding-top: 6px; }
       .history li span:last-child { white-space: nowrap; }
       .grid { font-size: 22px; letter-spacing: 2px; text-align: center; margin: 6px 0; }
-      .best { font-family: var(--pixel); font-size: 10px; color: var(--dim); }
+      .best { font: var(--label); font-size: 12px; letter-spacing: var(--track); text-transform: uppercase; color: var(--dim); }
       .best.new { color: var(--lime); }
 
       /* tutorial */
@@ -299,7 +301,7 @@
       .team.compact .seat .oddler.mini { width: 72px; margin: 0 auto; }
       .seatname { font-size: 9px; color: var(--dim); margin: 6px 0 0; }
       .seat.turn .seatname { color: var(--lime); }
-      .waiting { display: grid; place-items: center; height: 100%; font-family: var(--pixel); font-size: 9px; line-height: 1.8; color: var(--dim); border: 2px dashed var(--line); border-radius: 12px; text-align: center; }
+      .waiting { display: grid; place-items: center; height: 100%; font: var(--label); font-size: 12px; letter-spacing: var(--track); text-transform: uppercase; color: var(--dim); border: 2px dashed var(--line); border-radius: 12px; text-align: center; }
       .chip.lime { background: var(--lime); color: var(--plum); }
       .live { border: 2px solid var(--line); border-radius: 10px; padding: 10px 14px; background: rgba(27,16,38,0.9); min-height: 58px; }
       .livelabel { font-size: 8px; color: var(--dim); display: block; margin-bottom: 4px; }
@@ -311,9 +313,9 @@
       .about p { color: var(--dim); }
       @media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
 
-      .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--lime); color: var(--plum); font-family: var(--pixel); font-size: 10px; padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity 200ms; pointer-events: none; z-index: 10; }
+      .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--lime); color: var(--plum); font: var(--label); letter-spacing: var(--track); text-transform: uppercase; padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity 200ms; pointer-events: none; z-index: 10; }
       .toast.show { opacity: 1; }
-      #status { font-family: var(--pixel); font-size: 9px; color: var(--dim); text-align: center; }
+      #status { font: var(--label); font-size: 11px; letter-spacing: var(--track); text-transform: uppercase; color: var(--dim); text-align: center; }
       #status.error { color: var(--rust); }
       @media (prefers-reduced-motion: reduce) {
         .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up, .nameplate, .xpflash.show, .life.stamp, .outcall, .nameplate.b-void, .nameplate.b-oddlion { animation: none; }
@@ -330,7 +332,7 @@
       <header class="top">
         <div class="brand">
           <img src="/art/logo.png" alt="Oddler" />
-          <span class="tag">only odd answers score</span>
+          <span class="tag">Only uncommon answers score</span>
         </div>
         <button id="mute" class="iconbtn" type="button" aria-pressed="true" aria-label="Sound on">♪</button>
       </header>
