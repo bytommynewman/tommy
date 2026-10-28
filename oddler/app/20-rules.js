@@ -13,7 +13,24 @@ export function normalize(text) {
     .trim()
     .replace(/^(the|a|an) /, "")
     .replace(/^(mount|mt) /, "")
+    .replace(/\b(saint|st) /g, "st ")
     .trim();
+}
+
+/** The same string with spaces removed: "ice cream" and "icecream" are one answer. */
+function compact(key) { return key.replace(/ /g, ""); }
+
+/** Singular/plural spellings of a normalized key that should count as the same word. */
+function numberForms(key) {
+  const out = new Set();
+  if (key.endsWith("ies")) out.add(key.slice(0, -3) + "y");
+  if (key.endsWith("es")) out.add(key.slice(0, -2));
+  if (key.endsWith("s")) out.add(key.slice(0, -1));
+  out.add(key + "s");
+  if (key.endsWith("y")) out.add(key.slice(0, -1) + "ies");
+  if (/(s|x|z|ch|sh)$/.test(key)) out.add(key + "es");
+  out.delete(key);
+  return [...out];
 }
 
 function parseAnswers(spec) {
@@ -82,6 +99,11 @@ export function matchAnswer(question, text) {
   const key = normalize(text);
   if (!key) return null;
   for (const a of question.answers) if (a.keys.includes(key)) return { answer: a, exact: true };
+  // Spacing and number: "newzealand", "ice-cream", "ribs" for "rib".
+  const ckey = compact(key);
+  for (const a of question.answers) if (a.keys.some((k) => compact(k) === ckey)) return { answer: a, exact: true };
+  const forms = numberForms(key);
+  for (const a of question.answers) if (a.keys.some((k) => forms.includes(k))) return { answer: a, exact: true };
   let best = null, bestDist = Infinity, tie = false;
   for (const a of question.answers) {
     for (const k of a.keys) {
@@ -89,6 +111,7 @@ export function matchAnswer(question, text) {
       if (!limit || Math.abs(k.length - key.length) > limit) continue;
       const dist = editDistance(key, k);
       if (dist > limit) continue;
+      if (key.length < 8 && key[0] !== k[0]) continue;
       if (dist < bestDist) { best = a; bestDist = dist; tie = false; }
       else if (dist === bestDist && best !== a) tie = true;
     }
@@ -193,6 +216,7 @@ export function setup(players) {
     mode: null,
     colour: "pink",
     seed: 1,
+    category: null,       // classic/blitz/endless: only deal prompts from this category
     fixed: null,          // daily/challenge: the exact prompt ids to deal, in order
     day: null,            // daily: UTC day number
     challenge: null,      // challenge code this game was dealt from
@@ -209,15 +233,25 @@ export function setup(players) {
 
 function roundLimit(state) {
   if (state.kind === "duo") return DUO_ROUNDS;
-  return state.mode === "endless" ? Infinity : CLASSIC_ROUNDS;
+  if (state.mode === "endless") return Infinity;
+  return state.mode === "blitz" ? BLITZ_ROUNDS : CLASSIC_ROUNDS;
 }
+
+/** How long a round's clock runs in this mode (null: no clock). */
+function roundMsFor(state) {
+  if (state.mode === "practice") return null;
+  return state.mode === "blitz" ? BLITZ_MS : ROUND_MS;
+}
+
+/** Every category in the bank, for the lobby's category pick. */
+export const CATEGORIES = [...new Set(QUESTIONS.map((q) => q.category))].sort();
 
 function partsOf(state, id) {
   return state.kind === "duo" ? state.profiles[id].parts : state.parts;
 }
 
 function deadline(state) {
-  return state.round.startedAt + ROUND_MS + GRACE_MS;
+  return state.round.startedAt + (roundMsFor(state) ?? 0) + GRACE_MS;
 }
 
 function timedOut(state, at) {
@@ -239,9 +273,10 @@ function freshRound(state, at) {
       round: { q: q.id, startedAt: at, tries: [], ended: null, turn: state.player, typing: "" },
     };
   }
-  let unused = QUESTIONS.filter((q) => !state.used.includes(q.id) && !state.seen.includes(q.id));
+  const pool = state.category ? QUESTIONS.filter((q) => q.category === state.category) : QUESTIONS;
+  let unused = pool.filter((q) => !state.used.includes(q.id) && !state.seen.includes(q.id));
   // Everything already seen: better a repeat than no prompt.
-  if (!unused.length) unused = QUESTIONS.filter((q) => !state.used.includes(q.id));
+  if (!unused.length) unused = pool.filter((q) => !state.used.includes(q.id));
   if (!unused.length) return null;
   const [q, seed] = pick(state.seed, unused);
   const turn = state.kind === "duo" ? turnFor(state, state.history.length) : state.player;
@@ -310,6 +345,10 @@ export function validateAction(state, playerId, action) {
     } else {
       if (!MODES.includes(action.mode)) return { ok: false, error: "unknown mode" };
       if (action.mode === "daily" && state.dailyDone === dayOf(action.at)) return { ok: false, error: "you have played today's daily — back tomorrow" };
+    }
+    if (action.category !== undefined && action.category !== null) {
+      if (duo || !["classic", "blitz", "endless", "practice"].includes(action.mode)) return { ok: false, error: "no category picks in this mode" };
+      if (!CATEGORIES.includes(action.category)) return { ok: false, error: "unknown category" };
     }
     if (action.challenge !== undefined) {
       if (duo || action.mode !== "classic") return { ok: false, error: "challenges are Classic, solo" };
@@ -450,6 +489,7 @@ export function applyAction(state, playerId, action) {
     case "start": {
       const seed = ((at ^ (action.seed | 0)) >>> 0) || 1;
       const base = { ...resetKeepingSeats(state, seed), mode: action.mode, seen: Array.isArray(action.seen) ? action.seen : [] };
+      if (action.category && !action.challenge) base.category = action.category;
       if (action.mode === "daily") { base.day = dayOf(at); base.fixed = dailyPrompts(base.day); }
       else if (action.challenge) { base.challenge = action.challenge; base.fixed = challengePrompts(action.challenge); }
       const names = action.names ?? {}, loadouts = action.loadouts ?? {}, colours = action.colours ?? {}, banners = action.banners ?? {};
@@ -535,9 +575,11 @@ export function viewFor(state, playerId) {
     parts: state.parts,
     history: state.history,
     roundNo: state.history.length + (state.phase === "ask" ? 1 : 0),
-    totalRounds: duo ? DUO_ROUNDS : state.mode === "endless" ? null : CLASSIC_ROUNDS,
+    totalRounds: duo ? DUO_ROUNDS : roundLimit(state) === Infinity ? null : roundLimit(state),
+    category: state.category ?? null,
+    categories: CATEGORIES,
     tiers: TIERS,
-    roundMs: state.mode === "practice" ? null : ROUND_MS,
+    roundMs: roundMsFor(state),
     round: null,
     duo: null,
   };

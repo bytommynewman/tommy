@@ -15,6 +15,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preload" as="image" href="/art/axo-base.png" />
+    <link rel="preload" as="image" href="/art/logo.png" />
     <style>
       :root {
         color-scheme: dark;
@@ -118,10 +120,11 @@
       .link { background: none; border: 0; color: var(--lime); text-decoration: underline; text-underline-offset: 3px; padding: 6px; font-size: 16px; font-weight: 600; }
 
       /* mode tabs */
-      .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .row #sharecard { flex: 0 0 auto; min-width: 86px; }
       .tab {
         background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 11px 6px;
-        font: var(--label); font-size: 16px; color: var(--dim);
+        font: var(--label); font-size: 15px; color: var(--dim);
       }
       .tab small { display: block; font-family: var(--body); font-size: 12px; color: var(--dim); margin-top: 4px; }
       .tab[aria-pressed="true"] { background: var(--purple); border-color: var(--lime); color: var(--cream); }
@@ -266,6 +269,10 @@
       .tries .ok { color: var(--dim); }
 
       /* reveal */
+      .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 30; }
+      .catpick { display: inline-flex; align-items: center; gap: 8px; }
+      .catpick select { font: var(--label); font-size: 15px; color: var(--cream); background: var(--purple); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+      .tier { animation: stamp 420ms cubic-bezier(0.2, 1.6, 0.4, 1) both; transform-origin: left center; }
       .tier { display: inline-block; font: var(--label); font-size: 13px; letter-spacing: var(--track); text-transform: uppercase; padding: 8px 12px; border-radius: 8px; color: var(--plum); }
       .tier.t0 { background: var(--slate); } .tier.t1 { background: var(--t1); } .tier.t2 { background: var(--t2); }
       .tier.t3 { background: var(--t3); color: var(--cream); } .tier.t4 { background: var(--t4); } .tier.t5 { background: var(--t5); } .tier.t6 { background: var(--t6); }
@@ -320,7 +327,7 @@
       #status { font: var(--label); font-size: 11px; letter-spacing: var(--track); text-transform: uppercase; color: var(--dim); text-align: center; }
       #status.error { color: var(--rust); }
       @media (prefers-reduced-motion: reduce) {
-        .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up, .nameplate, .xpflash.show, .life.stamp, .outcall, .nameplate.b-void, .nameplate.b-oddlion { animation: none; }
+        .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up, .nameplate, .xpflash.show, .life.stamp, .outcall, .nameplate.b-void, .nameplate.b-oddlion, .tier { animation: none; }
         .clock .fill, .oddler { transition: none; }
       }
       @media (min-width: 700px) {

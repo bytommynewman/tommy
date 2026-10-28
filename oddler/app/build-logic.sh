@@ -116,6 +116,38 @@ console.log("duo checks OK");
   if (new Set(L.dailyPrompts(day).concat(L.dailyPrompts(day + 1))).size !== 14) throw new Error("consecutive dailies overlap");
   console.log("daily/challenge checks OK —", d1.join(","));
 }
+// grading: spacing, number, saint, and no first-letter typos on short words
+{
+  const dog = L.QUESTIONS.find((q) => q.id === "dog-breed");
+  const bone = L.QUESTIONS.find((q) => q.id === "bone");
+  const eu = L.QUESTIONS.find((q) => q.id === "eu-country");
+  const want = (q, typed, name) => { const m = L.matchAnswer(q, typed); const got = m ? m.answer.name : null; if (got !== name) throw new Error("grade " + typed + ": got " + got + ", want " + name); };
+  want(eu, "newzealand", null); want(eu, "united-kingdom", "United Kingdom"); want(eu, "UnitedKingdom", "United Kingdom");
+  want(bone, "femurs", "Femur"); want(bone, "rib", "Ribs"); want(bone, "phalanx", "Phalanges");
+  want(dog, "saint bernard", "Saint Bernard"); want(dog, "St. Bernard", "Saint Bernard"); want(dog, "poodles", "Poodle");
+  want(eu, "Iran", null); want(eu, "Fraance", "France"); want(eu, "Prance", null);
+  console.log("grading checks OK");
+}
+// blitz: five-second clock, ten rounds; category pick narrows the deal
+{
+  let st = L.setup(["pb"]);
+  st = L.applyAction(st, "pb", { kind: "start", mode: "blitz", seed: 5, at: at0 });
+  const v = L.viewFor(st, "pb");
+  if (v.roundMs !== 5000 || v.totalRounds !== 10) throw new Error("blitz view " + v.roundMs + "/" + v.totalRounds);
+  const late = L.applyAction(st, "pb", { kind: "answer", text: "France", at: at0 + 7500 });
+  if (!L.viewFor(late, "pb").round.ended?.timedOut) throw new Error("blitz answer at 7.5s should time out");
+  for (let i = 0; i < 10; i++) { st = L.applyAction(st, "pb", { kind: "skip", at: at0 + 100 }); st = L.applyAction(st, "pb", { kind: "next", at: at0 + 200 }); }
+  if (st.phase !== "done") throw new Error("blitz should finish after ten rounds");
+  if (!L.CATEGORIES.includes("Geography")) throw new Error("categories missing Geography");
+  let sc = L.setup(["pc"]);
+  if (L.validateAction(sc, "pc", { kind: "start", mode: "classic", category: "Nope", at: at0 }).ok) throw new Error("unknown category accepted");
+  sc = L.applyAction(sc, "pc", { kind: "start", mode: "classic", category: "Geography", seed: 9, at: at0 });
+  for (let i = 0; i < 7; i++) {
+    if (L.viewFor(sc, "pc").round.category !== "Geography") throw new Error("category pick not honoured");
+    sc = L.applyAction(sc, "pc", { kind: "skip", at: at0 + 100 }); sc = L.applyAction(sc, "pc", { kind: "next", at: at0 + 200 });
+  }
+  console.log("blitz/category checks OK");
+}
 console.log("ALL LOGIC CHECKS PASSED");
 '
 wc -c logic.js

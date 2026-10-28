@@ -261,6 +261,7 @@ function onState(msg) {
     const e = v.round.ended;
     if (e.tier) sfx.score(e.tier); else sfx.miss();
     lastNewPart = e.part ? e.part.id : null;
+    if (e.tier >= 5 && !reduced) setTimeout(() => confetti(e.tier === 6 ? 140 : 80), 60);
   }
   if (v.phase === "done" && prev?.phase !== "done") { recordBest(v); refreshAfterGame(); }
   render();
@@ -320,9 +321,11 @@ function recordBest(v) {
 
 const MODE_INFO = {
   classic: ["Classic", "Seven prompts, ten seconds each."],
+  blitz: ["Blitz", "Ten prompts, five seconds each. Think fast."],
   endless: ["Endless", "Keep going until your third miss."],
   practice: ["Practice", "No clock, same scoring, nothing recorded."],
 };
+let chosenCategory = store.get("category", "");
 
 function swatchesHTML(current) {
   return `<div class="swatches" role="group" aria-label="Oddler colour">
@@ -394,7 +397,9 @@ function lobbyHTML(v) {
       <div class="tabs" role="group" aria-label="Mode">
         ${Object.entries(MODE_INFO).map(([m, [name, sub]]) => `<button class="tab" type="button" data-mode="${m}" aria-pressed="${m === chosenMode}" title="${esc(sub)}">${name}</button>`).join("")}
       </div>
-      <p class="small dim center" style="margin:8px 0 12px">${esc(MODE_INFO[chosenMode]?.[1] ?? "")}</p>
+      <p class="small dim center" style="margin:8px 0 10px">${esc(MODE_INFO[chosenMode]?.[1] ?? "")}</p>
+      <p class="center" style="margin:0 0 12px"><label class="catpick"><span class="small dim">Prompts from</span>
+        <select id="category" aria-label="Category">${["", ...(v.categories || [])].map((c) => `<option value="${esc(c)}" ${c === chosenCategory ? "selected" : ""}>${c ? esc(c) : "Any category"}</option>`).join("")}</select></label></p>
       <p style="margin:0"><button id="start" class="btn" type="button">Go odd</button></p>
       <div class="row" style="margin-top:12px">
         <button id="duo" class="btn ghost slim" type="button">Duo</button>
@@ -465,7 +470,7 @@ function lockerHTML(v) {
     </section>
     <section class="panel">
       <h2>Locker</h2>
-      <p class="small dim">Best — classic ${me.best?.classic ?? 0} · endless ${me.best?.endless ?? 0} · daily ${me.best?.daily ?? 0} · duo ${me.best?.duo ?? 0}</p>
+      <p class="small dim">Best — classic ${me.best?.classic ?? 0} · blitz ${me.best?.blitz ?? 0} · endless ${me.best?.endless ?? 0} · daily ${me.best?.daily ?? 0} · duo ${me.best?.duo ?? 0}</p>
       <p class="small dim">${me.games} game${me.games === 1 ? "" : "s"} played · ${me.catalogue.filter((p) => p.unlocked).length}/${me.catalogue.length} parts unlocked. Mutations come from Odd-ish-or-better answers in games; accessories unlock as you level up.</p>
       ${grid}
     </section>
@@ -572,7 +577,7 @@ function hudHTML(v, stamp = false) {
   if (v.duo) left = `DUO · ROUND ${v.roundNo}/${v.totalRounds}`;
   else if (v.mode === "endless") left = `ENDLESS · ROUND ${v.roundNo} ${livesHTML(v.strikes, stamp)}`;
   else if (v.mode === "practice") left = `PRACTICE · ${v.roundNo}/${v.totalRounds}`;
-  else left = `ROUND ${v.roundNo}/${v.totalRounds}`;
+  else left = `${v.mode === "blitz" ? "BLITZ · " : ""}ROUND ${v.roundNo}/${v.totalRounds}${v.category ? ` · ${esc(v.category.toUpperCase())}` : ""}`;
   return `<div class="hud"><span>${left}</span><span><span class="score">${v.duo ? "TEAM " : ""}${v.score} ODD</span> <button id="quit" class="quit" type="button" aria-label="Quit this game">✕ QUIT</button></span></div>`;
 }
 
@@ -767,7 +772,7 @@ function doneHTML(v) {
   const ladder = v.history.map((h) => `<span class="t${h.tier}" style="background:var(--t${h.tier || 1});${h.tier ? "" : "opacity:.35"}" title="${esc(h.answer || "miss")}">${h.tier || "·"}</span>`).join("");
   const nameOf = (id) => { const p = v.duo?.players.find((x) => x.id === id); return p ? seatName(p).toLowerCase() : ""; };
   const rows = v.history.map((h) => `<li><span>${esc(h.prompt)}<br><b>${esc(h.answer || (h.timedOut ? "out of time" : "skipped"))}</b>${v.duo ? ` <span class="small dim">· ${esc(nameOf(h.by))}</span>` : ""}</span><span>${h.tier ? esc(tierName(h.tier)) : "—"} · ${h.pts}</span></li>`).join("");
-  const label = v.duo ? "Duo" : v.mode === "endless" ? `${v.history.length} rounds` : v.mode === "daily" ? `Daily #${dailyNo(v.day ?? todayNo())}` : v.challenge ? "Challenge" : "Classic";
+  const label = v.duo ? "Duo" : v.mode === "endless" ? `${v.history.length} rounds` : v.mode === "daily" ? `Daily #${dailyNo(v.day ?? todayNo())}` : v.challenge ? "Challenge" : v.mode === "blitz" ? "Blitz" : "Classic";
   const daily = v.mode === "daily";
   if (daily && v.day !== null) store.set("daily:" + v.day, { score: v.score, grid: gridOf(v.history) });
   const verdict = v.challenge && challengeParam === v.challenge && challengeScore
@@ -794,6 +799,7 @@ function doneHTML(v) {
       <p class="small">${earnedCount} part${earnedCount === 1 ? "" : "s"} earned · ${label}</p>
       <div class="row">
         <button id="share" class="btn lime" type="button">${daily ? "SHARE GRID" : v.challenge ? "SEND CHALLENGE" : "SHARE"}</button>
+        <button id="sharecard" class="btn ghost" type="button" title="Save a picture of this result">PIC</button>
         ${again}
       </div>
       <p><button id="locker" class="link" type="button">Open locker</button> · ${v.duo ? `<a class="link" href="/">Leave room</a>` : `<button id="lobby" class="link" type="button">Change mode</button>`}</p>
@@ -808,8 +814,108 @@ function shareText(v) {
   if (v.mode === "daily") return `Oddler Daily #${dailyNo(v.day ?? todayNo())} · ${v.score} odd\n${gridOf(v.history)}\nOnly uncommon answers score. ${location.origin}`;
   if (v.challenge) return `I scored ${v.score} on Oddler. Same 7 prompts, your turn — beat me: ${challengeLink(v.challenge, v.score)}`;
   const tiers = v.history.map((h) => "·▁▂▃▅▆█"[h.tier] || "·").join("");
-  const mode = v.duo ? "Duo" : v.mode === "endless" ? `Endless (${v.history.length} rounds)` : "Classic";
+  const mode = v.duo ? "Duo" : v.mode === "endless" ? `Endless (${v.history.length} rounds)` : v.mode === "blitz" ? "Blitz" : "Classic";
   return `ODDLER · ${mode} · ${v.score} odd${me ? ` · ${displayName()} LV ${me.level}` : ""}\n${tiers}\n${location.origin}`;
+}
+
+// effects ------------------------------------------------------------------
+
+/** A short burst of pixel confetti over the screen (rare answers, level ups). */
+function confetti(n = 80) {
+  const c = document.createElement("canvas");
+  c.className = "confetti"; c.width = innerWidth; c.height = innerHeight;
+  document.body.appendChild(c);
+  const ctx = c.getContext("2d");
+  const colours = ["#b8e62e", "#f08ca8", "#e8743b", "#b48fe0", "#f5e6c8", "#7fe0b0"];
+  const ps = Array.from({ length: n }, () => ({
+    x: c.width / 2 + (Math.random() - 0.5) * 80, y: c.height * 0.42,
+    vx: (Math.random() - 0.5) * 14, vy: -Math.random() * 14 - 4,
+    s: 6 + Math.random() * 8, col: colours[Math.floor(Math.random() * colours.length)], r: Math.random() * Math.PI,
+  }));
+  const t0 = performance.now();
+  const step = (t) => {
+    const k = (t - t0) / 1500;
+    ctx.clearRect(0, 0, c.width, c.height);
+    for (const p of ps) {
+      p.vy += 0.45; p.x += p.vx; p.y += p.vy; p.r += 0.1;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.globalAlpha = Math.max(0, 1 - k);
+      ctx.fillStyle = p.col; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s); ctx.restore();
+    }
+    if (k < 1) requestAnimationFrame(step); else c.remove();
+  };
+  requestAnimationFrame(step);
+}
+
+/** Warm the sprite cache so the creature never pops in piece by piece. */
+function preloadArt(parts) {
+  const urls = [`/art/${BASE[me?.colour || chosenColour] || "axo-base"}.png`, ...parts.map((p) => `/art/${p.id}.png`)];
+  for (const u of urls) { const im = new Image(); im.decoding = "async"; im.src = u; }
+}
+
+function loadImage(src) { return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; }); }
+
+/** A 1080×1920 result card: logo, creature, score, grid, link. Shared as a file where possible. */
+async function shareCard(v) {
+  const W = 1080, H = 1920;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const ctx = c.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = "#1b1026"; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, 900);
+  g.addColorStop(0, "rgba(124,91,166,0.45)"); g.addColorStop(1, "rgba(27,16,38,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  try {
+    const logo = await loadImage("/art/logo.png");
+    const lw = 620, lh = lw * logo.height / logo.width;
+    ctx.imageSmoothingEnabled = true; ctx.drawImage(logo, (W - lw) / 2, 150, lw, lh); ctx.imageSmoothingEnabled = false;
+  } catch { /* no logo, no problem */ }
+  // the creature, composed exactly like the DOM version
+  const parts = v.duo ? (v.duo.players.find((p) => p.isYou)?.parts || []) : v.parts;
+  const colour = v.duo ? (v.duo.players.find((p) => p.isYou)?.colour || "pink") : v.colour;
+  const size = 584, ox = (W - size) / 2, oy = 420;
+  try {
+    const base = await loadImage(`/art/${BASE[colour] || BASE.pink}.png`);
+    const layers = [];
+    const used = {};
+    for (const p of parts) {
+      const list = ANCHORS[p.slot] || []; const i = used[p.slot] = used[p.slot] ?? 0; used[p.slot] = i + 1;
+      const a = list[i]; if (!a) continue;
+      layers.push({ p, a });
+    }
+    layers.sort((m, n) => (m.a.z ?? 0) - (n.a.z ?? 0));
+    const back = layers.filter((l) => (l.a.z ?? 0) < 1), front = layers.filter((l) => (l.a.z ?? 0) >= 1);
+    const draw = async (l) => {
+      const im = await loadImage(`/art/${l.p.id}.png`);
+      const w = size * l.a.w / 100, h = w * im.height / im.width;
+      const x = ox + size * l.a.x / 100, y = oy + size * l.a.y / 100;
+      const top = l.a.a === "bottom" ? y - h : y - h / 2;
+      ctx.save();
+      if (l.a.flip) { ctx.translate(x, 0); ctx.scale(-1, 1); ctx.drawImage(im, -w / 2, top, w, h); }
+      else ctx.drawImage(im, x - w / 2, top, w, h);
+      ctx.restore();
+    };
+    for (const l of back) await draw(l);
+    ctx.drawImage(base, ox, oy, size, size * base.height / base.width);
+    for (const l of front) await draw(l);
+  } catch { /* art missing: the card still carries the score */ }
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#b8e62e"; ctx.font = "700 150px 'Press Start 2P', monospace";
+  ctx.fillText(`${v.score}`, W / 2, 1210);
+  ctx.font = "700 44px 'Fredoka', sans-serif"; ctx.fillStyle = "#f5e6c8";
+  const mode = v.duo ? "DUO" : v.mode === "daily" ? `DAILY #${dailyNo(v.day ?? todayNo())}` : v.mode === "blitz" ? "BLITZ" : v.mode === "endless" ? `ENDLESS · ${v.history.length} ROUNDS` : "CLASSIC";
+  ctx.fillText(`${mode} · ${displayName().toUpperCase()}`, W / 2, 1290);
+  ctx.font = "80px sans-serif"; ctx.fillText(gridOf(v.history), W / 2, 1420);
+  ctx.font = "600 38px 'Manrope', sans-serif"; ctx.fillStyle = "#d9cfc4";
+  ctx.fillText("Only uncommon answers score.", W / 2, 1560);
+  ctx.fillStyle = "#b8e62e"; ctx.font = "700 44px 'Fredoka', sans-serif";
+  ctx.fillText(location.host, W / 2, 1640);
+  const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+  const file = new File([blob], "oddler.png", { type: "image/png" });
+  try {
+    if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text: shareText(v) }); return; }
+  } catch { /* cancelled */ return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "oddler.png"; a.click();
+  toast("SAVED");
 }
 
 // wiring -------------------------------------------------------------------
@@ -858,8 +964,9 @@ function wire() {
     sfx.click();
     showingLobby = false;
     if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
-    else act({ kind: "start", mode: chosenMode, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
+    else act({ kind: "start", mode: chosenMode, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts(), ...(chosenCategory ? { category: chosenCategory } : {}) });
   });
+  $("#category")?.addEventListener("change", (ev) => { chosenCategory = ev.target.value; store.set("category", chosenCategory); });
   $("#duo")?.addEventListener("click", () => { sfx.click(); location.href = `/?room=${makeCode()}`; });
   $("#daily")?.addEventListener("click", () => { sfx.click(); showingLobby = false; act({ kind: "start", mode: "daily", seed: 1, seen: [] }); });
   $("#challenge")?.addEventListener("click", () => {
@@ -956,9 +1063,10 @@ function wire() {
     fanfare = null;
     if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
     else if (v.challenge) act({ kind: "start", mode: "classic", challenge: v.challenge, seed: 1, seen: [] });
-    else act({ kind: "start", mode: v.mode, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
+    else act({ kind: "start", mode: v.mode, seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts(), ...(v.category ? { category: v.category } : {}) });
   });
   $("#lobby")?.addEventListener("click", () => { showingLobby = true; fanfare = null; render(); });
+  $("#sharecard")?.addEventListener("click", () => { sfx.click(); shareCard(v).catch(() => toast("COULD NOT MAKE THE CARD")); });
   $("#share")?.addEventListener("click", async () => {
     const text = shareText(v);
     try {
@@ -993,6 +1101,7 @@ function wireTutorial() {
   await api("GET");
   indexCatalogue();
   PLAYER_ID = me?.id || await hashToken(TOKEN);
+  preloadArt(myLoadoutParts());
   room = roomParam || PLAYER_ID;
   if (me && !me.name && store.get("colour", null) && me.colour !== chosenColour) saveProfile({ colour: chosenColour });
   connect();
