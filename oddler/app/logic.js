@@ -65,12 +65,12 @@ export const PARTS = [
   // accessory sheet — level rewards, never earned mid-game (tier 0): one per level from 2
   { id: "acc-00", slot: "hat", tier: 0, level: 2 }, { id: "acc-12", slot: "neck", tier: 0, level: 3 },
   { id: "acc-04", slot: "face", tier: 0, level: 4 }, { id: "acc-08", slot: "held", tier: 0, level: 5 },
-  { id: "acc-05", slot: "flower", tier: 0, level: 6 }, { id: "acc-03", slot: "hat", tier: 0, level: 7 },
-  { id: "acc-14", slot: "neck", tier: 0, level: 8 }, { id: "acc-10", slot: "held", tier: 0, level: 8 },
-  { id: "acc-13", slot: "pack", tier: 0, level: 9 }, { id: "acc-01", slot: "hat", tier: 0, level: 9 },
-  { id: "acc-06", slot: "hat", tier: 0, level: 10 }, { id: "acc-11", slot: "held", tier: 0, level: 10 },
-  { id: "acc-09", slot: "held", tier: 0, level: 11 }, { id: "acc-07", slot: "hat", tier: 0, level: 11 },
-  { id: "acc-15", slot: "pack", tier: 0, level: 12 }, { id: "acc-02", slot: "hat", tier: 0, level: 12 },
+  { id: "acc-05", slot: "flower", tier: 0, level: 6 }, { id: "acc-03", slot: "hat", tier: 0, level: 8 },
+  { id: "acc-14", slot: "neck", tier: 0, level: 10 }, { id: "acc-10", slot: "held", tier: 0, level: 12 },
+  { id: "acc-13", slot: "pack", tier: 0, level: 14 }, { id: "acc-01", slot: "hat", tier: 0, level: 16 },
+  { id: "acc-06", slot: "hat", tier: 0, level: 18 }, { id: "acc-11", slot: "held", tier: 0, level: 21 },
+  { id: "acc-09", slot: "held", tier: 0, level: 24 }, { id: "acc-07", slot: "hat", tier: 0, level: 27 },
+  { id: "acc-15", slot: "pack", tier: 0, level: 30 }, { id: "acc-02", slot: "hat", tier: 0, level: 34 },
 ];
 
 /**
@@ -84,15 +84,20 @@ export const BANKS = [];
  * Name banners: the plate behind a player's name. Unlocked by level, picked in
  * the locker. The client owns the look (index.html .nameplate.b-<id>).
  */
+/** Levels run 1–MAX_LEVEL in bands of five; each band unlocks the next name banner. */
+export const MAX_LEVEL = 50;
+export const BAND = 5;
 export const BANNERS = [
   { id: "plain", name: "Plain", level: 1 },
-  { id: "lime", name: "Lime Edge", level: 2 },
-  { id: "stripe", name: "Hazard Stripe", level: 4 },
-  { id: "ember", name: "Ember", level: 6 },
-  { id: "storm", name: "Storm", level: 8 },
-  { id: "neon", name: "Neon", level: 10 },
-  { id: "holo", name: "Holo", level: 13 },
-  { id: "legend", name: "Legend", level: 16 },
+  { id: "lime", name: "Lime Edge", level: 6 },
+  { id: "stripe", name: "Hazard Stripe", level: 11 },
+  { id: "ember", name: "Ember", level: 16 },
+  { id: "storm", name: "Storm", level: 21 },
+  { id: "neon", name: "Neon", level: 26 },
+  { id: "holo", name: "Holo", level: 31 },
+  { id: "legend", name: "Legend", level: 36 },
+  { id: "void", name: "Void", level: 41 },
+  { id: "oddlion", name: "Oddlion", level: 46 },
 ];
 
 /** How many of each slot an Oddler can carry. */

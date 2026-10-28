@@ -324,7 +324,7 @@ function levelHTML() {
   return `<div class="levelbar">
     <div class="levelrow">${plateHTML(displayName(), me.banner)}<span class="px lvl">LV ${me.level}${me.username ? ` <span class="dim">@${esc(me.username)}</span>` : ""}</span></div>
     <div class="xp"><div class="xpfill" style="width:${pct}%"></div></div>
-    <div class="levelrow small dim"><span>${me.xp} xp</span><span>${me.nextLevelXp - me.xp} to level ${me.level + 1}</span></div>
+    <div class="levelrow small dim"><span>${me.xp} xp</span><span>${toNextText(me.level, me.xp, me.nextLevelXp)}</span></div>
   </div>`;
 }
 
@@ -335,8 +335,12 @@ function plateHTML(name, banner, extra = "") {
   return `<span class="nameplate b-${esc(banner || "plain")}">${esc(String(name || "You").toUpperCase())}${extra}</span>`;
 }
 /** Mirror of the server's curve (profile.ts) so the XP bar can animate across levels. */
-function xpForLevel(level) { const n = Math.max(0, level - 1); return 120 * n * n + 20 * n * n * n; }
-function levelFor(xp) { let l = 1; while (l < 200 && xpForLevel(l + 1) <= xp) l++; return l; }
+const MAX_LEVEL = 50, BAND = 5;
+function xpForLevel(level) { const n = Math.max(0, level - 1); return Math.round(90 * n * n + 1.5 * n * n * n); }
+function levelFor(xp) { let l = 1; while (l < MAX_LEVEL && xpForLevel(l + 1) <= xp) l++; return l; }
+/** "LV 6–10": the five-level band a banner covers. */
+function bandLabel(level) { const lo = Math.floor((level - 1) / BAND) * BAND + 1; return `LV ${lo}–${Math.min(MAX_LEVEL, lo + BAND - 1)}`; }
+function toNextText(level, xp, nextXp) { return level >= MAX_LEVEL ? "MAX LEVEL" : `${nextXp - xp} to level ${level + 1}`; }
 
 function lobbyHTML(v) {
   const best = me?.best?.classic ?? store.get(bestKey("classic"), 0);
@@ -429,9 +433,9 @@ function lockerHTML(v) {
     </section>
     <section class="panel">
       <h2>Name banners</h2>
-      <p class="small dim">The plate behind your name. New ones unlock as you level up.</p>
+      <p class="small dim">The plate behind your name. Levels run 1 to ${MAX_LEVEL} in bands of five, and every band unlocks a new banner.</p>
       <div class="banners">${(me.banners || []).map((b) => `<button class="bannerpick ${b.unlocked ? "" : "locked"} ${me.banner === b.id ? "chosen" : ""}" type="button" data-banner="${esc(b.id)}" ${b.unlocked ? "" : "disabled"} aria-pressed="${me.banner === b.id}">
-        ${plateHTML(displayName(), b.id)}<span class="ihow">${b.unlocked ? (me.banner === b.id ? "CHOSEN" : esc(b.name.toUpperCase())) : `LV ${b.level} · ${esc(b.name.toUpperCase())}`}</span></button>`).join("")}</div>
+        ${plateHTML(displayName(), b.id)}<span class="ihow">${b.unlocked ? (me.banner === b.id ? "CHOSEN" : esc(b.name.toUpperCase())) : `${bandLabel(b.level)} · ${esc(b.name.toUpperCase())}`}</span></button>`).join("")}</div>
     </section>
     <section class="panel">
       ${accountHTML()}
@@ -695,12 +699,13 @@ function animateXp() {
     const lo = xpForLevel(level), hi = xpForLevel(level + 1);
     fill.style.width = `${Math.min(100, ((xp - lo) / (hi - lo)) * 100)}%`;
     now.textContent = `${Math.round(xp)} xp`;
-    next.textContent = `${Math.max(0, Math.round(hi - xp))} to level ${level + 1}`;
+    next.textContent = toNextText(level, Math.round(xp), hi);
     lvl.textContent = `LV ${level}`;
     gain.textContent = `+${Math.round(xp - from)} XP`;
     if (level > shownLevel) {
       shownLevel = level;
-      flash.textContent = `LEVEL UP! LV ${level}`;
+      const banner = (me.banners || []).find((b) => b.level === level);
+      flash.textContent = banner ? `LEVEL UP! LV ${level} · ${banner.name.toUpperCase()} BANNER` : `LEVEL UP! LV ${level}`;
       flash.classList.remove("show"); void flash.offsetWidth; flash.classList.add("show");
       $("#fanfare")?.classList.add("up");
       sfx.levelup();

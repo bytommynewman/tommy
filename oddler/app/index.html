@@ -165,6 +165,10 @@
       .nameplate.b-neon { background: var(--plum); color: var(--lime); border-color: var(--lime); box-shadow: 0 0 10px rgba(184,230,46,0.6), inset 0 0 8px rgba(184,230,46,0.25); animation: neon 1.2s ease-in-out infinite alternate; }
       .nameplate.b-holo { background: linear-gradient(90deg, #f08ca8, #b8e62e, #7fe0b0, #b48fe0, #f08ca8); background-size: 300% 100%; color: var(--plum); border-color: #fff; animation: holo 3s linear infinite; }
       .nameplate.b-legend { background: linear-gradient(90deg, #f5d36b, #fff2b0, #e0a62a); background-size: 200% 100%; color: #3a2a00; border-color: #fff5c2; box-shadow: 0 0 14px rgba(245,211,107,0.7); animation: shimmer 1.8s linear infinite; }
+      .nameplate.b-void { background: radial-gradient(circle at 20% 30%, #3a1f5c 0, #0b0514 45%, #000 100%); color: #d9c8ff; border-color: #6a3fb5; box-shadow: 0 0 12px rgba(106,63,181,0.8), inset 0 0 14px rgba(0,0,0,0.9); text-shadow: 0 0 6px #b48fe0; animation: voidpulse 2.6s ease-in-out infinite alternate; }
+      .nameplate.b-oddlion { background: linear-gradient(90deg, #f5d36b, #f08ca8, #b8e62e, #7fe0b0, #b48fe0, #f5d36b); background-size: 400% 100%; color: #1a0b2e; border-color: #fff; box-shadow: 0 0 18px rgba(255,255,255,0.7), 0 0 30px rgba(245,211,107,0.6); animation: holo 2.2s linear infinite, oddlion 1.4s ease-in-out infinite alternate; }
+      @keyframes voidpulse { from { box-shadow: 0 0 8px rgba(106,63,181,0.5), inset 0 0 14px rgba(0,0,0,0.9); } to { box-shadow: 0 0 20px rgba(180,143,224,0.9), inset 0 0 10px rgba(0,0,0,0.8); } }
+      @keyframes oddlion { from { transform: scale(1); } to { transform: scale(1.04); } }
       @keyframes shimmer { from { background-position: 0% 0; } to { background-position: 200% 0; } }
       @keyframes holo { from { background-position: 0% 0; } to { background-position: 300% 0; } }
       @keyframes neon { from { box-shadow: 0 0 6px rgba(184,230,46,0.4), inset 0 0 6px rgba(184,230,46,0.2); } to { box-shadow: 0 0 16px rgba(184,230,46,0.9), inset 0 0 10px rgba(184,230,46,0.35); } }
@@ -305,7 +309,7 @@
       #status { font-family: var(--pixel); font-size: 9px; color: var(--dim); text-align: center; }
       #status.error { color: var(--rust); }
       @media (prefers-reduced-motion: reduce) {
-        .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up, .nameplate, .xpflash.show, .life.stamp, .outcall { animation: none; }
+        .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up, .nameplate, .xpflash.show, .life.stamp, .outcall, .nameplate.b-void, .nameplate.b-oddlion { animation: none; }
         .clock .fill, .oddler { transition: none; }
       }
       @media (min-width: 700px) {

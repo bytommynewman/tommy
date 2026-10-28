@@ -85,16 +85,18 @@ function sameHex(a: string, b: string): boolean {
 // ── levels and parts ───────────────────────────────────────────────────────
 
 /**
- * Level 1 at 0 xp. Each level costs more than the last and the climb steepens:
- * 140 → 640 → 1,620 → 3,200 → 5,500 … (a good Classic run pays ~500).
+ * Level 1 at 0 xp, fifty levels in bands of five. Each level costs more than
+ * the last and the climb steepens: 92 → 372 → 850 → 1,536 → 2,440 … 8,400 at
+ * level 10, 43,000 at 20, 388,000 at 50 (a good Classic run pays ~300).
  */
 export function xpForLevel(level: number): number {
   const n = Math.max(0, level - 1);
-  return 120 * n * n + 20 * n * n * n;
+  return Math.round(90 * n * n + 1.5 * n * n * n);
 }
+export const MAX_LEVEL = logic.MAX_LEVEL as number;
 export function levelFor(xp: number): number {
   let level = 1;
-  while (level < 200 && xpForLevel(level + 1) <= Math.max(0, xp)) level++;
+  while (level < MAX_LEVEL && xpForLevel(level + 1) <= Math.max(0, xp)) level++;
   return level;
 }
 type Banner = { id: string; name: string; level: number };

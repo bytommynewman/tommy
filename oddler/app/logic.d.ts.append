@@ -7,3 +7,5 @@ export const SLOT_CAP: Record<string, number>;
 export const COLOURS: string[];
 export const TIERS: ({ id: number; name: string; pts: number; odd: string } | null)[];
 export const BANNERS: { id: string; name: string; level: number }[];
+export const MAX_LEVEL: number;
+export const BAND: number;
