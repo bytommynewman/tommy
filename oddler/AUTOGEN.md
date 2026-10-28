@@ -8,8 +8,13 @@ Everything below is self-contained; each task reports at the end.
 
 ## 0. Ground rules
 
-- Work on branch `claude/great-meitner-cdyydz` of `bytommynewman/tommy`
-  (`git fetch origin claude/great-meitner-cdyydz && git checkout claude/great-meitner-cdyydz && git pull`).
+- Work on branch `claude/great-meitner-cdyydz` of `bytommynewman/tommy`.
+  A fresh session starts with NO checkout: first call the `add_repo` tool
+  (owner `bytommynewman`, repo `tommy`, access `push`), run the clone command
+  it returns so the repo lands at `/home/user/tommy`, call
+  `register_repo_root` with that path, then
+  `cd /home/user/tommy && git fetch origin claude/great-meitner-cdyydz && git checkout claude/great-meitner-cdyydz && git pull`.
+  All paths below are relative to `/home/user/tommy`.
   Never force-push. Never rewrite existing bank files.
 - Do not change the rules (`20-rules.js`), the client, or the tests. This task
   only adds a bank piece and retires old auto pieces.
@@ -22,7 +27,7 @@ Everything below is self-contained; each task reports at the end.
 
 ```
 oddler/app/00-header.js      # tiers, parts, constants
-oddler/app/1*-bank*.js       # bank pieces (hand-written 10–13, auto 14-...)
+oddler/app/1*-bank*.js       # bank pieces (hand-written 10–13 and 15–16, auto 14-bank-auto-*)
 oddler/app/20-rules.js       # parser — see parseAnswers() and normalize()
 oddler/app/build-logic.sh    # concatenates the pieces, runs the checks
 ```
