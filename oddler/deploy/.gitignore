@@ -1,0 +1,6 @@
+/dist/
+/public/
+/src/logic.js
+/src/profile.ts
+/src/worker.ts
+/node_modules/

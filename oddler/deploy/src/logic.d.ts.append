@@ -1,0 +1,19 @@
+
+// ── Oddler additions ───────────────────────────────────────────────────────
+/** The wardrobe catalogue: mutations carry a rarity tier, accessories a level. */
+export const PARTS: { id: string; slot: string; tier: number; level?: number }[];
+/** How many of each slot a creature can wear. */
+export const SLOT_CAP: Record<string, number>;
+export const COLOURS: string[];
+export const TIERS: ({ id: number; name: string; pts: number; odd: string } | null)[];
+export const BANNERS: { id: string; name: string; level: number }[];
+export const MAX_LEVEL: number;
+export const BAND: number;
+export const DAILY_EPOCH: number;
+export const DAY_MS: number;
+export function dayOf(at: number): number;
+export function dailyPrompts(day: number): string[];
+export function challengePrompts(code: string): string[];
+export const CATEGORIES: string[];
+export const BLITZ_MS: number;
+export const BLITZ_ROUNDS: number;
