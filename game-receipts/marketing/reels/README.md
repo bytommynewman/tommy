@@ -31,3 +31,9 @@ Format B can later be fed a real screen recording from `marketing/real/` by poin
 
 `node marketing/reels/render-reels.mjs B1 --target ig` writes `<name>-ig.mp4` plus the 4K covers `B1-cover-2160x3840.jpg` and `B1-cover-grid-2160x2880.jpg`: same 4K encode (Instagram accepts 4K uploads);
 B1 also loses the grain, halves the glare and keeps captions/logo in the Reels safe zones (top 500, bottom 840, right 300 px at 4K). Works for A1/A2 too (encode settings are identical).
+
+## Fast sound-on cuts
+
+`node marketing/reels/render-reels.mjs --fast [A1 A2 B1] [--no-ig]` writes `marketing/out/fast/<id>-fast.mp4` (4K) and `<id>-fast-ig.mp4` (1080x1920, ~10 Mbps): payoff-first (stamp or Cashed + Prestige on frame 0 with the hook on screen),
+0.6 s rewind, hard cuts at <= 1.5x, 1.2 s end card, hype bed + synthesised SFX at -14 LUFS. Format A keeps the creator panel (video only, the talking-head audio is not used) and drops the stopwatch (the edit is no longer real time).
+Logic and timelines live in `marketing/fast.mjs`, see the "Fast sound-on cuts" section of `marketing/README.md`.

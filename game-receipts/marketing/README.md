@@ -34,6 +34,28 @@ node marketing/qa.mjs                            # full-res QA frames + contact 
 
 Arguments still work to redo part of the set, e.g. `node marketing/capture.mjs 4` / `node marketing/render.mjs 4`, or `carousel`.
 
+## Fast sound-on cuts (`--fast`)
+
+Analytics said first posts averaged 1.0-1.7 s of watch time on 10-17 s videos and the screen ads were posted silent, so there is a faster, sound-on version of every screen ad
+(spot-1..6, A1, A2, B1), built from the **existing raw captures** (no re-capture):
+
+```sh
+node marketing/render.mjs --fast [1 2 ...] [--no-ig]            # spot-1..6  -> out/fast/spot-<n>-fast.mp4 (+ -fast-ig.mp4)
+node marketing/reels/render-reels.mjs --fast [A1 A2 B1] [--no-ig]  # reels      -> out/fast/<id>-fast.mp4 (+ -fast-ig.mp4)
+node marketing/fast.mjs [names] [--check | --qa]                # same thing; --check = first/last frame of every cut on a sheet, --qa = frames + loudness + contact sheets in qa/fast/
+```
+
+- `fast.mjs` holds the **timelines** (`FAST`: raw-capture time ranges, speed, captions, SFX cues per cut) and the three compositors (phone-in-bezel spots, Format A split-screen, Format B POV).
+  `plan()` enforces the edit rules and throws if one breaks: 8-12 s total (spot 2 <= 9 s), 1.2 s end card, beats 0.6-1.2 s, app footage <= 1.5x, captions >= 0.7 s and <= 5 words.
+- **Structure:** frame 0 is the payoff (LOCKED date stamp on a take card, or Cashed + Prestige for the receipt spots 4 / A2) with the hook already on screen (no fade-in), a 0.6 s "rewind" (the same footage
+  played backwards at 1x), then how it was made (hard cuts), ending on the stamp / leaderboard and a 1.2 s end card. Spots 5 and 6 never place a take on screen, so their payoff opener reuses the stamp shot
+  from the spot-3 / spot-1 captures.
+- **Audio** (every file has sound): `marketing/audio/hype-bed.m4a` is a 27 s instrumental sports-hype loop generated with Higgsfield `sonilo_music` (1.88 credits, original, no vocals); it was trimmed to start on its first
+  kick so every cut opens on a downbeat. `sfx.mjs` synthesises the SFX with ffmpeg (aevalsrc / anoisesrc): thud on each stamp (and a soft one on the end card), whoosh on cuts, a descending sweep on the rewind, ticks on
+  dropdown changes. The bed is ducked -6 dB under each thud, the mix is 2-pass `loudnorm` to -14 LUFS integrated / -1.5 dBTP plus a safety limiter, then muxed (AAC-LC 48 kHz 192k).
+- **Instagram version** `<name>-fast-ig.mp4`: 1080x1920, H.264 High, BT.709, 2-pass ~10 Mbps (max 12M), AAC 48 kHz (copied from the 4K master), +faststart.
+- To retime a cut edit its entry in `FAST` (raw seconds `a`/`b`, `sp` <= 1.5) and run `node marketing/fast.mjs <name> --check` to see the first/last frame of each segment before the 4K render.
+
 ## Typography
 
 All text is Saira + Inter rendered by headless Chrome (`type.mjs`, fonts in `fonts/`), see [TYPE.md](TYPE.md). No ffmpeg drawtext.

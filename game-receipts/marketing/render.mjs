@@ -4,7 +4,7 @@
 // crop never drops below the on-screen phone width). Every video carries the emblem bug (marketing/brand.mjs) and ends on the full logo.
 //   out/reddit-4x5-<n>-<slug>.mp4    2160x2700 reframe of each spot
 //   out/reddit-carousel-1..3.png     2160x2700 stills
-// Usage: node marketing/render.mjs [spotId ... | carousel]
+// Usage: node marketing/render.mjs [spotId ... | carousel] [--fast [--no-ig]]   (--fast = sound-on fast cuts, see fast.mjs)
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -188,6 +188,14 @@ async function renderCarousel() {
   }
 }
 
+// --fast: faster sound-on cuts (payoff-first, music + SFX) -> out/fast/spot-<n>-fast.mp4 (+ -fast-ig.mp4). See fast.mjs / README.
+if (process.argv.includes("--fast")) {
+  const { renderFast } = await import("./fast.mjs");
+  const ids = only.length ? only : cfg.spots.map((s) => s.id);
+  await renderFast(ids.map((i) => `spot-${i}`), { LAYOUTS, ph, roundRect, background }, { ig: !process.argv.includes("--no-ig") });
+  await TY.closeType();
+  process.exit(0);
+}
 for (const spot of cfg.spots) {
   if (onlyCarousel || (only.length && !only.includes(spot.id))) continue;
   if (!fs.existsSync(path.join(RAW, `spot-${spot.id}.mp4`))) { console.warn(`skip spot ${spot.id}: no capture (run capture.mjs)`); continue; }

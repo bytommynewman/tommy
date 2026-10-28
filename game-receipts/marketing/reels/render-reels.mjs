@@ -28,11 +28,13 @@ const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/M
 
 // ---- CLI ---------------------------------------------------------------------------------------------------
 const args = process.argv.slice(2);
-const topArg = {}; const ids = []; let keepAudio = false; let target = "default";
+const topArg = {}; const ids = []; let keepAudio = false; let fastMode = false; let noIg = false; let target = "default";
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--target") { target = args[++i]; if (!["ig", "default"].includes(target)) throw new Error("--target must be ig|default"); }
   else if (args[i] === "--top") { const [k, v] = args[++i].split("="); topArg[k] = path.resolve(v); }
   else if (args[i] === "--keep-audio") keepAudio = true;
+  else if (args[i] === "--fast") fastMode = true;
+  else if (args[i] === "--no-ig") noIg = true;
   else ids.push(args[i]);
 }
 
@@ -214,6 +216,13 @@ async function renderB(id, spec) {
   return out;
 }
 
+// ---- --fast: sound-on fast cuts of A1/A2/B1 -> out/fast/<id>-fast.mp4 (+ -fast-ig.mp4), see ../fast.mjs ---------------------
+if (fastMode) {
+  const { renderFast } = await import("../fast.mjs");
+  await renderFast(ids.length ? ids : Object.keys(SPECS), null, { ig: !noIg });
+  await TY.closeType();
+  process.exit(0);
+}
 // ---- main --------------------------------------------------------------------------------------------------
 browser = await chromium.launch({ executablePath: CHROME });
 shotPage = await browser.newPage({ deviceScaleFactor: 2 }); // overlays are authored in 1080-wide CSS px and rasterised at 2x

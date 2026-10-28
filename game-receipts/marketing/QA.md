@@ -86,3 +86,31 @@ Dropdown 100% crops checked: new chevrons (grey, green when focused) sit inside 
 ## 23 Oct 2026 - UGC-2 replaced (new creator, real Wemby headshot, clearer pitch)
 
 New Kling 15 s head (clear skin, new line), real ESPN headshots for this spot only (unlicensed: swap before paid ads), hook "Everyone laughed at my Wemby MVP pick", 4 caption pills, finish.mjs footage-cut fix. ugc-2-mvp.mp4 / -4x5.mp4: 2160x3840 / 2160x2700, 24.97 s, AAC 48 kHz; speech ends 14.68 s (head 15.04 s), no cutoff. A1 reel re-rendered with the new head (14.6 s). QA frames: `qa/ugc-2-mvp-v2-*.png`, `qa/ugc-2-mvp-v2-contact.png`, `qa/ugc-2-mvp-v2-wemby-photo-crop.png`. Audio pronunciation not verified by ear. Old files in `ugc/out/old/`, `reels/out/old/`.
+
+
+## Fast sound-on cuts (`--fast`, see README)
+
+Payoff-first edits of spot-1..6, A1, A2, B1 from the existing raw captures; hype bed from Higgsfield `sonilo_music` (1.88 credits) + ffmpeg-synthesised SFX; 4K masters and 1080x1920 IG files (H.264 High, BT.709, 2-pass ~10 Mbps, AAC 48 kHz, +faststart).
+QA per file: frames at 0.0 s (payoff + hook already on screen, checked at full res for spot-2, A2, spot-1/4 sheets), 0.5 s, 25/50/75 %, end card on a contact sheet in `marketing/qa/fast/<name>-fast-sheet.jpg` (all < 1 MB); duration 8-12 s (spot 2 <= 9 s); audio stream present; loudness via `ebur128` (target -14 LUFS, true peak <= -1 dBTP).
+Exceptions: spots 5 and 6 never place a take on screen, so their frame-0 stamp shot is borrowed from the spot-3 / spot-1 captures. Format A drops the stopwatch (edit is no longer real time) and uses the creator video without its audio.
+
+| file | resolution | duration | size | bitrate | loudness | true peak | audio |
+|---|---|---|---|---|---|---|---|
+| marketing/out/fast/spot-1-fast.mp4 | 2160x3840 | 9.43 s | 33.5 MB | 28.2 Mbps | -14.2 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-1-fast-ig.mp4 | 1080x1920 | 9.43 s | 9.5 MB | 7.8 Mbps | -14.2 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-2-fast.mp4 | 2160x3840 | 8.27 s | 39.5 MB | 38.0 Mbps | -14.3 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-2-fast-ig.mp4 | 1080x1920 | 8.27 s | 9.5 MB | 9.0 Mbps | -14.3 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-3-fast.mp4 | 2160x3840 | 8.57 s | 29.6 MB | 27.4 Mbps | -14.3 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-3-fast-ig.mp4 | 1080x1920 | 8.57 s | 8.7 MB | 8.0 Mbps | -14.3 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-4-fast.mp4 | 2160x3840 | 8.80 s | 36.2 MB | 32.7 Mbps | -14.2 LUFS | -1.5 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-4-fast-ig.mp4 | 1080x1920 | 8.80 s | 9.3 MB | 8.2 Mbps | -14.2 LUFS | -1.5 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-5-fast.mp4 | 2160x3840 | 8.33 s | 30.0 MB | 28.6 Mbps | -14.2 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-5-fast-ig.mp4 | 1080x1920 | 8.33 s | 8.8 MB | 8.3 Mbps | -14.2 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-6-fast.mp4 | 2160x3840 | 9.37 s | 35.1 MB | 29.8 Mbps | -14.2 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/spot-6-fast-ig.mp4 | 1080x1920 | 9.37 s | 10.1 MB | 8.5 Mbps | -14.2 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/A1-fast.mp4 | 2160x3840 | 9.10 s | 49.8 MB | 43.5 Mbps | -14.3 LUFS | -1.5 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/A1-fast-ig.mp4 | 1080x1920 | 9.10 s | 11.1 MB | 9.6 Mbps | -14.3 LUFS | -1.5 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/A2-fast.mp4 | 2160x3840 | 8.30 s | 45.4 MB | 43.6 Mbps | -14.2 LUFS | -1.5 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/A2-fast-ig.mp4 | 1080x1920 | 8.30 s | 10.1 MB | 9.6 Mbps | -14.2 LUFS | -1.5 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/B1-fast.mp4 | 2160x3840 | 8.90 s | 48.3 MB | 43.2 Mbps | -14.3 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
+| marketing/out/fast/B1-fast-ig.mp4 | 1080x1920 | 8.90 s | 11.1 MB | 9.8 Mbps | -14.3 LUFS | -1.4 dBTP | AAC 48 kHz stereo ✓ |
