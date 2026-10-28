@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <title>Oddler</title>
-    <meta name="description" content="Only odd answers score. Seven prompts, 10 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
+    <meta name="description" content="Only odd answers score. Seven prompts, 20 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
     <meta property="og:title" content="Oddler" />
-    <meta property="og:description" content="Only odd answers score. Seven prompts, 10 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
+    <meta property="og:description" content="Only odd answers score. Seven prompts, 20 seconds each — the rarer your correct answer, the odder your Oddler grows. Play solo or Duo with a friend." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/art/cover.png" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -237,14 +237,15 @@
       .clock { display: flex; align-items: center; gap: 14px; margin: 10px 0 10px; }
       .clock .bar { flex: 1; height: 14px; background: var(--purple); border-radius: 7px; overflow: hidden; border: 2px solid var(--line); }
       .clock .fill { height: 100%; width: 100%; background: var(--lime); transition: width 60ms linear; }
-      .clock .count { font-family: var(--pixel); font-size: 40px; line-height: 1; min-width: 1.3em; text-align: center; color: var(--lime); text-shadow: 0 0 12px rgba(184,230,46,0.5); }
-      .clock .count.punch { animation: punch 320ms cubic-bezier(.2,1.4,.4,1); }
-      @keyframes punch { 0% { transform: scale(1.7); } 100% { transform: scale(1); } }
+      .clock .heart { flex: none; width: 40px; height: 36px; background: var(--lime); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 8' shape-rendering='crispEdges'%3E%3Cpath d='M1 0h2v1h1v1h1v-1h1v-1h2v1h1v3h-1v1h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-3h1z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 8' shape-rendering='crispEdges'%3E%3Cpath d='M1 0h2v1h1v1h1v-1h1v-1h2v1h1v3h-1v1h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-3h1z'/%3E%3C/svg%3E") center / contain no-repeat; transform-origin: center; filter: drop-shadow(0 0 6px rgba(184,230,46,0.55)); }
+      .clock .heart.beat { animation: beat 340ms cubic-bezier(.2,1.2,.4,1); }
+      @keyframes beat { 0% { transform: scale(1); } 35% { transform: scale(1.38); } 65% { transform: scale(0.94); } 100% { transform: scale(1); } }
       .clock.warn .fill { background: var(--rust); }
-      .clock.warn .count { color: var(--rust); text-shadow: 0 0 14px rgba(232,116,59,0.7); }
+      .clock.warn .heart { background: var(--rust); filter: drop-shadow(0 0 10px rgba(232,116,59,0.8)); }
       .clock.danger .fill { background: #ff3b3b; }
-      .clock.danger .count { color: #ff3b3b; text-shadow: 0 0 18px rgba(255,59,59,0.9); animation: throb 300ms ease-in-out infinite alternate; }
-      @keyframes throb { from { transform: scale(1); } to { transform: scale(1.25); } }
+      .clock.danger .heart { background: #ff3b3b; filter: drop-shadow(0 0 16px rgba(255,59,59,0.95)); }
+      .clock .heart.boom { animation: boom 480ms ease-out forwards; }
+      @keyframes boom { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(2.6); opacity: 0.9; } 100% { transform: scale(3.6); opacity: 0; } }
       .panel.shake { animation: shake 90ms linear infinite; }
       @keyframes shake { 0% { transform: translate(0,0); } 25% { transform: translate(2px,-1px); } 50% { transform: translate(-2px,1px); } 75% { transform: translate(1px,2px); } 100% { transform: translate(-1px,-2px); } }
       #vignette { position: fixed; inset: 0; pointer-events: none; z-index: 5; --urg: 0;
@@ -327,7 +328,7 @@
       #status { font: var(--label); font-size: 11px; letter-spacing: var(--track); text-transform: uppercase; color: var(--dim); text-align: center; }
       #status.error { color: var(--rust); }
       @media (prefers-reduced-motion: reduce) {
-        .oddler.idle, .oddler .part.new, .clock .count, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up, .nameplate, .xpflash.show, .life.stamp, .outcall, .nameplate.b-void, .nameplate.b-oddlion, .tier { animation: none; }
+        .oddler.idle, .oddler .part.new, .clock .heart, .onclock.you, .team .seat.turn, #vignette, .panel.shake, .fanfare.up, .nameplate, .xpflash.show, .life.stamp, .outcall, .nameplate.b-void, .nameplate.b-oddlion, .tier { animation: none; }
         .clock .fill, .oddler { transition: none; }
       }
       @media (min-width: 700px) {

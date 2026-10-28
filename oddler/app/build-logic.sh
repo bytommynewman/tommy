@@ -29,8 +29,9 @@ for (let r = 0; r < 7; r++) {
 const done = L.viewFor(s);
 if (done.phase !== "done") throw new Error("expected done, got " + done.phase);
 console.log("classic run OK — score", done.score, "parts", done.parts.length, done.parts.map(p => p.id).join(","));
-// timeout path
+// timeout path: 20s clock plus grace, so 21s still counts and 60s does not
 s = L.setup(["p1"]); act({ kind: "start", mode: "classic", at: at0 });
+{ const ok = L.applyAction(s, "p1", { kind: "answer", text: "France", at: at0 + 21_000 }); if (L.viewFor(ok, "p1").round.ended?.timedOut) throw new Error("answer at 21s should still count"); }
 act({ kind: "answer", text: "France", at: at0 + 60_000 });
 if (!L.viewFor(s).round.ended.timedOut) throw new Error("late answer should time out");
 // fuzzy matching
@@ -133,9 +134,9 @@ console.log("duo checks OK");
   let st = L.setup(["pb"]);
   st = L.applyAction(st, "pb", { kind: "start", mode: "blitz", seed: 5, at: at0 });
   const v = L.viewFor(st, "pb");
-  if (v.roundMs !== 5000 || v.totalRounds !== 10) throw new Error("blitz view " + v.roundMs + "/" + v.totalRounds);
-  const late = L.applyAction(st, "pb", { kind: "answer", text: "France", at: at0 + 7500 });
-  if (!L.viewFor(late, "pb").round.ended?.timedOut) throw new Error("blitz answer at 7.5s should time out");
+  if (v.roundMs !== 8000 || v.totalRounds !== 10) throw new Error("blitz view " + v.roundMs + "/" + v.totalRounds);
+  const late = L.applyAction(st, "pb", { kind: "answer", text: "France", at: at0 + 11_000 });
+  if (!L.viewFor(late, "pb").round.ended?.timedOut) throw new Error("blitz answer at 11s should time out");
   for (let i = 0; i < 10; i++) { st = L.applyAction(st, "pb", { kind: "skip", at: at0 + 100 }); st = L.applyAction(st, "pb", { kind: "next", at: at0 + 200 }); }
   if (st.phase !== "done") throw new Error("blitz should finish after ten rounds");
   if (!L.CATEGORIES.includes("Geography")) throw new Error("categories missing Geography");

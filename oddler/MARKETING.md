@@ -8,7 +8,7 @@ Source: `oddler/` in this repo (branch `claude/great-meitner-cdyydz`).
 **One line:** *Only uncommon answers score.*
 
 **The pitch (two sentences):** Oddler gives you a prompt like "Name a Premier
-League club" and ten seconds. Everyone can say Arsenal; the points are for the
+League club" and twenty seconds. Everyone can say Arsenal; the points are for the
 answer nobody else would say, and rare answers grow a pixel axolotl you keep.
 
 **Why it spreads:** the fun is in *comparing* answers. "What did you put for
@@ -69,8 +69,8 @@ game's own data is the cheapest content there is.
 2. **Duet bait: the typing reveal.** Record a Duo game with a friend on
    FaceTime: you see their answer appear letter by letter. The reaction to
    "p-a-r-m…" is the clip. Caption: "name a cheese that ISN'T cheddar".
-3. **Countdown panic.** 10-second clock, red vignette, heartbeat, you fumble
-   "liechtenstien" (typo, still accepted). Caption: "10 seconds is NOT enough".
+3. **Countdown panic.** The heart beating faster as the bar drains, red vignette, you fumble
+   "liechtenstien" (typo, still accepted). Caption: "20 seconds is NOT enough".
 4. **Streak / locker flex.** Timelapse of a creature going from plain pink to
    horns, wings, holo banner over a week of dailies. Caption: "day 9 of growing
    my oddler".
@@ -86,7 +86,7 @@ already running, or a creature that is clearly a bit wrong.
 > **Oddler — trivia where only the uncommon answer scores (browser, free, no
 > signup)**
 > "Name a pasta shape" — spaghetti is 10 points, strozzapreti is 85. Seven
-> prompts, ten seconds each, rare answers grow a pixel axolotl you keep. There's
+> prompts, twenty seconds each, rare answers grow a pixel axolotl you keep. There's
 > a Daily (same 7 for everyone) and a challenge link that deals a friend your
 > exact 7. Made it with a mate in Toronto; the question bank is ~130 hand-written
 > prompts plus a batch that auto-refreshes twice a day. Would love hard-prompt
@@ -108,10 +108,10 @@ already running, or a creature that is clearly a bit wrong.
 ## 6. Copy bank
 
 Taglines: *Only uncommon answers score.* · *Be odd. Score odd.* · *Everyone
-says Arsenal.* · *Ten seconds. Don't say the obvious one.*
+says Arsenal.* · *Twenty seconds. Don't say the obvious one.*
 
 App-store-style description (for the Higgsfield listing, Product Hunt, bios):
-> Trivia for people who hate the obvious answer. Seven prompts, ten seconds
+> Trivia for people who hate the obvious answer. Seven prompts, twenty seconds
 > each; every prompt has dozens of right answers, but only the uncommon ones
 > score. Rare answers grow your pixel axolotl, levels unlock banners and
 > accessories, and the Daily deals everyone the same seven so you can argue

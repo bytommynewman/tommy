@@ -13,16 +13,16 @@
 
 export const meta = { game: "Oddler", minPlayers: 1, maxPlayers: 2 };
 
-export const ROUND_MS = 10_000;
-/** Network slack past the 25s: a late-but-honest answer still counts. */
+export const ROUND_MS = 20_000;
+/** Network slack past the clock: a late-but-honest answer still counts. */
 export const GRACE_MS = 2_000;
 export const CLASSIC_ROUNDS = 7;
 /** Duo: ten prompts, partners alternate, one team score. */
 export const DUO_ROUNDS = 10;
 export const ENDLESS_STRIKES = 3;
 export const MODES = ["classic", "endless", "practice", "daily", "blitz"];
-/** Blitz: ten prompts, five seconds each. */
-export const BLITZ_MS = 5_000;
+/** Blitz: ten prompts, eight seconds each. */
+export const BLITZ_MS = 8_000;
 export const BLITZ_ROUNDS = 10;
 /** Daily #1 was 2026-10-28 (UTC day number); dailies roll over at midnight UTC. */
 export const DAILY_EPOCH = 20754;

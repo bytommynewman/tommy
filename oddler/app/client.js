@@ -320,8 +320,8 @@ function recordBest(v) {
 }
 
 const MODE_INFO = {
-  classic: ["Classic", "Seven prompts, ten seconds each."],
-  blitz: ["Blitz", "Ten prompts, five seconds each. Think fast."],
+  classic: ["Classic", "Seven prompts, twenty seconds each."],
+  blitz: ["Blitz", "Ten prompts, eight seconds each. Think fast."],
   endless: ["Endless", "Keep going until your third miss."],
   practice: ["Practice", "No clock, same scoring, nothing recorded."],
 };
@@ -602,7 +602,7 @@ function askHTML(v) {
   const partner = v.duo ? v.duo.players.find((p) => !p.isYou) : null;
   const tries = triesHTML(r);
   const timer = timed
-    ? `<div class="clock" id="clock" aria-hidden="true"><div class="count" id="secs">${Math.ceil(v.roundMs / 1000)}</div><div class="bar"><div class="fill" id="fill"></div></div></div>`
+    ? `<div class="clock" id="clock" aria-hidden="true"><div class="heart" id="heart"></div><div class="bar"><div class="fill" id="fill"></div></div></div>`
     : `<p class="small dim">No clock — take your time.</p>`;
   const input = mine
     ? `<form class="answer" id="form" autocomplete="off">
@@ -631,7 +631,7 @@ function askHTML(v) {
 }
 
 function startTimer(v) {
-  const fill = $("#fill"), secs = $("#secs"), clock = $("#clock"), panel = $("#askpanel");
+  const fill = $("#fill"), heart = $("#heart"), clock = $("#clock"), panel = $("#askpanel");
   const vignette = $("#vignette");
   if (!fill || v.roundMs == null) return;
   let lastWhole = Infinity;
@@ -644,16 +644,20 @@ function startTimer(v) {
     fill.style.width = `${(left / v.roundMs) * 100}%`;
     const whole = Math.ceil(left / 1000);
     if (whole !== lastWhole) {
-      secs.textContent = String(whole);
-      secs.classList.remove("punch"); void secs.offsetWidth; secs.classList.add("punch");
       if (whole > 0 && whole <= 3) sfx.tick();
       lastWhole = whole;
     }
-    clock.classList.toggle("warn", left < 3000);
-    clock.classList.toggle("danger", left < 1500);
-    panel?.classList.toggle("shake", left < 1200 && left > 0 && !reduced);
-    if (vignette) { vignette.style.setProperty("--urg", urg.toFixed(3)); vignette.classList.toggle("danger", left < 1500 && left > 0); }
-    if (left > 0 && elapsed >= nextBeat) { sfx.beat(urg); nextBeat = elapsed + (900 - 600 * urg); }
+    clock.classList.toggle("warn", left < 6000);
+    clock.classList.toggle("danger", left < 3000);
+    panel?.classList.toggle("shake", left < 2000 && left > 0 && !reduced);
+    if (vignette) { vignette.style.setProperty("--urg", urg.toFixed(3)); vignette.classList.toggle("danger", left < 3000 && left > 0); }
+    // the heart beats faster as the bar drains; sound and picture share one pulse
+    if (left > 0 && elapsed >= nextBeat) {
+      sfx.beat(urg);
+      if (heart && !reduced) { heart.classList.remove("beat"); void heart.offsetWidth; heart.classList.add("beat"); }
+      nextBeat = elapsed + (1000 - 720 * urg);
+    }
+    if (left <= 0 && heart && !heart.classList.contains("boom")) { heart.classList.add("boom"); fill.style.width = "0%"; }
     const slack = mine ? 0 : 2600;
     if (left <= 0 && elapsed >= v.roundMs + slack && !autoSkipped) {
       autoSkipped = true;
