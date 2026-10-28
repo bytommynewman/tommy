@@ -335,9 +335,8 @@ function levelHTML() {
   const span = Math.max(1, me.nextLevelXp - me.levelXp);
   const pct = Math.min(100, Math.round(((me.xp - me.levelXp) / span) * 100));
   return `<div class="levelbar">
-    <div class="levelrow">${plateHTML(displayName(), me.banner)}<span class="px lvl">LV ${me.level}${me.username ? ` <span class="dim">@${esc(me.username)}</span>` : ""}</span></div>
-    <div class="xp"><div class="xpfill" style="width:${pct}%"></div></div>
-    <div class="levelrow small dim"><span>${me.xp} xp</span><span>${toNextText(me.level, me.xp, me.nextLevelXp)}</span></div>
+    <div class="levelrow">${plateHTML(displayName(), me.banner)}<span class="px lvl">LV ${me.level}</span></div>
+    <div class="xp" title="${me.xp} xp · ${toNextText(me.level, me.xp, me.nextLevelXp)}"><div class="xpfill" style="width:${pct}%"></div></div>
   </div>`;
 }
 
@@ -361,59 +360,49 @@ function dailyCardHTML(v) {
   const done = saved || (v.dailyDone === day ? { score: v.mode === "daily" ? v.score : null, grid: v.mode === "daily" ? gridOf(v.history) : "" } : null);
   const no = dailyNo(day);
   if (done) {
-    return `<section class="panel daily">
-      <h2>Daily #${no}</h2>
-      <p class="px small dim">DONE · ${done.score ?? "—"} ODD · NEXT IN ${untilNextDaily()}</p>
-      ${done.grid ? `<p class="grid" aria-label="Your daily result">${done.grid}</p>` : ""}
-      <p><button id="sharedaily" class="btn lime" type="button">SHARE RESULT</button></p>
+    return `<section class="panel soft">
+      <div class="headrow"><h2>Daily #${no}</h2><span class="small dim">done · ${done.score ?? "—"} odd · next in ${untilNextDaily()}</span></div>
+      <div class="row" style="align-items:center;margin-top:10px">${done.grid ? `<p class="grid" aria-label="Your daily result" style="margin:0">${done.grid}</p>` : "<span></span>"}<button id="sharedaily" class="btn lime slim" type="button">SHARE</button></div>
     </section>`;
   }
-  return `<section class="panel daily">
-    <h2>Daily #${no}</h2>
-    <p class="small">Same 7 prompts for everyone today. One go. Share your grid.</p>
-    <p><button id="daily" class="btn" type="button">▼ PLAY DAILY #${no} ▼</button></p>
-    <p class="px small dim">RESETS IN ${untilNextDaily()}</p>
+  return `<section class="panel soft">
+    <div class="headrow"><h2>Daily #${no}</h2><span class="small dim">same 7 for everyone · resets in ${untilNextDaily()}</span></div>
+    <p style="margin:10px 0 0"><button id="daily" class="btn lime" type="button">PLAY TODAY'S DAILY</button></p>
   </section>`;
 }
 
 function challengeCardHTML(v) {
   if (!challengeParam || (!challengeBy && !challengeScore)) return "";
   const who = challengeBy || "A friend";
-  return `<section class="panel challenge">
-    <h2>Challenge from ${esc(who)}</h2>
-    <p class="small">${challengeScore ? `<b>${esc(who)}</b> scored <b class="px">${challengeScore}</b> on 7 prompts. You get the exact same 7.` : `<b>${esc(who)}</b> sent you 7 prompts.`}</p>
-    <p><button id="acceptchallenge" class="btn" type="button">▼ ${challengeScore ? "BEAT IT" : "TAKE IT ON"} ▼</button></p>
+  return `<section class="panel soft">
+    <div class="headrow"><h2>Challenge</h2><span class="small dim">${challengeScore ? `${esc(who)} scored ${challengeScore} · same 7 prompts` : `from ${esc(who)} · 7 prompts`}</span></div>
+    <p style="margin:10px 0 0"><button id="acceptchallenge" class="btn" type="button">${challengeScore ? "BEAT IT" : "TAKE IT ON"}</button></p>
   </section>`;
 }
 
 function lobbyHTML(v) {
-  const best = me?.best?.classic ?? store.get(bestKey("classic"), 0);
-  const bestE = me?.best?.endless ?? store.get(bestKey("endless"), 0);
-  const bestD = me?.best?.duo ?? store.get(bestKey("duo"), 0);
   const colour = me?.colour || chosenColour;
   return `
     <section class="panel nest">
       ${oddlerHTML(colour, myLoadoutParts(), "big")}
       ${levelHTML()}
-      <p><button id="locker" class="btn ghost" type="button">OPEN LOCKER</button></p>
-      ${me && !me.username ? `<p class="small dim" style="margin:0">Guest locker — <button id="locker2" class="link" type="button" style="font-size:14px;padding:0">create an account</button> to save it and use it anywhere.</p>` : ""}
+      <p class="center" style="margin:8px 0 0"><button id="locker" class="link quiet" type="button">Open locker${me && !me.username ? " · save it with an account" : ""}</button></p>
     </section>
     ${challengeCardHTML(v)}
     ${dailyCardHTML(v)}
     <section class="panel">
-      <h2>The odd dive</h2>
-      <p>Every prompt has lots of right answers. <b>Only the uncommon ones score.</b> Rare answers earn your Oddler new parts for its locker.</p>
       <div class="tabs" role="group" aria-label="Mode">
-        ${Object.entries(MODE_INFO).map(([m, [name, sub]]) => `<button class="tab" type="button" data-mode="${m}" aria-pressed="${m === chosenMode}">${name}<small>${sub}</small></button>`).join("")}
+        ${Object.entries(MODE_INFO).map(([m, [name, sub]]) => `<button class="tab" type="button" data-mode="${m}" aria-pressed="${m === chosenMode}" title="${esc(sub)}">${name}</button>`).join("")}
       </div>
-      <p style="margin-top:14px"><button id="start" class="btn" type="button">▼ GO ODD ▼</button></p>
-      <p><button id="duo" class="btn ghost" type="button">PLAY WITH A FRIEND</button></p>
-      <p class="small dim" style="text-align:center;margin-top:-4px">Duo: 10 prompts, you take turns, one team score.</p>
-      <p><button id="challenge" class="btn ghost" type="button">CHALLENGE A FRIEND</button></p>
-      <p class="small dim" style="text-align:center;margin-top:-4px">Play 7 prompts, then send the link — they get the exact same 7 and your score to beat.</p>
-      <p class="best">BEST CLASSIC: ${best} &nbsp;·&nbsp; ENDLESS: ${bestE} &nbsp;·&nbsp; DUO: ${bestD}</p>
-      <p><button id="how" class="link" type="button">How does scoring work?</button></p>
-    </section>`;
+      <p class="small dim center" style="margin:8px 0 12px">${esc(MODE_INFO[chosenMode]?.[1] ?? "")}</p>
+      <p style="margin:0"><button id="start" class="btn" type="button">GO ODD</button></p>
+      <div class="row" style="margin-top:12px">
+        <button id="duo" class="btn ghost slim" type="button">DUO</button>
+        <button id="challenge" class="btn ghost slim" type="button">CHALLENGE</button>
+      </div>
+      <p class="small dim center" style="margin:10px 0 0">Duo: play together, one score. Challenge: send a friend your exact 7.</p>
+    </section>
+    <p class="center" style="margin:0"><button id="how" class="link quiet" type="button">How does scoring work?</button></p>`;
 }
 
 function tutorialHTML() {
@@ -476,6 +465,7 @@ function lockerHTML(v) {
     </section>
     <section class="panel">
       <h2>Locker</h2>
+      <p class="small dim">Best — classic ${me.best?.classic ?? 0} · endless ${me.best?.endless ?? 0} · daily ${me.best?.daily ?? 0} · duo ${me.best?.duo ?? 0}</p>
       <p class="small dim">${me.games} game${me.games === 1 ? "" : "s"} played · ${me.catalogue.filter((p) => p.unlocked).length}/${me.catalogue.length} parts unlocked. Mutations come from Odd-ish-or-better answers in games; accessories unlock as you level up.</p>
       ${grid}
     </section>
