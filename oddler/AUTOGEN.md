@@ -83,9 +83,9 @@ Format of one row (see any existing piece for examples):
   prompt; when unsure, leave it out.
 - Spread categories: no more than 12 prompts in any one category per file;
   include some Canada-flavoured prompts (the players are in Toronto) and keep
-  the rest global. Mix eras and difficulty. The host's deploy scan refuses files
-  with explicit, sexual, drug or violent wording, so skip song/film titles and
-  slang of that kind even when they are real answers. No politics, no slurs, nothing
+  the rest global. Mix eras and difficulty. Drug, sex and gun references are fine
+  when they are real answers (song titles, slang); skip outright profanity in
+  answer text, since the host's deploy scan refuses it. No politics, no slurs, nothing
   that needs a content warning.
 
 ## 3. Validate and trim
