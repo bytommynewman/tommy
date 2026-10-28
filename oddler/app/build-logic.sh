@@ -139,6 +139,10 @@ console.log("duo checks OK");
   for (let i = 0; i < 10; i++) { st = L.applyAction(st, "pb", { kind: "skip", at: at0 + 100 }); st = L.applyAction(st, "pb", { kind: "next", at: at0 + 200 }); }
   if (st.phase !== "done") throw new Error("blitz should finish after ten rounds");
   if (!L.CATEGORIES.includes("Geography")) throw new Error("categories missing Geography");
+  for (const c of L.CATEGORIES) { const n = L.QUESTIONS.filter((q) => q.category === c).length; if (n < L.CATEGORY_MIN) throw new Error("thin category offered: " + c + " " + n); }
+  if (L.QUESTIONS.some((q) => q.category in L.CATEGORY_GROUPS)) throw new Error("category group not applied");
+  const thin = [...new Set(L.QUESTIONS.map((q) => q.category))].find((c) => !L.CATEGORIES.includes(c));
+  if (thin && L.validateAction(L.setup(["pt"]), "pt", { kind: "start", mode: "classic", category: thin, at: at0 }).ok) throw new Error("thin category accepted: " + thin);
   let sc = L.setup(["pc"]);
   if (L.validateAction(sc, "pc", { kind: "start", mode: "classic", category: "Nope", at: at0 }).ok) throw new Error("unknown category accepted");
   sc = L.applyAction(sc, "pc", { kind: "start", mode: "classic", category: "Geography", seed: 9, at: at0 });

@@ -55,6 +55,10 @@ Format of one row (see any existing piece for examples):
 - `id`: kebab-case, unique, ≤ 40 chars, e.g. `"nba-legend"`.
 - `Category`: one of Geography, Science, Space, Body, Animals, Food, Sports,
   Music, Movies, Games, Mythology, History, Things, Tech, Everyday, Words.
+  Players pick from groups (Space/Body/Tech count as Science, Mythology as
+  History, Games/Everyday as Things) and a group is only offered once it holds
+  20+ prompts, so favour whichever groups are thinnest in the current bank
+  (check with `node -e` over logic.js QUESTIONS before writing).
 - `Prompt text`: an open "Name a …" style prompt with MANY correct answers
   (at least 15 plausible ones). Never a prompt with one right answer.
 - `answers spec`: entries separated by `|`; each entry is

@@ -664,8 +664,20 @@ function parseAnswers(spec) {
 }
 
 /** The parsed bank: one object per prompt, answers with normalized keys. */
+/**
+ * Bank authors tag prompts finely; players pick from broader groups so no
+ * pick runs dry after a game or two. Anything not listed keeps its own name.
+ */
+export const CATEGORY_GROUPS = {
+  Space: "Science", Body: "Science", Tech: "Science",
+  Mythology: "History",
+  Games: "Things", Everyday: "Things",
+};
+/** A category must hold at least this many prompts before it is offered as a pick. */
+export const CATEGORY_MIN = 20;
+
 export const QUESTIONS = BANKS.map(([id, category, prompt, spec, core]) => ({
-  id, category, prompt, answers: parseAnswers(spec), core: Boolean(core),
+  id, category: CATEGORY_GROUPS[category] ?? category, prompt, answers: parseAnswers(spec), core: Boolean(core),
 }));
 
 const BY_ID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
@@ -853,8 +865,10 @@ function roundMsFor(state) {
   return state.mode === "blitz" ? BLITZ_MS : ROUND_MS;
 }
 
-/** Every category in the bank, for the lobby's category pick. */
-export const CATEGORIES = [...new Set(QUESTIONS.map((q) => q.category))].sort();
+/** The categories offered in the lobby: only those deep enough (CATEGORY_MIN prompts) to avoid repeats. */
+export const CATEGORIES = [...new Set(QUESTIONS.map((q) => q.category))]
+  .filter((c) => QUESTIONS.filter((q) => q.category === c).length >= CATEGORY_MIN)
+  .sort();
 
 function partsOf(state, id) {
   return state.kind === "duo" ? state.profiles[id].parts : state.parts;

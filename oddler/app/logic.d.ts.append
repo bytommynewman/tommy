@@ -15,5 +15,7 @@ export function dayOf(at: number): number;
 export function dailyPrompts(day: number): string[];
 export function challengePrompts(code: string): string[];
 export const CATEGORIES: string[];
+export const CATEGORY_GROUPS: Record<string, string>;
+export const CATEGORY_MIN: number;
 export const BLITZ_MS: number;
 export const BLITZ_ROUNDS: number;
