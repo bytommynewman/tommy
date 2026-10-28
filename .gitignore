@@ -47,3 +47,6 @@ scripts/hole16-rotated.png
 
 # supabase CLI local state
 supabase/.temp/
+
+# 4K teaser video (73 MB, regenerate with marketing/prelaunch/build-assets.mjs)
+game-receipts/marketing/prelaunch/assets/*.mp4

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Game Receipts — Call it. Lock it. Prove it. (Coming soon)</title>
+<meta name="description" content="Everyone says they called it. Game Receipts proves it. Lock a sports take, get a date-stamped receipt, get graded. Free to play. Join the waitlist.">
+<meta name="theme-color" content="#050607">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- Open Graph / Twitter. Replace SITE_URL once deployed so crawlers get an absolute image URL. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Game Receipts">
+<meta property="og:title" content="Game Receipts — Everyone says they called it. We prove it.">
+<meta property="og:description" content="Lock a sports take. Get a date-stamped receipt. Get graded. Free to play. Coming soon — join the waitlist.">
+<meta property="og:image" content="https://SITE_URL/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Game Receipts: Everyone says they called it. Coming soon.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Game Receipts — Call it. Lock it. Prove it.">
+<meta name="twitter:description" content="Lock a sports take. Get a date-stamped receipt. Get graded. Free to play.">
+<meta name="twitter:image" content="https://SITE_URL/og.png">
+
+<style>
+  :root{
+    --ink-950:#050607; --ink-900:#0a0c0e; --ink-850:#0f1215; --ink-800:#15191d; --ink-700:#252b31;
+    --ink-400:#8a949b; --ink-300:#aab3b9; --ink-200:#cdd3d7; --ink-100:#e9ecee;
+    --volt:#22e58a; --volt-bright:#5cffb0; --volt-deep:#0f9d5c; --loss:#ff5d5d;
+    --display: Impact, "Haettenschweiler", "Arial Narrow Bold", "Arial Black", sans-serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0}
+  html{background:var(--ink-950);color:var(--ink-100);-webkit-text-size-adjust:100%}
+  body{font-family:var(--sans);line-height:1.5;min-height:100vh;overflow-x:hidden;
+    background:var(--ink-950) url("hero-tall.webp") center top/cover no-repeat fixed;position:relative}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:linear-gradient(180deg,rgba(5,6,7,.8) 0%,rgba(5,6,7,.62) 45%,rgba(5,6,7,.92) 100%)}
+  @media (min-width:800px){ body{background-image:url("hero-wide.webp")} .hero-logo{width:140px!important} .hero{padding-top:4px!important} h1{font-size:76px!important} }
+  .wrap{max-width:1040px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 20px 40px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);letter-spacing:.04em;font-size:22px;text-transform:uppercase}
+  .brand img{width:40px;height:40px;border-radius:10px}
+  .badge{font:700 11px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-950);background:var(--volt);padding:8px 12px;border-radius:999px}
+
+  .hero{text-align:center;padding:36px 0 28px}
+  .hero-logo{width:min(200px,52vw);height:auto;margin:0 auto 6px;display:block;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%,#000 62%,transparent 71%);mask-image:radial-gradient(circle at 50% 50%,#000 62%,transparent 71%)}
+  h1{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.01em;
+    font-size:clamp(40px,11.5vw,88px);line-height:1.06;text-wrap:balance;text-shadow:0 4px 24px rgba(0,0,0,.7)}
+  h1 .v{display:block;color:var(--volt)}
+  .sub{text-shadow:0 2px 12px #000,0 0 3px #000;margin:16px auto 0;max-width:34ch;font-size:clamp(17px,4.4vw,21px);color:var(--ink-200)}
+  .chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .chip{font:600 13px/1 var(--sans);padding:9px 14px;border-radius:999px;border:1px solid rgba(34,229,138,.5);color:var(--volt-bright);background:rgba(5,6,7,.55)}
+
+  form{margin:26px auto 0;max-width:460px;display:grid;gap:10px;text-align:left}
+  .row{display:flex;gap:8px;flex-direction:column}
+  @media (min-width:520px){ .row{flex-direction:row} }
+  input[type=email]{flex:1;min-width:0;height:54px;border-radius:14px;border:1px solid var(--ink-700);background:rgba(15,18,21,.92);color:var(--ink-100);font:500 17px var(--sans);padding:0 16px}
+  input[type=email]::placeholder{color:var(--ink-400)}
+  input[type=email]:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--volt);outline-offset:2px}
+  button.cta{height:54px;border:0;border-radius:14px;padding:0 22px;cursor:pointer;font:800 16px var(--sans);letter-spacing:.02em;
+    color:var(--ink-950);background:linear-gradient(180deg,var(--volt-bright),var(--volt) 60%,var(--volt-deep))}
+  button.cta:disabled{opacity:.6;cursor:progress}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+  .msg{min-height:22px;font-size:14px;text-align:center;color:var(--ink-300)}
+  .msg.ok{color:var(--volt-bright)} .msg.err{color:var(--loss)}
+  .invite{margin:6px auto 0;max-width:460px;text-align:center;font-size:15px;color:var(--ink-200);
+    border:1px dashed rgba(34,229,138,.45);border-radius:14px;padding:12px 14px;background:rgba(5,6,7,.5)}
+  .invite b{color:var(--volt-bright)}
+  .invite button{margin-top:10px;background:none;border:1px solid var(--volt);color:var(--volt-bright);font:700 14px var(--sans);border-radius:10px;padding:9px 14px;cursor:pointer}
+
+  .cards{display:grid;gap:14px;margin:44px 0 0}
+  @media (min-width:760px){ .cards{grid-template-columns:repeat(3,1fr)} }
+  .card{background:rgba(15,18,21,.82);border:1px solid var(--ink-700);border-radius:20px;padding:22px;backdrop-filter:blur(6px)}
+  .card .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:rgba(34,229,138,.12);border:1px solid rgba(34,229,138,.4);margin-bottom:14px}
+  .card svg{width:26px;height:26px;stroke:var(--volt);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .card h2{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.03em;font-size:26px;margin-bottom:6px}
+  .card p{color:var(--ink-300);font-size:15px}
+  .tag{margin:44px 0 0;text-align:center;font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:clamp(20px,5vw,30px);color:var(--volt)}
+  footer{margin-top:28px;text-align:center;font-size:12px;color:var(--ink-400)}
+  footer p+p{margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><img src="icon-192.png" alt="" width="40" height="40">Game Receipts</div>
+    <span class="badge">Coming soon</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <img class="hero-logo" src="logo.webp" alt="Game Receipts logo: a receipt in front of sports balls" width="280" height="280">
+      <h1>Everyone says they called it. <span class="v">Game Receipts proves it.</span></h1>
+      <p class="sub">Lock a take on any player or team. Get a date-stamped receipt. Get graded when it happens.</p>
+      <div class="chips"><span class="chip">Free to play</span><span class="chip">Just receipts</span></div>
+
+      <form id="wl" novalidate>
+        <div class="row">
+          <input type="email" id="email" name="email" inputmode="email" autocomplete="email" placeholder="you@email.com" aria-label="Email address" required>
+          <button class="cta" type="submit" id="btn">Join the waitlist</button>
+        </div>
+        <!-- honeypot: real users never fill this -->
+        <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input type="hidden" name="ref" id="ref" value="">
+        <input type="hidden" name="source" value="waitlist-page">
+        <p class="msg" id="msg" role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="invite" id="invite">
+        <b>Invite 3 friends &rarr; early access.</b> Founding Members get in first and keep a badge.
+        <div><button type="button" id="share">Share the link</button></div>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="What you get">
+      <article class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg></div>
+        <h2>Dropdown takes</h2>
+        <p>No essays. Pick the league, the player or team, and the call from a dropdown. A take takes about ten seconds.</p>
+      </article>
+      <article class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18l-3.5-2-3.5 2-3.5-2L5 21z"/><path d="M9 8h6M9 12h6"/></svg></div>
+        <h2>Date-stamped receipts</h2>
+        <p>Every take is sealed with the date and time. It can't be edited or deleted, so the group chat can't rewrite history.</p>
+      </article>
+      <article class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20v-6h5v6zM9.5 20V6h5v14zM15 20v-9h5v9z"/></svg></div>
+        <h2>Leaderboard</h2>
+        <p>Takes get graded when the results are in. Build a record, climb the board, and settle the argument.</p>
+      </article>
+    </section>
+
+    <p class="tag">Call it. Lock it. Prove it.</p>
+  </main>
+
+  <footer>
+    <p>Free to play &middot; Just receipts.</p>
+    <p>We only use your email to tell you when Game Receipts opens. No spam, unsubscribe any time.</p>
+  </footer>
+</div>
+
+<script>
+/* ============ CONFIG — edit these two lines (see README.md) ============ */
+const FORM_ENDPOINT = "";            // e.g. "https://formspree.io/f/abcdwxyz" — leave "" to use the mailto fallback
+const MAILTO_ADDRESS = "";           // fallback inbox, e.g. "waitlist@yourdomain.com"
+/* ======================================================================= */
+const SHARE_URL = location.origin && location.origin !== "null" ? location.origin + location.pathname : "https://SITE_URL/";
+const $ = (id) => document.getElementById(id);
+const form = $("wl"), msg = $("msg"), btn = $("btn");
+const say = (t, c) => { msg.textContent = t; msg.className = "msg " + (c || ""); };
+
+// remember who referred this visitor (?ref=abc) and pass it with the signup
+try { const r = new URLSearchParams(location.search).get("ref"); if (r) { $("ref").value = r.slice(0, 40); sessionStorage.setItem("gr_ref", r.slice(0, 40)); } else { $("ref").value = sessionStorage.getItem("gr_ref") || ""; } } catch (e) {}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = $("email").value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { say("Enter a valid email address.", "err"); $("email").focus(); return; }
+  if (form.company.value) { say("You're on the list.", "ok"); return; }   // bot caught by honeypot
+
+  if (!FORM_ENDPOINT) {                       // graceful fallback: open the visitor's mail app
+    if (!MAILTO_ADDRESS) { say("Signups open soon. Check back shortly.", "err"); return; }
+    const body = encodeURIComponent("Add me to the Game Receipts waitlist.\n\nMy email: " + email + ($("ref").value ? "\nReferred by: " + $("ref").value : ""));
+    location.href = "mailto:" + MAILTO_ADDRESS + "?subject=" + encodeURIComponent("Game Receipts waitlist") + "&body=" + body;
+    say("Your email app should open. Hit send and you're on the list.", "ok");
+    return;
+  }
+
+  btn.disabled = true; say("Joining…");
+  try {
+    const res = await fetch(FORM_ENDPOINT, { method: "POST", headers: { "Accept": "application/json" }, body: new FormData(form) });
+    if (!res.ok) throw new Error(res.status);
+    say("You're on the list. Invite 3 friends below to jump the line.", "ok");
+    form.reset();
+    $("invite").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err) {
+    say("Couldn't save that. Please try again in a moment.", "err");
+  } finally { btn.disabled = false; }
+});
+
+$("share").addEventListener("click", async () => {
+  const data = { title: "Game Receipts", text: "Everyone says they called it. Game Receipts proves it. Join the waitlist:", url: SHARE_URL };
+  try { if (navigator.share) { await navigator.share(data); return; } await navigator.clipboard.writeText(data.text + " " + data.url); $("share").textContent = "Link copied"; }
+  catch (e) { prompt("Copy this link:", SHARE_URL); }
+});
+</script>
+</body>
+</html>

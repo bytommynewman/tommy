@@ -1,0 +1,14 @@
+{
+  "_note": "Higgsfield-generated brand art (job IDs in comments of fetch-art.mjs). Run `npm run art:fetch` on a machine with normal internet access.",
+  "hero-wide": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204245_ca9ab276-f3d3-4a7a-8299-c3f1879ec3c7.png",
+  "hero-tall": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204324_06970eea-6e96-44d1-bdb7-f849bee7c710.png",
+  "league-nfl": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204243_fab7f891-a18f-4412-8c72-d9d0ed9c60bf.png",
+  "league-nba": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204243_6e7a948f-0f14-465d-86ef-c096b8f3b96d.png",
+  "league-nhl": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204324_03d4d75e-f96b-411b-9e26-9211f27b5c5f.png",
+  "league-mlb": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204243_8d5c2717-8224-4cf4-868b-2c4cccecee54.png",
+  "empty-receipt": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204323_04111da2-6cfe-4ba4-8e69-cc56d623ab2d.png",
+  "empty-trophy": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204243_e100261b-23d4-4b9f-a6c3-ad6b71c35b4c.png",
+  "empty-battle": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204243_2f89d806-f1c5-403f-b5a1-cddb7896cd85.png",
+  "empty-bell": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204244_42c71bf8-f832-4ef3-8945-a759bed0e4fd.png",
+  "share-bg": "https://d8j0ntlcm91z4.cloudfront.net/user_3Geu4VxnSRFagYiyayCtfVAIQSR/hf_20261019_204244_6bef733c-7bb3-4133-b3d9-1596a60c29fe.png"
+}
