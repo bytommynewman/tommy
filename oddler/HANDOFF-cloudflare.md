@@ -31,8 +31,15 @@ to that branch that touches `oddler/`, and skips until the two secrets exist.
 ## Status
 
 - [x] Secrets added
-- [ ] First deploy green
-- [ ] oddler.app verified
+- [x] First deploy green
+- [x] oddler.app verified
+
+Two things the first run needed, both now fixed or done once:
+
+- `oddler/deploy/package.json` pinned `@cloudflare/workers-types` to v4, which
+  wrangler 4 no longer accepts as a peer; bumped to v5.
+- Cloudflare refused the publish until the account had a workers.dev subdomain.
+  Opening Workers & Pages in the dashboard created it (`tommy-newman.workers.dev`).
 
 ## Known follow-ups (after it is live)
 
