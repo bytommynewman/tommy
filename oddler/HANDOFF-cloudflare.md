@@ -56,8 +56,15 @@ Two things the first run needed, both now fixed or done once:
 
 ## Known follow-ups
 
-- `oddler/app/14-bank-auto-20261028-17.js` prompts 51–100 are held back on the
-  old Higgsfield copy only (its scanner refused them); on Cloudflare all ship.
+- Nothing in `oddler/app/14-bank-auto-20261028-17.js` is held back: all 100 of
+  its prompts are in the shipped build and the live site deals them (a 64-prompt
+  sample off oddler.app drew 7 from the back half, which is the share 50 of 429
+  should get). The one prompt the host scanner cost us, `eminem-song`, came back
+  in f18f62e. Checked 2026-10-29.
+- Still out of that bank *by choice*, not by any scanner: profanity in song and
+  episode titles (a few Eminem tracks, "The Bitch Is Back"). Cloudflare does not
+  scan, so this is now purely an editorial call — say the word to put them back.
+  Slurs stay out either way.
 - The Daily card on the home screen reads the locker, but a brand-new room
   still shows it unplayed until you try — the refusal is correct, the card is
   a beat behind.
