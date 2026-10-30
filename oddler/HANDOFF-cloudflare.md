@@ -30,7 +30,7 @@ to that branch that touches `oddler/`, and skips until the two secrets exist.
 
 ## Status
 
-- [ ] Secrets added
+- [x] Secrets added
 - [ ] First deploy green
 - [ ] oddler.app verified
 
