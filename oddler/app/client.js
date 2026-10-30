@@ -165,6 +165,7 @@ function beep(freq, ms, type = "square", gain = 0.05, when = 0) {
   if (muted) return;
   try {
     audio ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume().catch(() => {});
     const o = audio.createOscillator(); const g = audio.createGain();
     o.type = type; o.frequency.value = freq;
     g.gain.value = gain;
@@ -225,7 +226,7 @@ function onState(msg) {
   const prev = view;
   view = v;
   if (!booted) {
-    booted = true; TIERS_CACHE = v.tiers.slice(1);
+    booted = true; if (Array.isArray(v.tiers)) TIERS_CACHE = v.tiers.slice(1);
     // A fresh page load after a finished game opens on the lobby, not stale results.
     if (v.phase === "done" && !v.duo) showingLobby = true;
   }
@@ -295,9 +296,14 @@ function render() {
     const tries = $(".tries"); if (tries) tries.innerHTML = triesHTML(v.round);
     return;
   }
+  // A state push mid-typing (locker name, account form) must not steal the caret or the text.
+  const active = document.activeElement;
+  const keep = active && active.id && screen.contains(active) && (active.tagName === "INPUT" || active.tagName === "SELECT")
+    ? { id: active.id, value: active.value, s: active.selectionStart, e: active.selectionEnd } : null;
   screen.dataset.phase = v.phase;
   screen.dataset.round = v.round ? String(v.round.startedAt) : "";
   clearInterval(timerHandle);
+  clearTimeout(typingTimer); typingTimer = 0;
   const vig = $("#vignette"); if (vig) { vig.classList.remove("danger"); vig.style.setProperty("--urg", "0"); }
   if (showingLocker && (v.phase === "lobby" || v.phase === "done" || v.phase === "duo-lobby")) screen.innerHTML = lockerHTML(v);
   else if (v.duo && !v.duo.seated && (v.duo.players.length >= 2 || v.phase !== "duo-lobby")) screen.innerHTML = spectatorHTML(v);
@@ -307,6 +313,14 @@ function render() {
   else if (v.phase === "reveal") screen.innerHTML = revealHTML(v);
   else if (v.phase === "done") screen.innerHTML = doneHTML(v);
   wire();
+  if (keep) {
+    const el = document.getElementById(keep.id);
+    if (el && el.tagName === active.tagName) {
+      if (!el.value && keep.value) el.value = keep.value;
+      if (document.activeElement !== el) el.focus({ preventScroll: true });
+      try { if (keep.s != null && el.setSelectionRange) el.setSelectionRange(keep.s, keep.e); } catch { /* not a text input */ }
+    }
+  }
 }
 
 // lobby ----------------------------------------------------------------------
@@ -339,7 +353,7 @@ function levelHTML() {
   const pct = Math.min(100, Math.round(((me.xp - me.levelXp) / span) * 100));
   return `<div class="levelbar">
     <div class="levelrow">${plateHTML(displayName(), me.banner)}<span class="px lvl">LV ${me.level}</span></div>
-    <div class="xp" title="${me.xp} xp · ${toNextText(me.level, me.xp, me.nextLevelXp)}"><div class="xpfill" style="width:${pct}%"></div></div>
+    <div class="xp" title="${me.xp} xp · ${toNextText(me.level, me.xp, me.nextLevelXp)}"><div class="xpfill" style="transform:scaleX(${(pct / 100).toFixed(3)})"></div></div>
   </div>`;
 }
 
@@ -461,7 +475,7 @@ function lockerHTML(v) {
     <section class="panel nest">
       ${oddlerHTML(me.colour, myLoadoutParts(), "big")}
       ${levelHTML()}
-      <label class="namefield"><span class="px small">NAME</span><input id="name" type="text" maxlength="16" value="${esc(me.name)}" placeholder="Your Oddler's name" autocomplete="nickname" /></label>
+      <label class="namefield"><span class="px small">NAME</span><input id="name" type="text" maxlength="16" value="${esc(me.name)}" placeholder="Your Oddler's name" autocomplete="nickname" autocorrect="off" spellcheck="false" /></label>
       ${swatchesHTML(me.colour)}
       <div class="row" style="margin-top:12px">
         <button id="closelocker" class="btn" type="button">DONE</button>
@@ -605,7 +619,7 @@ function askHTML(v) {
     ? `<div class="clock" id="clock" aria-hidden="true"><div class="heart" id="heart"></div><div class="bar"><div class="fill" id="fill"></div></div></div>`
     : `<p class="small dim">No clock — take your time.</p>`;
   const input = mine
-    ? `<form class="answer" id="form" autocomplete="off">
+    ? `<form class="answer" id="form" autocomplete="off" novalidate>
         <label class="sr" for="answer">Your answer</label>
         <input id="answer" name="answer" type="text" placeholder="Type an uncommon answer…" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="80" required />
         <button class="btn lime" type="submit">GO</button>
@@ -636,12 +650,14 @@ function startTimer(v) {
   if (!fill || v.roundMs == null) return;
   let lastWhole = Infinity;
   let nextBeat = 0;
+  let lastUrg = "";
   const mine = v.round.yourTurn;
+  const BEAT = [{ transform: "scale(1)" }, { transform: "scale(1.38)", offset: 0.35 }, { transform: "scale(0.94)", offset: 0.65 }, { transform: "scale(1)" }];
   const tick = () => {
     const elapsed = performance.now() - roundLocalStart;
     const left = Math.max(0, v.roundMs - elapsed);
     const urg = 1 - left / v.roundMs;
-    fill.style.width = `${(left / v.roundMs) * 100}%`;
+    fill.style.transform = `scaleX(${(left / v.roundMs).toFixed(4)})`;
     const whole = Math.ceil(left / 1000);
     if (whole !== lastWhole) {
       if (whole > 0 && whole <= 3) sfx.tick();
@@ -650,14 +666,22 @@ function startTimer(v) {
     clock.classList.toggle("warn", left < 6000);
     clock.classList.toggle("danger", left < 3000);
     panel?.classList.toggle("shake", left < 2000 && left > 0 && !reduced);
-    if (vignette) { vignette.style.setProperty("--urg", urg.toFixed(3)); vignette.classList.toggle("danger", left < 3000 && left > 0); }
+    if (vignette) {
+      const u = urg.toFixed(3);
+      if (u !== lastUrg) { lastUrg = u; vignette.style.setProperty("--urg", u); }
+      vignette.classList.toggle("danger", left < 3000 && left > 0);
+    }
     // the heart beats faster as the bar drains; sound and picture share one pulse
     if (left > 0 && elapsed >= nextBeat) {
       sfx.beat(urg);
-      if (heart && !reduced) { heart.classList.remove("beat"); void heart.offsetWidth; heart.classList.add("beat"); }
+      // Web Animations restart cleanly without the class-toggle reflow trick.
+      if (heart && !reduced) { if (heart.animate) heart.animate(BEAT, { duration: 340, easing: "cubic-bezier(.2,1.2,.4,1)" }); else heart.classList.add("beat"); }
       nextBeat = elapsed + (1000 - 720 * urg);
     }
-    if (left <= 0 && heart && !heart.classList.contains("boom")) { heart.classList.add("boom"); fill.style.width = "0%"; }
+    if (left <= 0 && heart && !heart.classList.contains("boom")) {
+      if (heart.getAnimations) for (const a of heart.getAnimations()) a.cancel();
+      heart.classList.remove("beat"); heart.classList.add("boom"); fill.style.transform = "scaleX(0)";
+    }
     const slack = mine ? 0 : 2600;
     if (left <= 0 && elapsed >= v.roundMs + slack && !autoSkipped) {
       autoSkipped = true;
@@ -724,7 +748,7 @@ function fanfareHTML() {
     .map((b) => `<span class="unlock">${plateHTML(displayName(), b.id)}</span>`).join("");
   return `<div class="fanfare" id="fanfare">
     <div class="levelrow"><span class="px" id="xpgain">+0 XP</span><span class="px lvl" id="xplvl">LV ${fanfare.levelBefore}</span></div>
-    <div class="xp"><div class="xpfill" id="xpfill" style="width:0%"></div></div>
+    <div class="xp"><div class="xpfill" id="xpfill" style="transform:scaleX(0)"></div></div>
     <div class="levelrow small dim"><span id="xpnow"></span><span id="xpnext"></span></div>
     <p class="px xpflash" id="xpflash" aria-live="polite"></p>
     ${unlocks || bannerUnlocks ? `<div class="unlockwrap" id="unlockwrap" hidden><p class="small">New in your locker:</p><div class="unlocks">${unlocks}${bannerUnlocks}</div></div>` : ""}
@@ -744,7 +768,7 @@ function animateXp() {
   const draw = (xp) => {
     const level = levelFor(xp);
     const lo = xpForLevel(level), hi = xpForLevel(level + 1);
-    fill.style.width = `${Math.min(100, ((xp - lo) / (hi - lo)) * 100)}%`;
+    fill.style.transform = `scaleX(${Math.min(1, (xp - lo) / (hi - lo)).toFixed(4)})`;
     now.textContent = `${Math.round(xp)} xp`;
     next.textContent = toNextText(level, Math.round(xp), hi);
     lvl.textContent = `LV ${level}`;
@@ -939,11 +963,15 @@ function makeCode() {
   return s;
 }
 
-let typingTimer = 0;
+let typingTimer = 0, typingText = "";
 function sendTyping(text) {
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => act({ kind: "typing", text: text.slice(0, 80) }), 120);
+  typingText = text.slice(0, 80);
+  if (typingTimer) return;                      // one broadcast per 120 ms, always the latest text
+  typingTimer = setTimeout(() => { typingTimer = 0; act({ kind: "typing", text: typingText }); }, 120);
 }
+/** True when the same intent was sent within `ms`: a fast double tap or Enter+tap sends one action, not two. */
+const sentAt = {};
+function dup(key, ms = 1200) { const t = Date.now(); if (t - (sentAt[key] || 0) < ms) return true; sentAt[key] = t; return false; }
 
 function toggleWear(id) {
   if (!me) return;
@@ -965,6 +993,7 @@ function toggleWear(id) {
 function wire() {
   const v = view;
   $("#start")?.addEventListener("click", () => {
+    if (dup("start")) return;
     sfx.click();
     showingLobby = false;
     if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
@@ -991,7 +1020,7 @@ function wire() {
   $("#undress")?.addEventListener("click", () => { sfx.click(); saveProfile({ loadout: [] }); render(); });
   for (const b of document.querySelectorAll("[data-part]")) b.addEventListener("click", () => toggleWear(b.dataset.part));
   const name = $("#name");
-  if (name) name.addEventListener("input", () => { saveProfile({ name: name.value.slice(0, 16) }); const lv = document.querySelector(".levelrow .px"); if (lv) lv.textContent = (name.value.trim() || "You").toUpperCase(); });
+  if (name) name.addEventListener("input", () => { saveProfile({ name: name.value.slice(0, 16) }); const plate = document.querySelector(".levelrow .nameplate"); if (plate) plate.textContent = (name.value.trim() || "You").toUpperCase(); });
   $("#authswitch")?.addEventListener("click", () => { authMode = authMode === "signup" ? "login" : "signup"; render(); });
   $("#logout")?.addEventListener("click", async () => {
     await auth("logout");
@@ -1039,14 +1068,14 @@ function wire() {
     form.addEventListener("submit", (ev) => {
       ev.preventDefault();
       const text = input.value.trim();
-      if (!text) return;
-      clearTimeout(typingTimer);
+      if (!text) { input.value = ""; input.focus({ preventScroll: true }); return; }
+      clearTimeout(typingTimer); typingTimer = 0;
       act({ kind: "answer", text });
       input.value = "";
       input.focus({ preventScroll: true });
     });
   }
-  $("#skip")?.addEventListener("click", () => { sfx.click(); act({ kind: "skip" }); });
+  $("#skip")?.addEventListener("click", () => { if (dup("skip")) return; sfx.click(); act({ kind: "skip" }); });
   $("#quit")?.addEventListener("click", () => {
     const msg = v.duo ? "Quit this game for both of you? Points so far are lost." : "Quit this run? Points so far are lost.";
     if (!confirm(msg)) return;
@@ -1060,9 +1089,10 @@ function wire() {
   const next = $("#next");
   if (next) {
     next.focus({ preventScroll: true });
-    next.addEventListener("click", () => { sfx.click(); act({ kind: "next" }); });
+    next.addEventListener("click", () => { if (dup("next")) return; sfx.click(); act({ kind: "next" }); });
   }
   $("#again")?.addEventListener("click", () => {
+    if (dup("start")) return;
     sfx.click();
     fanfare = null;
     if (v.duo) act({ kind: "start", mode: "duo", seed: Math.floor(Math.random() * 2 ** 31), seen: seenPrompts() });
@@ -1078,7 +1108,12 @@ function wire() {
       else { await navigator.clipboard.writeText(text); toast("COPIED"); }
     } catch { /* cancelled */ }
   });
-  document.onkeydown = (ev) => { if (ev.key === "Enter" && $("#next") && document.activeElement?.tagName !== "INPUT") $("#next").click(); };
+  document.onkeydown = (ev) => {
+    if (ev.key !== "Enter" || ev.repeat) return;
+    const tag = document.activeElement?.tagName;
+    if (tag === "INPUT" || tag === "BUTTON" || tag === "A" || tag === "SELECT" || tag === "TEXTAREA") return;
+    $("#next")?.click();
+  };
 }
 
 function wireTutorial() {

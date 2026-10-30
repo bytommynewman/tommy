@@ -18,13 +18,14 @@ Object class (`Room`) and one KV namespace (lockers), plus static files.
    template "Edit Cloudflare Workers". Add two permissions to it:
    *Account → Workers KV Storage → Edit* and *Zone → DNS → Edit* (zone: oddler.app).
    Copy the token once; note your **Account ID** (dashboard sidebar).
-4. **Give the session the token.** In the Claude Code cloud environment settings
-   (the environment menu in the session title bar → Edit), add two secrets:
-   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Under Network access,
-   allow `api.cloudflare.com` and `oddler.higgsfield.app` (the art is copied
-   from the live site). A new session picks these up.
+4. **Give GitHub the token.** On github.com open bytommynewman/tommy →
+   Settings → Secrets and variables → Actions → New repository secret. Add
+   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 
-Then say "deploy to Cloudflare" and the steps below run from the repo.
+That is all. The workflow `.github/workflows/oddler-deploy.yml` deploys on every
+push to `claude/great-meitner-cdyydz` that touches `oddler/`, on GitHub's
+machines, so updates go live without using any Claude tokens. You can also run
+it by hand from the repo's Actions tab.
 
 ## What the deploy does
 

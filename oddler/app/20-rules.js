@@ -20,18 +20,29 @@ export function normalize(text) {
 /** The same string with spaces removed: "ice cream" and "icecream" are one answer. */
 function compact(key) { return key.replace(/ /g, ""); }
 
-/** Singular/plural spellings of a normalized key that should count as the same word. */
+/**
+ * Singular/plural spellings of a normalized key that should count as the same
+ * word, likeliest first. Nothing shorter than three letters is pluralized:
+ * "u" is not "US" and "ies" is not "I".
+ */
 function numberForms(key) {
   const out = new Set();
+  if (key.length < 3) return [];
   if (key.endsWith("ies")) out.add(key.slice(0, -3) + "y");
   if (key.endsWith("es")) out.add(key.slice(0, -2));
   if (key.endsWith("s")) out.add(key.slice(0, -1));
   out.add(key + "s");
   if (key.endsWith("y")) out.add(key.slice(0, -1) + "ies");
   if (/(s|x|z|ch|sh)$/.test(key)) out.add(key + "es");
+  // wolves/wolf, knives/knife, calves/calf
+  if (key.endsWith("ves")) { out.add(key.slice(0, -3) + "f"); out.add(key.slice(0, -3) + "fe"); }
+  if (/fe?$/.test(key)) out.add(key.replace(/fe?$/, "ves"));
   out.delete(key);
-  return [...out];
+  return [...out].filter((f) => f.length >= 2);
 }
+
+/** The digits of a key, in order: "big hero 6" → "6". Digits are never typos. */
+function digitsOf(key) { return key.replace(/\D/g, ""); }
 
 function parseAnswers(spec) {
   const seen = new Set();
@@ -114,13 +125,16 @@ export function matchAnswer(question, text) {
   // Spacing and number: "newzealand", "ice-cream", "ribs" for "rib".
   const ckey = compact(key);
   for (const a of question.answers) if (a.keys.some((k) => compact(k) === ckey)) return { answer: a, exact: true };
-  const forms = numberForms(key);
-  for (const a of question.answers) if (a.keys.some((k) => forms.includes(k))) return { answer: a, exact: true };
+  // Likeliest form first, so "caves" is Cave before it is Cafe.
+  for (const f of numberForms(key)) for (const a of question.answers) if (a.keys.includes(f)) return { answer: a, exact: true };
   let best = null, bestDist = Infinity, tie = false;
+  const digits = digitsOf(key);
   for (const a of question.answers) {
     for (const k of a.keys) {
       const limit = Math.min(tolerance(k.length), tolerance(key.length));
       if (!limit || Math.abs(k.length - key.length) > limit) continue;
+      // "Big Hero 7" is not a typo of "Big Hero 6".
+      if (digitsOf(k) !== digits) continue;
       const dist = editDistance(key, k);
       if (dist > limit) continue;
       if (key.length < 8 && key[0] !== k[0]) continue;
@@ -128,7 +142,10 @@ export function matchAnswer(question, text) {
       else if (dist === bestDist && best !== a) tie = true;
     }
   }
-  return best && !tie ? { answer: best, exact: false } : null;
+  if (!best || tie) return null;
+  // "dominican" is a word of "dominican republic", not a typo of "dominica": ambiguous, so ask for more.
+  if (question.answers.some((a) => a !== best && a.keys.some((k) => k.startsWith(key + " ")))) return null;
+  return { answer: best, exact: false };
 }
 
 // ── seeded randomness (mulberry32) ─────────────────────────────────────────
@@ -312,6 +329,8 @@ const ACTIONS = new Set(["start", "answer", "skip", "next", "restart", "sit", "c
  */
 function migrate(state) {
   if (!state || typeof state !== "object") return setup(["?"]);
+  // A prompt retired from the bank since this room saved it cannot be graded: the game ends instead of crashing.
+  if (state.round && state.phase === "ask" && !BY_ID[state.round.q]) state = { ...state, round: null, phase: "done" };
   const fresh = state.kind !== undefined && Array.isArray(state.players) && state.profiles && Array.isArray(state.seen)
     && Number.isInteger(state.games) && (!state.round || state.round.turn !== undefined);
   if (fresh) return state;
@@ -319,6 +338,8 @@ function migrate(state) {
   if (!Array.isArray(s.used)) s.used = [];
   if (!Array.isArray(s.history)) s.history = [];
   if (!Array.isArray(s.parts)) s.parts = [];
+  if (typeof s.score !== "number") s.score = 0;
+  if (typeof s.strikes !== "number") s.strikes = 0;
   if (s.round && s.round.turn === undefined) s.round = { ...s.round, turn: s.player, typing: "" };
   return s;
 }

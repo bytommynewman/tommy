@@ -153,6 +153,30 @@ console.log("duo checks OK");
   }
   console.log("blitz/category checks OK");
 }
+// grading hardening: -ves plurals, digits are never typos, tiny inputs never pluralize, a word of another answer is ambiguous
+{
+  const want = (q, typed, name) => { const m = L.matchAnswer(q, typed); const got = m ? m.answer.name : null; if (got !== name) throw new Error("grade " + typed + ": got " + got + ", want " + name); };
+  // synthetic prompts (the bank pieces churn): [name, ...aliases] per answer
+  const mk = (rows) => ({ answers: rows.map((names) => ({ name: names[0], tier: 3, keys: names.map((n) => L.normalize(n)) })) });
+  const tools = mk([["Wolf"], ["Knife"], ["Calf"], ["Cave"], ["Cafe"]]);
+  want(tools, "wolves", "Wolf"); want(tools, "knives", "Knife"); want(tools, "calves", "Calf"); want(tools, "caves", "Cave"); want(tools, "cafe", "Cafe");
+  want(mk([["Wolves", "Wolverhampton"]]), "wolf", "Wolves");
+  const films = mk([["Frozen 2", "Frozen II"], ["Big Hero 6"], ["Toy Story 3"]]);
+  want(films, "frozen 3", null); want(films, "big hero 7", null); want(films, "frozn 2", "Frozen 2"); want(films, "toy story 3", "Toy Story 3");
+  const tiny = mk([["Us"], ["I"], ["Letters"], ["Ribs"]]);
+  want(tiny, "u", null); want(tiny, "ies", null); want(tiny, "es", null); want(tiny, "rib", "Ribs");
+  const carib = mk([["Dominica"], ["Dominican Republic"]]);
+  want(carib, "dominican", null); want(carib, "dominica", "Dominica"); want(carib, "dominican republic", "Dominican Republic"); want(carib, "dominca", "Dominica");
+  // a prompt retired from the bank: the round closes and the room can start again instead of crashing on skip/answer
+  const retired = { ...L.setup(["p"]), phase: "ask", mode: "classic", round: { q: "no-such-prompt", startedAt: at0, tries: [], ended: null, turn: "p", typing: "" } };
+  if (L.viewFor(retired, "p").phase !== "done") throw new Error("retired prompt should end the game");
+  if (L.validateAction(retired, "p", { kind: "skip", at: at0 + 1 }).ok) throw new Error("retired prompt should not accept a skip");
+  const again = L.applyAction(retired, "p", { kind: "start", mode: "classic", at: at0 + 1 }); if (again.phase !== "ask") throw new Error("retired room should restart");
+  // old rooms without score/strikes still count strikes (NaN never reached 3)
+  let o = { player: "p", phase: "ask", mode: "endless", colour: "pink", seed: 5, used: [L.QUESTIONS[0].id], round: { q: L.QUESTIONS[0].id, startedAt: at0, tries: [], ended: null }, history: [], parts: [] };
+  o = L.applyAction(o, "p", { kind: "skip", at: at0 + 1 }); if (o.strikes !== 1 || o.score !== 0) throw new Error("old room strikes/score: " + o.strikes + "/" + o.score);
+  console.log("grading hardening checks OK");
+}
 console.log("ALL LOGIC CHECKS PASSED");
 '
 wc -c logic.js
