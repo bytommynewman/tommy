@@ -41,10 +41,23 @@ Two things the first run needed, both now fixed or done once:
 - Cloudflare refused the publish until the account had a workers.dev subdomain.
   Opening Workers & Pages in the dashboard created it (`tommy-newman.workers.dev`).
 
-## Known follow-ups (after it is live)
+## Server hardening — done 2026-10-29
 
-- Server: resolve the player from the token in the worker instead of trusting
-  `join.playerId`; serialize room messages with `blockConcurrencyWhile`; keep
-  Daily once-per-player in the profile, not the room.
+- The socket's player is resolved from the token in the Worker. The browser
+  offers it as a `t.<token>` subprotocol (a socket carries no headers, and a
+  query string would be logged); the Worker passes `x-oddler-player` to the
+  room, which ignores whatever the `join` frame claims. No token → 401.
+  **A tab running the old cached `client.js` cannot connect: reload it.**
+- Both socket handlers run inside `blockConcurrencyWhile`, so two frames can no
+  longer read the same game and overwrite each other across a KV await.
+- Daily is once per player: the day lives in the locker (`profile.dailyDone`),
+  the room attaches it to `start`, and the rules refuse on that. A fresh room
+  code is no longer a second go.
+
+## Known follow-ups
+
 - `oddler/app/14-bank-auto-20261028-17.js` prompts 51–100 are held back on the
   old Higgsfield copy only (its scanner refused them); on Cloudflare all ship.
+- The Daily card on the home screen reads the locker, but a brand-new room
+  still shows it unplayed until you try — the refusal is correct, the card is
+  a beat behind.
