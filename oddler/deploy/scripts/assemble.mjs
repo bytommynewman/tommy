@@ -1,5 +1,5 @@
 // Pull the game's own files from oddler/app into this deploy tree, and the art from the live site.
-import { cp, mkdir, writeFile, access } from "node:fs/promises";
+import { cp, mkdir, readdir, writeFile, access } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 const here = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -19,4 +19,12 @@ for (const n of names) {
   if (!r.ok) { console.warn("missing art", n); continue; }
   await writeFile(out, Buffer.from(await r.arrayBuffer()));
 }
+// Art that lives in this repo wins over anything pulled from the old host, and
+// is how new parts ship: drop a <part-id>.png in oddler/app/art and it deploys.
+try {
+  const own = resolve(game, "art");
+  for (const f of await readdir(own)) {
+    if (f.endsWith(".png")) await cp(resolve(own, f), resolve(here, "public/art", f));
+  }
+} catch { /* no repo art dir yet */ }
 console.log("assembled");

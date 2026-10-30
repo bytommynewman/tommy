@@ -46,7 +46,9 @@ export const PART_NAMES = {
   "acc-00": "Party hat", "acc-01": "Bobble hat", "acc-02": "Wizard hat", "acc-03": "Flat cap",
   "acc-04": "Round spectacles", "acc-05": "Flower", "acc-06": "Bandana", "acc-07": "Headphones",
   "acc-08": "Tiny mug", "acc-09": "Lantern", "acc-10": "Little flag", "acc-11": "Magnifying glass",
-  "acc-12": "Scarf", "acc-13": "Backpack", "acc-14": "Bow tie", "acc-15": "Cape",
+  "acc-12": "Scarf",
+  "glass-00": "Shades", "glass-01": "Square frames", "glass-02": "Star shades",
+  "glass-03": "Heart shades", "glass-04": "Visor", "glass-05": "Cat-eye", "acc-13": "Backpack", "acc-14": "Bow tie", "acc-15": "Cape",
 };
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

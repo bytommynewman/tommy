@@ -77,6 +77,11 @@ export const PARTS = [
   { id: "acc-06", slot: "hat", tier: 0, level: 18 }, { id: "acc-11", slot: "held", tier: 0, level: 21 },
   { id: "acc-09", slot: "held", tier: 0, level: 24 }, { id: "acc-07", slot: "hat", tier: 0, level: 27 },
   { id: "acc-15", slot: "pack", tier: 0, level: 30 }, { id: "acc-02", slot: "hat", tier: 0, level: 34 },
+  // Glasses. One face slot, so these are a choice rather than a stack, spread
+  // across the climb so there is always another pair coming.
+  { id: "glass-00", slot: "face", tier: 0, level: 7 }, { id: "glass-01", slot: "face", tier: 0, level: 9 },
+  { id: "glass-02", slot: "face", tier: 0, level: 15 }, { id: "glass-03", slot: "face", tier: 0, level: 19 },
+  { id: "glass-04", slot: "face", tier: 0, level: 25 }, { id: "glass-05", slot: "face", tier: 0, level: 31 },
 ];
 
 /**
