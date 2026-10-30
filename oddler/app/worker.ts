@@ -12,8 +12,8 @@
 
 import type { Env } from "./env";
 import {
-  allUnlocked, bannerUnlocked, cleanLoadout, endSession, levelFor, loadProfile, logIn, publicProfile, resolveToken,
-  sanitizeName, saveProfile, signUp, TOKEN_RE,
+  allUnlocked, bannerUnlocked, cleanLoadout, endSession, hashToken, levelFor, loadProfile, logIn, publicProfile,
+  resolveToken, sanitizeName, saveProfile, signUp, TOKEN_RE,
 } from "./profile";
 import { Room } from "./room";
 import * as logic from "./logic.js";
@@ -23,6 +23,8 @@ export { Room };
 const WS_PREFIX = "/ws";
 const ROOM_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const DEFAULT_ROOM = "main";
+/** The subprotocol the server speaks; the client offers it beside its token. */
+const WS_PROTOCOL = "oddler.v1";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -41,6 +43,21 @@ async function readBody(request: Request): Promise<Record<string, unknown> | nul
 function tokenOf(request: Request): string | null {
   const token = request.headers.get("x-oddler-token") ?? "";
   return TOKEN_RE.test(token) ? token : null;
+}
+
+/**
+ * The token a browser offers on a socket. A browser cannot set headers on a
+ * WebSocket, so the client sends it as a `t.<token>` subprotocol: a header
+ * either way, and not the query string, which would be logged.
+ */
+function socketToken(request: Request): string | null {
+  for (const raw of (request.headers.get("Sec-WebSocket-Protocol") ?? "").split(",")) {
+    const offered = raw.trim();
+    if (!offered.startsWith("t.")) continue;
+    const token = offered.slice(2);
+    if (TOKEN_RE.test(token)) return token;
+  }
+  return null;
 }
 
 /** `/api/me` — the caller's locker. GET creates a guest profile on first sight. */
@@ -116,8 +133,15 @@ export default {
       if (!ROOM_RE.test(room)) {
         return new Response("invalid room name", { status: 400 });
       }
+      // Who the socket belongs to is settled here, from the token the browser
+      // holds — never from the player id a `join` frame claims later.
+      const token = socketToken(request);
+      if (!token) return new Response("missing or malformed token", { status: 401 });
+      const player = env.KV ? (await resolveToken(env.KV, token)).id : await hashToken(token);
+      const headers = new Headers(request.headers);
+      headers.set("x-oddler-player", player);
       const id = env.ROOMS.idFromName(room);
-      return env.ROOMS.get(id).fetch(request);
+      return env.ROOMS.get(id).fetch(new Request(request, { headers }));
     }
 
     if (url.pathname.startsWith("/api/")) {

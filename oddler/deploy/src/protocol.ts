@@ -4,11 +4,10 @@
  * frame into a value the room may act on.
  */
 const MAX_FRAME_BYTES = 16 * 1024;
-const MAX_PLAYER_ID = 64;
 const MAX_ACTION_BYTES = 4 * 1024;
 
 export type ClientMessage =
-  | { type: "join"; playerId: string }
+  | { type: "join" }
   | { type: "action"; action: unknown }
   | { type: "reset" };
 
@@ -33,15 +32,11 @@ export function parseClientMessage(raw: string | ArrayBuffer): ParseResult {
   }
   if (!isRecord(parsed)) return { ok: false, error: "expected a json object" };
   switch (parsed.type) {
-    case "join": {
-      const rawId = parsed.playerId;
-      if (typeof rawId !== "string" && typeof rawId !== "number") {
-        return { ok: false, error: "playerId required" };
-      }
-      const playerId = String(rawId).slice(0, MAX_PLAYER_ID);
-      if (!playerId) return { ok: false, error: "playerId required" };
-      return { ok: true, msg: { type: "join", playerId } };
-    }
+    case "join":
+      // Identity is not taken from the frame: the Worker resolves the player
+      // from the token on the socket and the room reads it off the socket.
+      // Older clients still send a `playerId`; it is ignored.
+      return { ok: true, msg: { type: "join" } };
     case "action": {
       if (!("action" in parsed)) return { ok: false, error: "action required" };
       let size: number;

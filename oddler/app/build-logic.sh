@@ -109,6 +109,11 @@ console.log("duo checks OK");
   const v = L.validateAction(s1, "px", { kind: "start", mode: "daily", at: at0 + 1000 });
   if (v.ok) throw new Error("daily replay should be refused");
   if (!L.validateAction(s1, "px", { kind: "start", mode: "daily", at: at0 + 86_400_000 }).ok) throw new Error("the next day daily should be allowed");
+  // once per player, not per room: a fresh room is refused when the locker says today is played
+  if (L.validateAction(L.setup(["px"]), "px", { kind: "start", mode: "daily", dailyDone: day, at: at0 + 1000 }).ok) throw new Error("locker daily record should refuse a fresh room");
+  if (!L.validateAction(L.setup(["px"]), "px", { kind: "start", mode: "daily", dailyDone: day - 1, at: at0 + 1000 }).ok) throw new Error("a daily played yesterday should not block today");
+  { const st = L.applyAction(L.setup(["px"]), "px", { kind: "start", mode: "daily", dailyDone: day - 1, at: at0 });
+    if (st.dailyDone !== day - 1) throw new Error("locker daily record should reach the view"); }
   if (!L.validateAction(s1, "px", { kind: "start", mode: "classic", at: at0 + 1000 }).ok) throw new Error("classic after daily should be allowed");
   const [c1] = run("classic", { challenge: "abc123" }); const [c2] = run("classic", { challenge: "abc123" }); const [c3] = run("classic", { challenge: "abc124" });
   if (c1.join() !== c2.join()) throw new Error("challenge sets differ");

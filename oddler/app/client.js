@@ -50,16 +50,19 @@ let room = null;
 
 const PING = "__ping";
 const PONG = "__pong";
+const WS_PROTOCOL = "oddler.v1";
 let socket = null;
 let retry = 0;
 
 function connect() {
   const proto = location.protocol === "https:" ? "wss:" : "ws:";
-  socket = new WebSocket(`${proto}//${location.host}/ws/${encodeURIComponent(room)}`);
+  // The token rides as a subprotocol: a browser cannot set a header on a
+  // socket, and a query string would end up in logs. The server resolves it.
+  socket = new WebSocket(`${proto}//${location.host}/ws/${encodeURIComponent(room)}`, [WS_PROTOCOL, "t." + TOKEN]);
   socket.addEventListener("open", () => {
     retry = 0;
     setStatus("");
-    send({ type: "join", playerId: PLAYER_ID });
+    send({ type: "join" });
   });
   socket.addEventListener("message", (event) => {
     if (event.data === PONG) return;
@@ -374,7 +377,8 @@ function toNextText(level, xp, nextXp) { return level >= MAX_LEVEL ? "MAX LEVEL"
 function dailyCardHTML(v) {
   const day = todayNo();
   const saved = store.get("daily:" + day, null);
-  const done = saved || (v.dailyDone === day ? { score: v.mode === "daily" ? v.score : null, grid: v.mode === "daily" ? gridOf(v.history) : "" } : null);
+  const playedToday = v.dailyDone === day || me?.dailyDone === day;
+  const done = saved || (playedToday ? { score: v.mode === "daily" ? v.score : null, grid: v.mode === "daily" ? gridOf(v.history) : "" } : null);
   const no = dailyNo(day);
   if (done) {
     return `<section class="panel soft">

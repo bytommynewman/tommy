@@ -25,6 +25,7 @@ export interface Profile {
   xp: number;
   games: number;
   best: Record<string, number>;
+  dailyDone: number | null;  // the UTC day number of the last Daily this player finished
   created: number;
   updated: number;
 }
@@ -138,7 +139,7 @@ export function cleanLoadout(raw: unknown, owned: Set<string>): string[] {
 // ── profiles ───────────────────────────────────────────────────────────────
 
 export function freshProfile(id: string, now: number): Profile {
-  return { id, username: null, name: "", banner: "plain", colour: "pink", loadout: [], unlocked: [], xp: 0, games: 0, best: {}, created: now, updated: now };
+  return { id, username: null, name: "", banner: "plain", colour: "pink", loadout: [], unlocked: [], xp: 0, games: 0, best: {}, dailyDone: null, created: now, updated: now };
 }
 
 export async function loadProfile(kv: KVNamespace, id: string, now: number): Promise<Profile> {
@@ -158,6 +159,7 @@ export async function loadProfile(kv: KVNamespace, id: string, now: number): Pro
     xp: Number.isFinite(stored.xp) ? Math.max(0, stored.xp as number) : 0,
     games: Number.isFinite(stored.games) ? (stored.games as number) : 0,
     best: stored.best && typeof stored.best === "object" ? (stored.best as Record<string, number>) : {},
+    dailyDone: Number.isInteger(stored.dailyDone) ? (stored.dailyDone as number) : null,
   };
 }
 
@@ -183,6 +185,7 @@ export function publicProfile(p: Profile) {
     nextLevelXp: xpForLevel(level + 1),
     games: p.games,
     best: p.best,
+    dailyDone: p.dailyDone,
     catalogue: PARTS.map((part) => ({
       id: part.id, slot: part.slot, tier: part.tier,
       level: part.level ?? null,
@@ -277,6 +280,8 @@ export interface GameResult {
   mode: string;
   pts: number;
   earned: string[];
+  /** For a Daily: the UTC day it was, so the locker can refuse a second go. */
+  day?: number | null;
 }
 
 /** Credit one finished game to one player. */
@@ -291,6 +296,9 @@ export async function awardGame(kv: KVNamespace, id: string, result: GameResult,
     if (PART_BY_ID.has(partId) && !p.unlocked.includes(partId)) p.unlocked.push(partId);
   }
   if (result.mode !== "practice") p.best[result.mode] = Math.max(p.best[result.mode] ?? 0, result.pts);
+  // Daily is once per player, not once per room: a fresh room must not hand out
+  // a second go, so the day a Daily was played is kept here.
+  if (Number.isInteger(result.day)) p.dailyDone = result.day as number;
   p.updated = now;
   await saveProfile(kv, p);
   const afterOwned = allUnlocked(p);

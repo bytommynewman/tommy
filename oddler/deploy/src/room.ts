@@ -47,6 +47,11 @@ export function resolveMeta(raw: unknown): { game: string; minPlayers: number; m
 const META = resolveMeta(logic.meta);
 const PING = "__ping";
 const PONG = "__pong";
+/** The subprotocol the client offers beside its token; echoed on the upgrade. */
+const WS_PROTOCOL = "oddler.v1";
+
+/** What a socket is: its connection id, and the player the Worker resolved. */
+interface Who { connId: string; playerId: string; }
 
 export class Room extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
@@ -91,24 +96,43 @@ export class Room extends DurableObject<Env> {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("expected a websocket upgrade", { status: 426 });
     }
+    // The Worker in front of us has already turned the socket's token into a
+    // player id. A socket that arrives without one is not identified, and an
+    // unidentified socket never gets a seat.
+    const playerId = request.headers.get("x-oddler-player") ?? "";
+    if (!playerId) return new Response("unidentified socket", { status: 401 });
     const pair = new WebSocketPair();
     const server = pair[1]!;
     this.ctx.acceptWebSocket(server);
     const connId = crypto.randomUUID().slice(0, 8);
-    server.serializeAttachment({ connId });
-    return new Response(null, { status: 101, webSocket: pair[0] });
+    server.serializeAttachment({ connId, playerId } satisfies Who);
+    const offered = (request.headers.get("Sec-WebSocket-Protocol") ?? "").split(",").map((p) => p.trim());
+    return new Response(null, {
+      status: 101,
+      webSocket: pair[0],
+      headers: offered.includes(WS_PROTOCOL) ? { "Sec-WebSocket-Protocol": WS_PROTOCOL } : undefined,
+    });
+  }
+
+  private whoIs(ws: WebSocket): Who | null {
+    const att = ws.deserializeAttachment() as Partial<Who> | null;
+    return att?.connId && att.playerId ? { connId: att.connId, playerId: att.playerId } : null;
   }
 
   private connIdOf(ws: WebSocket): string | undefined {
-    const att = ws.deserializeAttachment() as { connId?: string } | null;
-    return att?.connId;
+    return this.whoIs(ws)?.connId;
   }
 
   override async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
-    const connId = this.connIdOf(ws);
-    if (!connId) return;
+    const who = this.whoIs(ws);
+    if (!who) return;
     try {
-      await this.dispatch(await this.onMessage(connId, raw));
+      // One frame at a time. Between `load` and `save` this handler awaits KV
+      // for profiles, and KV is not storage: without the gate a second frame
+      // could read the same game, act on it, and overwrite the first's write.
+      await this.ctx.blockConcurrencyWhile(async () => {
+        await this.dispatch(await this.onMessage(who, raw));
+      });
     } catch (err) {
       console.error("room message failed:", err instanceof Error ? err.stack : String(err));
       try {
@@ -122,11 +146,13 @@ export class Room extends DurableObject<Env> {
   override async webSocketClose(ws: WebSocket): Promise<void> {
     const connId = this.connIdOf(ws);
     if (!connId) return;
-    const { game, conns } = await this.load();
-    if (conns[connId] === undefined) return;
-    delete conns[connId];
-    await this.save(game, conns);
-    await this.dispatch(this.broadcast(game, conns));
+    await this.ctx.blockConcurrencyWhile(async () => {
+      const { game, conns } = await this.load();
+      if (conns[connId] === undefined) return;
+      delete conns[connId];
+      await this.save(game, conns);
+      await this.dispatch(this.broadcast(game, conns));
+    });
   }
 
   override async webSocketError(ws: WebSocket): Promise<void> {
@@ -141,16 +167,17 @@ export class Room extends DurableObject<Env> {
     }
   }
 
-  private async onMessage(connId: string, raw: string | ArrayBuffer): Promise<Dispatchable> {
+  private async onMessage(who: Who, raw: string | ArrayBuffer): Promise<Dispatchable> {
+    const connId = who.connId;
     const parsed = parseClientMessage(raw);
     if (!parsed.ok) return this.error(connId, parsed.error);
     const msg = parsed.msg;
     const { game, conns } = await this.load();
 
     if (msg.type === "join") {
-      conns[connId] = msg.playerId;
-      if (!game.seats.includes(msg.playerId) && game.seats.length < META.maxPlayers) {
-        game.seats.push(msg.playerId);
+      conns[connId] = who.playerId;
+      if (!game.seats.includes(who.playerId) && game.seats.length < META.maxPlayers) {
+        game.seats.push(who.playerId);
       }
       if (game.status === "waiting" && game.seats.length >= META.minPlayers) {
         game.state = logic.setup(game.seats);
@@ -217,14 +244,22 @@ export class Room extends DurableObject<Env> {
         const loadouts: Record<string, string[]> = {};
         const colours: Record<string, string> = {};
         const banners: Record<string, string> = {};
+        // Daily is once per player, so the answer comes from the caller's own
+        // locker — a fresh room, or one whose state was cleared, is not a
+        // second go.
+        let dailyDone: number | null = null;
         for (const id of ids) {
           const p = await loadProfile(this.env.KV, id, now);
+          if (id === playerId) dailyDone = p.dailyDone;
           names[id] = p.name;
           colours[id] = p.colour;
           banners[id] = p.banner;
           loadouts[id] = cleanLoadout(p.loadout, allUnlocked(p));
         }
-        return { ...a, names, loadouts, colours, banners };
+        if (!ids.includes(playerId)) {
+          dailyDone = (await loadProfile(this.env.KV, playerId, now)).dailyDone;
+        }
+        return { ...a, names, loadouts, colours, banners, dailyDone };
       }
     } catch (err) {
       console.error("profile lookup failed:", err instanceof Error ? err.message : String(err));
@@ -237,6 +272,7 @@ export class Room extends DurableObject<Env> {
     if (!this.env.KV || !state || typeof state !== "object") return;
     const s = state as {
       kind?: string; mode?: string; player?: string; score?: number; earned?: string[];
+      dailyDone?: number | null;
       players?: string[]; profiles?: Record<string, { pts?: number; earned?: string[] }>;
     };
     const now = Date.now();
@@ -247,7 +283,8 @@ export class Room extends DurableObject<Env> {
           await awardGame(this.env.KV, id, { mode: "duo", pts: p.pts ?? 0, earned: p.earned ?? [] }, now);
         }
       } else if (s.player) {
-        await awardGame(this.env.KV, s.player, { mode: s.mode ?? "classic", pts: s.score ?? 0, earned: s.earned ?? [] }, now);
+        const day = s.mode === "daily" ? s.dailyDone ?? null : null;
+        await awardGame(this.env.KV, s.player, { mode: s.mode ?? "classic", pts: s.score ?? 0, earned: s.earned ?? [], day }, now);
       }
     } catch (err) {
       console.error("award failed:", err instanceof Error ? err.message : String(err));

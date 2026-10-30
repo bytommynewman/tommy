@@ -10,16 +10,30 @@
 import { SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 
-/** Open a socket to a room and collect frames as they arrive. */
-async function open(room = "main") {
+/** A player's secret token: 32 hex chars, stable for a label within a run. */
+function tokenFor(who: string): string {
+  const hex = [...who].map((c) => c.charCodeAt(0).toString(16).padStart(2, "0")).join("");
+  return (hex + "0".repeat(32)).slice(0, 32);
+}
+
+/**
+ * Open a socket to a room as `who` and collect frames as they arrive. The token
+ * rides as a subprotocol, exactly as the browser client sends it: the Worker
+ * resolves it to a player id, so nothing a frame claims can change who you are.
+ */
+async function open(room = "main", who = "tommy") {
   const res = await SELF.fetch(`https://game.test/ws/${room}`, {
-    headers: { Upgrade: "websocket" },
+    headers: { Upgrade: "websocket", "Sec-WebSocket-Protocol": `oddler.v1, t.${tokenFor(who)}` },
   });
   expect(res.status).toBe(101);
   const ws = res.webSocket;
   if (!ws) throw new Error("no webSocket on the upgrade response");
   ws.accept();
+  return wrap(ws);
+}
 
+/** Collect frames off an accepted socket and wait on them by shape. */
+function wrap(ws: WebSocket) {
   const frames: unknown[] = [];
   ws.addEventListener("message", (event: MessageEvent) => {
     const data = typeof event.data === "string" ? event.data : "";
@@ -53,6 +67,18 @@ async function open(room = "main") {
   };
 }
 
+/** `open`, for a test that already holds the player's real token. */
+async function openWithToken(room: string, token: string) {
+  const res = await SELF.fetch(`https://game.test/ws/${room}`, {
+    headers: { Upgrade: "websocket", "Sec-WebSocket-Protocol": `oddler.v1, t.${token}` },
+  });
+  expect(res.status).toBe(101);
+  const ws = res.webSocket;
+  if (!ws) throw new Error("no webSocket on the upgrade response");
+  ws.accept();
+  return wrap(ws);
+}
+
 let seq = 0;
 function uniq(label: string): string {
   seq += 1;
@@ -62,7 +88,7 @@ function uniq(label: string): string {
 /** Join a fresh room as its one player and start a classic run. */
 async function started(room: string, mode = "classic") {
   const p = await open(room);
-  p.send({ type: "join", playerId: "tommy" });
+  p.send({ type: "join" });
   await p.phase("lobby");
   p.frames.length = 0;
   p.send({ type: "action", action: { kind: "start", mode, colour: "mint", seed: 7 } });
@@ -77,6 +103,11 @@ describe("routing", () => {
     expect(res.status).toBe(426);
   });
 
+  it("refuses a socket that offers no token instead of seating a stranger", async () => {
+    const res = await SELF.fetch("https://game.test/ws/no-token", { headers: { Upgrade: "websocket" } });
+    expect(res.status).toBe(401);
+  });
+
   it("404s a non-asset, non-ws path for a non-HTML request", async () => {
     const res = await SELF.fetch("https://game.test/api/nope");
     expect(res.status).toBe(404);
@@ -86,7 +117,7 @@ describe("routing", () => {
 describe("a run", () => {
   it("seats one player straight into the lobby", async () => {
     const a = await open(uniq("lobby"));
-    a.send({ type: "join", playerId: "tommy" });
+    a.send({ type: "join" });
     const s = await a.state();
     expect(s.status).toBe("playing");
     expect(s.seats).toEqual(["tommy"]);
@@ -140,7 +171,7 @@ describe("a run", () => {
 
   it("refuses actions that do not fit the phase", async () => {
     const a = await open(uniq("phase"));
-    a.send({ type: "join", playerId: "tommy" });
+    a.send({ type: "join" });
     await a.phase("lobby");
     a.frames.length = 0;
     a.send({ type: "action", action: { kind: "answer", text: "France" } });
@@ -189,10 +220,10 @@ describe("a run", () => {
 
 describe("isolation and persistence", () => {
   it("keeps two rooms completely separate", async () => {
-    const one = await open(uniq("room-one"));
-    const two = await open(uniq("room-two"));
-    one.send({ type: "join", playerId: "alice" });
-    two.send({ type: "join", playerId: "bob" });
+    const one = await open(uniq("room-one"), "alice");
+    const two = await open(uniq("room-two"), "bob");
+    one.send({ type: "join" });
+    two.send({ type: "join" });
     const s1 = await one.state();
     const s2 = await two.state();
     expect(s1.seats).toEqual(["alice"]);
@@ -207,7 +238,7 @@ describe("isolation and persistence", () => {
     p.ws.close();
 
     const again = await open(room);
-    again.send({ type: "join", playerId: "tommy" });
+    again.send({ type: "join" });
     const restored = await again.state();
     expect(restored.status).toBe("playing");
     expect(restored.view.phase).toBe("ask");
@@ -217,21 +248,21 @@ describe("isolation and persistence", () => {
 
   it("seats two players in a code room; a third joiner spectates", async () => {
     const room = uniq("duo-seats");
-    const h = await open(room);
-    h.send({ type: "join", playerId: "host" });
+    const h = await open(room, "host");
+    h.send({ type: "join" });
     await h.phase("lobby");
     h.send({ type: "action", action: { kind: "sit", colour: "mint" } });
     await h.phase("duo-lobby");
-    const g = await open(room);
-    g.send({ type: "join", playerId: "guest" });
+    const g = await open(room, "guest");
+    g.send({ type: "join" });
     await g.state();
     g.send({ type: "action", action: { kind: "sit", colour: "sand" } });
     const seated = await g.next((f) => f?.type === "state" && f.view?.duo?.players?.length === 2, "two seated");
     expect(seated.view.duo.seated).toBe(true);
     expect(seated.view.duo.host).toBe("host");
 
-    const s = await open(room);
-    s.send({ type: "join", playerId: "watcher" });
+    const s = await open(room, "watcher");
+    s.send({ type: "join" });
     const asWatcher = await s.state();
     expect(asWatcher.seats).toEqual(["host", "guest"]);
     expect(asWatcher.view.duo.seated).toBe(false);
@@ -245,13 +276,13 @@ describe("isolation and persistence", () => {
 describe("duo", () => {
   /** Two seated players in a fresh code room, game started by the host. */
   async function duoStarted(room: string) {
-    const h = await open(room);
-    h.send({ type: "join", playerId: "host" });
+    const h = await open(room, "host");
+    h.send({ type: "join" });
     await h.phase("lobby");
     h.send({ type: "action", action: { kind: "sit", colour: "mint" } });
     await h.phase("duo-lobby");
-    const g = await open(room);
-    g.send({ type: "join", playerId: "guest" });
+    const g = await open(room, "guest");
+    g.send({ type: "join" });
     await g.state();
     g.send({ type: "action", action: { kind: "sit", colour: "sand" } });
     await g.next((f) => f?.type === "state" && f.view?.duo?.players?.length === 2, "two seated");
@@ -266,8 +297,8 @@ describe("duo", () => {
 
   it("only the host starts, and only with a partner seated", async () => {
     const room = uniq("duo-start");
-    const h = await open(room);
-    h.send({ type: "join", playerId: "host" });
+    const h = await open(room, "host");
+    h.send({ type: "join" });
     await h.phase("lobby");
     h.send({ type: "action", action: { kind: "sit" } });
     await h.phase("duo-lobby");
@@ -349,8 +380,8 @@ describe("untrusted input", () => {
   });
 
   it("refuses an oversized action payload", async () => {
-    const a = await open(uniq("big-action"));
-    a.send({ type: "join", playerId: "alice" });
+    const a = await open(uniq("big-action"), "alice");
+    a.send({ type: "join" });
     await a.state();
     a.frames.length = 0;
     a.send({ type: "action", action: { kind: "answer", text: "x".repeat(6_000) } });
@@ -385,9 +416,8 @@ describe("the locker (/api/me)", () => {
 
   it("credits a finished solo game with xp and a game count", async () => {
     const tok = "b".repeat(32);
-    const id = await (await SELF.fetch("https://game.test/api/me", { headers: { "x-oddler-token": tok } })).json().then((m: any) => m.id);
-    const p = await open(uniq("award"));
-    p.send({ type: "join", playerId: id });
+    const p = await openWithToken(uniq("award"), tok);
+    p.send({ type: "join" });
     await p.phase("lobby");
     p.frames.length = 0;
     p.send({ type: "action", action: { kind: "start", mode: "classic", seed: 1 } });
@@ -414,8 +444,8 @@ describe("accounts", () => {
     const guest = "e".repeat(32);
     // The guest earns something first.
     const id = ((await (await SELF.fetch("https://game.test/api/me", { headers: jsonHeaders(guest) })).json()) as any).id;
-    const p = await open(uniq("adopt"));
-    p.send({ type: "join", playerId: id });
+    const p = await openWithToken(uniq("adopt"), guest);
+    p.send({ type: "join" });
     await p.phase("lobby");
     p.send({ type: "action", action: { kind: "start", mode: "classic", seed: 1 } });
     await p.phase("ask");

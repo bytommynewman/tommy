@@ -379,7 +379,12 @@ export function validateAction(state, playerId, action) {
       if (action.mode !== "duo") return { ok: false, error: "this room plays Duo" };
     } else {
       if (!MODES.includes(action.mode)) return { ok: false, error: "unknown mode" };
-      if (action.mode === "daily" && state.dailyDone === dayOf(action.at)) return { ok: false, error: "you have played today's daily — back tomorrow" };
+      if (action.mode === "daily") {
+        // The room attaches `dailyDone` from the player's locker; the room's own
+        // copy is only the fallback for a deploy without lockers.
+        const done = Number.isInteger(action.dailyDone) ? action.dailyDone : state.dailyDone;
+        if (done === dayOf(action.at)) return { ok: false, error: "you have played today's daily — back tomorrow" };
+      }
     }
     if (action.category !== undefined && action.category !== null) {
       if (duo || !["classic", "blitz", "endless", "practice"].includes(action.mode)) return { ok: false, error: "no category picks in this mode" };
@@ -524,6 +529,7 @@ export function applyAction(state, playerId, action) {
     case "start": {
       const seed = ((at ^ (action.seed | 0)) >>> 0) || 1;
       const base = { ...resetKeepingSeats(state, seed), mode: action.mode, seen: Array.isArray(action.seen) ? action.seen : [] };
+      if (Number.isInteger(action.dailyDone)) base.dailyDone = action.dailyDone;
       if (action.category && !action.challenge) base.category = action.category;
       if (action.mode === "daily") { base.day = dayOf(at); base.fixed = dailyPrompts(base.day); }
       else if (action.challenge) { base.challenge = action.challenge; base.fixed = challengePrompts(action.challenge); }
