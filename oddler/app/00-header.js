@@ -92,6 +92,14 @@ export const PARTS = [
 export const BANKS = [];
 
 /**
+ * Top-ups: answers that were true but missing from a bank piece. Kept apart so
+ * additions stay reviewable in one file and the auto-generated pieces are never
+ * hand-edited. Each row is [prompt id, "Answer:tier|Other=Alias:tier"]; a key
+ * already on the prompt is ignored, so re-adding something is harmless.
+ */
+export const EXTRA = [];
+
+/**
  * Name banners: the plate behind a player's name. Unlocked by level, picked in
  * the locker. The client owns the look (index.html .nameplate.b-<id>).
  */

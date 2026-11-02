@@ -17,6 +17,12 @@ import * as logic from "./logic.js";
 import { parseClientMessage } from "./protocol";
 import { awardGame, loadProfile, allUnlocked, cleanLoadout } from "./profile";
 
+/** Just enough of the rules' state shape for the room to read a round. */
+interface RoundState {
+  phase?: string;
+  round?: { q?: string; tries?: unknown[] } | null;
+}
+
 interface Game {
   status: "waiting" | "playing" | "over";
   seats: string[];
@@ -202,9 +208,10 @@ export class Room extends DurableObject<Env> {
       action = await this.enrich(action, playerId, game.seats);
       const verdict = logic.validateAction(game.state, playerId, action);
       if (!verdict.ok) return this.error(connId, verdict.error ?? "invalid action");
-      const before = game.state as { phase?: string } | null;
+      const before = game.state as RoundState | null;
       game.state = logic.applyAction(game.state, playerId, action);
-      const after = game.state as { phase?: string };
+      const after = game.state as RoundState;
+      this.noteMiss(before, after, action);
       if (after?.phase === "done" && before?.phase !== "done") await this.award(game.state);
       const end = logic.isGameOver(game.state);
       if (end.over) {
@@ -265,6 +272,27 @@ export class Room extends DurableObject<Env> {
       console.error("profile lookup failed:", err instanceof Error ? err.message : String(err));
     }
     return action;
+  }
+
+  /**
+   * A rejected answer is the only honest signal about what the bank is missing:
+   * no hand-written list covers every true answer, so what players actually
+   * type is what tells us where to widen it. One short-lived KV row per miss,
+   * never blocking the round, never failing it.
+   */
+  private noteMiss(before: RoundState | null, after: RoundState, action: unknown): void {
+    const kv = this.env.KV;
+    if (!kv || !before?.round || !after?.round) return;
+    const was = before.round.tries?.length ?? 0;
+    const now = after.round.tries?.length ?? 0;
+    if (now <= was) return;                      // the answer landed, or this was not an answer
+    const typed = String((action as { text?: unknown })?.text ?? "").trim();
+    const prompt = after.round.q;
+    if (!prompt || typed.length < 2 || typed.length > 40) return;
+    const key = `miss:${logic.dayOf(Date.now())}:${prompt}:${crypto.randomUUID().slice(0, 8)}`;
+    this.ctx.waitUntil(
+      kv.put(key, typed, { expirationTtl: 60 * 60 * 24 * 30 }).catch(() => { /* never cost a round */ }),
+    );
   }
 
   /** Credit a finished game to every seated player's locker. */

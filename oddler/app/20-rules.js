@@ -81,6 +81,17 @@ export const QUESTIONS = BANKS.map(([id, category, prompt, spec, core]) => ({
   id, category: CATEGORY_GROUPS[category] ?? category, prompt, answers: parseAnswers(spec), core: Boolean(core),
 }));
 
+for (const [id, spec] of EXTRA) {
+  const q = QUESTIONS.find((x) => x.id === id);
+  if (!q) continue;
+  const have = new Set(q.answers.flatMap((a) => a.keys));
+  for (const a of parseAnswers(spec)) {
+    if (a.keys.some((k) => have.has(k))) continue;
+    for (const k of a.keys) have.add(k);
+    q.answers.push(a);
+  }
+}
+
 const BY_ID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 /** The hand-written prompts: a stable pool, so a daily or a challenge code means the same 7 prompts for everyone. */
 const CORE = QUESTIONS.filter((q) => q.core).map((q) => q.id).sort();
