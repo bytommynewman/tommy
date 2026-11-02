@@ -10,13 +10,17 @@ BOLD="fonts/Fredoka-700.ttf"
 MED="fonts/Fredoka-600.ttf"
 BG=0x1a0f26
 LIME=0xBFF747
-mkdir -p out posters
+V4K=out/1-vertical-4k-tiktok-reels-shorts
+V1080=out/2-vertical-1080-smaller
+SQ=out/3-square-feeds
+WIDE=out/4-landscape-youtube
+mkdir -p "$V4K" "$V1080" "$SQ" "$WIDE" posters
 STAGE="fps=30,scale=2160:3840:force_original_aspect_ratio=decrease,scale=iw*0.86:ih*0.86,pad=2160:3840:(ow-iw)/2:48:color=$BG"
 FULL="fps=30,scale=2160:3840:force_original_aspect_ratio=decrease,pad=2160:3840:(ow-iw)/2:0:color=$BG"
 # text, font, colour, size, from, to
 cap() { printf "drawtext=fontfile='%s':text='%s':fontcolor=%s:fontsize=%s:x=(w-text_w)/2:y=3455:box=1:boxcolor=%s@0.94:boxborderw=46:enable='between(t,%s,%s)'" "$2" "$1" "$3" "$4" "$BG" "$5" "$6"; }
 render() { ffmpeg -hide_banner -loglevel error -f concat -safe 0 -i "$1" -vf "${4:-$STAGE},$2" \
-    -c:v libx264 -pix_fmt yuv420p -preset slow -crf 18 -movflags +faststart -y "out/$3"; echo "built out/$3"; }
+    -c:v libx264 -pix_fmt yuv420p -preset slow -crf 18 -movflags +faststart -y "$V4K/$3"; echo "built $V4K/$3"; }
 # frames are NNN-<label>.png, so match the label exactly
 f() { ls frames/*-"$1".png | head -1; }
 d() { ls frames-duo/*-"$1".png | head -1; }
@@ -101,18 +105,23 @@ if [ -f sting-raw.mp4 ]; then
   ffmpeg -hide_banner -loglevel error -ss 0 -t 2.2 -i sting-raw.mp4 -i art/logo.png -filter_complex \
     "[0:v]scale=2160:3840:force_original_aspect_ratio=increase,crop=2160:3840,fps=30[v];[1:v]scale=1520:-1[lg];[v][lg]overlay=(W-w)/2:500,drawtext=fontfile='$BOLD':text='Only uncommon answers score':fontcolor=$LIME:fontsize=104:x=(w-text_w)/2:y=3455:box=1:boxcolor=$BG@0.94:boxborderw=46,fade=t=out:st=1.9:d=0.3" \
     -an -c:v libx264 -pix_fmt yuv420p -preset slow -crf 18 -y out/.opener.mp4
-  ffmpeg -hide_banner -loglevel error -i out/.opener.mp4 -i out/02-what-is-oddler-4k-9x16.mp4 \
-    -filter_complex "[0:v][1:v]concat=n=2:v=1[v]" -map "[v]" -c:v libx264 -pix_fmt yuv420p -preset slow -crf 18 -movflags +faststart -y out/02b-hook-with-opener-4k-9x16.mp4
-  echo "built out/02b-hook-with-opener-4k-9x16.mp4"
+  ffmpeg -hide_banner -loglevel error -i out/.opener.mp4 -i "$V4K/02-what-is-oddler-4k-9x16.mp4" \
+    -filter_complex "[0:v][1:v]concat=n=2:v=1[v]" -map "[v]" -c:v libx264 -pix_fmt yuv420p -preset slow -crf 18 -movflags +faststart -y "$V4K/02b-hook-with-opener-4k-9x16.mp4"
+  echo "built $V4K/02b-hook-with-opener-4k-9x16.mp4"
 fi
 
 # ── delivery formats, all derived from the 4K master ───────────────────────
-for v in out/*-4k-9x16.mp4; do
+for v in "$V4K"/*-4k-9x16.mp4; do
   b=$(basename "$v" -4k-9x16.mp4)
-  ffmpeg -hide_banner -loglevel error -i "$v" -vf "scale=1080:1920:flags=lanczos" -c:v libx264 -pix_fmt yuv420p -preset slow -crf 19 -movflags +faststart -y "out/$b-1080-9x16.mp4"
-  ffmpeg -hide_banner -loglevel error -i "$v" -vf "scale=2160:2160:force_original_aspect_ratio=decrease:flags=lanczos,pad=2160:2160:(ow-iw)/2:(oh-ih)/2:color=$BG" -c:v libx264 -pix_fmt yuv420p -preset slow -crf 19 -movflags +faststart -y "out/$b-4k-1x1.mp4"
-  ffmpeg -hide_banner -loglevel error -i "$v" -filter_complex "[0:v]scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160,gblur=sigma=60,eq=brightness=-0.18[bg];[0:v]scale=-1:2160:flags=lanczos[fg];[bg][fg]overlay=(W-w)/2:0" -c:v libx264 -pix_fmt yuv420p -preset slow -crf 19 -movflags +faststart -y "out/$b-4k-16x9.mp4"
+  ffmpeg -hide_banner -loglevel error -i "$v" -vf "scale=1080:1920:flags=lanczos" -c:v libx264 -pix_fmt yuv420p -preset slow -crf 19 -movflags +faststart -y "$V1080/$b-1080-9x16.mp4"
+  ffmpeg -hide_banner -loglevel error -i "$v" -vf "scale=2160:2160:force_original_aspect_ratio=decrease:flags=lanczos,pad=2160:2160:(ow-iw)/2:(oh-ih)/2:color=$BG" -c:v libx264 -pix_fmt yuv420p -preset slow -crf 19 -movflags +faststart -y "$SQ/$b-4k-1x1.mp4"
+  ffmpeg -hide_banner -loglevel error -i "$v" -filter_complex "[0:v]scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160,gblur=sigma=60,eq=brightness=-0.18[bg];[0:v]scale=-1:2160:flags=lanczos[fg];[bg][fg]overlay=(W-w)/2:0" -c:v libx264 -pix_fmt yuv420p -preset slow -crf 19 -movflags +faststart -y "$WIDE/$b-4k-16x9.mp4"
 done
+# a note in each folder so the right cut is obvious in Finder
+printf '2160x3840 — the masters. Best quality, use these by default.\nTikTok, Instagram Reels, YouTube Shorts, Stories.\n' > "$V4K/_README.txt"
+printf '1080x1920 — the same ads, downscaled from the 4K masters.\nOnly needed where 4K vertical is rejected or uploads too slowly.\n' > "$V1080/_README.txt"
+printf '2160x2160 square. Instagram and Facebook feed posts, X.\n' > "$SQ/_README.txt"
+printf '3840x2160 landscape. YouTube, X, Facebook, Reddit.\n' > "$WIDE/_README.txt"
 
 # ── stills: a 4:5 carousel and a 16:9 link card ────────────────────────────
 poster() { ffmpeg -hide_banner -loglevel error -i "$1" -vf \
@@ -128,4 +137,4 @@ ffmpeg -hide_banner -loglevel error -i "$(f round-reveal)" -i art/logo.png -filt
 "color=$BG:3840x2160[bg];[0:v]scale=-1:2060:flags=lanczos[p];[bg][p]overlay=220:50[s];[1:v]scale=1500:-1:flags=lanczos[lg];[s][lg]overlay=W-w-220:380" \
 -frames:v 1 -y posters/link-card-4k-16x9.png
 rm -f .c1 .c2 .c3 .c4 .c5 out/.opener.mp4
-echo "done — $(ls out/*.mp4 | wc -l | tr -d ' ') videos, $(ls posters/*.png | wc -l | tr -d ' ') stills"
+echo "done — $(ls out/*/*.mp4 | wc -l | tr -d ' ') videos, $(ls posters/*.png | wc -l | tr -d ' ') stills"

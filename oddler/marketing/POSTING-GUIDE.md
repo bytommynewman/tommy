@@ -19,21 +19,27 @@ row and the roomier round screen.
 | 5 | `05-collect` | 11s | Rare answers grow the creature |
 
 Masters are **2160×3840 (4K vertical)**, typeset in Fredoka — the game's own
-display font — so the captions match the product. Every cut is derived from the
-master, never from a smaller file:
+display font — so the captions match the product. Every other cut is derived
+from the master, never from a smaller file. `out/` is split by cut:
 
-- `-4k-9x16.mp4` — the master. TikTok, Reels, YouTube Shorts, Stories
-- `-1080-9x16.mp4` — for anywhere that chokes on 4K vertical
-- `-4k-1x1.mp4` — Instagram and Facebook feed, X
-- `-4k-16x9.mp4` — YouTube, X, Facebook, Reddit
+| Folder | Size | Where it goes |
+|---|---|---|
+| `1-vertical-4k-tiktok-reels-shorts` | 2160×3840 | **The default.** TikTok, Reels, Shorts, Stories |
+| `2-vertical-1080-smaller` | 1080×1920 | Only where 4K vertical is rejected or too slow to upload |
+| `3-square-feeds` | 2160×2160 | Instagram and Facebook feed, X |
+| `4-landscape-youtube` | 3840×2160 | YouTube, X, Facebook, Reddit |
+
+Each folder has a `_README.txt` saying the same thing, so the right one is
+obvious from Finder without coming back here. Reach for folder 1 unless a
+platform makes you do otherwise.
 
 ## Where each one goes first
 
 - **TikTok / Reels / Shorts** — lead with **02** (the hook does the work in two
   seconds), then **01**. Post **03** on a day you want the Daily to spike.
-- **Instagram feed** — the 6-slide carousel in `posters/`, or **01** at 1:1.
-- **X** — **02** at 16:9, with `posters/link-card-4k-16x9.png` as the fallback.
-- **Reddit** (r/wordgames, r/WebGames, r/incremental_games) — **01** at 16:9.
+- **Instagram feed** — the 6-slide carousel in `posters/`, or **01** from `3-square-feeds`.
+- **X** — **02** from `4-landscape-youtube`, with `posters/link-card-4k-16x9.png` as the fallback.
+- **Reddit** (r/wordgames, r/WebGames, r/incremental_games) — **01** from `4-landscape-youtube`.
   Lead with the game, not the brand; those subs punish ad-speak.
 - **YouTube Shorts** — all five, one a day, same order.
 
