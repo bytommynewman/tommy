@@ -70,34 +70,40 @@ F="$F$(cap 'Then you get a grid to share' "$MED" white 98 5.3 7.9),"
 F="$F$(cap 'Post it. Make them beat it.' "$BOLD" $LIME 108 8.1 11.2)"
 render .c3 "$F" 03-daily-4k-9x16.mp4
 
-# ── 04 · Duo — two phones on one canvas, so both stay readable ─────────────
-pair() { ffmpeg -hide_banner -loglevel error -i "$1" -i "$2" -filter_complex \
-  "color=$BG:2160x3840[bg];[0:v]scale=1040:-1[a];[1:v]scale=1040:-1[b];[a][b]hstack=inputs=2[s];[bg][s]overlay=(W-w)/2:430" \
-  -frames:v 1 -y "frames-duo/pair-$3.png"; }
-pair "$(d duo-host-code)"    "$(d duo-guest-joined)"   code
-pair "$(d duo-host-onclock)" "$(d duo-guest-watching)" start
-pair "$(d duo-host-scored)"  "$(d duo-guest-scored)"   scored
-{ echo "file 'frames-duo/pair-code.png'";   echo "duration 3.0"
-  echo "file 'frames-duo/pair-start.png'";  echo "duration 2.8"
-  echo "file '$(d duo-guest-sees-typing)'"; echo "duration 2.6"
-  echo "file 'frames-duo/pair-scored.png'"; echo "duration 3.4"
-  echo "file 'frames-duo/pair-scored.png'"; } > .c4
-F="$(cap 'Send a friend the room code' "$BOLD" $LIME 104 0.2 2.9),"
-F="$F$(cap 'Ten prompts. You take turns.' "$MED" white 98 3.1 5.7),"
-F="$F$(cap 'They watch you type, live' "$MED" white 98 5.9 8.3),"
-F="$F$(cap 'One team score. No hiding.' "$BOLD" $LIME 108 8.5 11.7)"
+# ── 04 · Duo — stacked two-up so both phones fill the frame, played out ───
+python3 src/stack-duo.py >/dev/null
+s() { ls frames-duo-stacked/*"$1"*.png | head -1; }
+{ echo "file '$(s lobby)'";            echo "duration 2.4"
+  echo "file '$(s r1-onclock)'";       echo "duration 2.0"
+  echo "file '$(s r1-typing)'";        echo "duration 2.2"
+  echo "file '$(s r1-scored)'";        echo "duration 2.4"
+  echo "file '$(s r2-onclock)'";       echo "duration 1.8"
+  echo "file '$(s r2-typing)'";        echo "duration 1.8"
+  echo "file '$(s r2-scored)'";        echo "duration 2.2"
+  echo "file '$(s r5-scored)'";        echo "duration 2.8"
+  echo "file '$(s r5-scored)'"; } > .c4
+F="$(cap 'Send a friend the room code' "$BOLD" $LIME 104 0.2 2.3),"
+F="$F$(cap 'Ten prompts. You take turns.' "$MED" white 98 2.5 4.3),"
+F="$F$(cap 'They watch you type, live' "$MED" white 98 4.5 6.5),"
+F="$F$(cap 'Their answer, your score' "$BOLD" $LIME 100 6.7 8.9),"
+F="$F$(cap 'Now it is their go' "$MED" white 98 9.1 12.5),"
+F="$F$(cap 'One team score. No hiding.' "$BOLD" $LIME 108 12.7 17.4)"
 render .c4 "$F" 04-duo-4k-9x16.mp4 "$FULL"
 
 # ── 05 · the locker ────────────────────────────────────────────────────────
-{ echo "file '$(f round-reveal-part)'"; echo "duration 3.0"
-  echo "file '$(f round-mid)'";         echo "duration 2.4"
-  echo "file '$(f run-done-scroll)'";   echo "duration 2.8"
-  echo "file '$(f home-top)'";          echo "duration 2.8"
+{ echo "file '$(f round-reveal-part)'"; echo "duration 2.8"
+  echo "file '$(f round-mid)'";         echo "duration 1.8"
+  # the locker, scrolled: every slot and everything there is to earn
+  for t in frames-locker/scroll-0[0-3]*.png; do echo "file '$t'"; echo "duration 0.0667"; done
+  echo "file '$(f run-done-scroll)'";   echo "duration 2.2"
+  echo "file '$(f home-top)'";          echo "duration 2.6"
   echo "file '$(f home-top)'"; } > .c5
-F="$(cap 'Land a rare answer, grow a part' "$BOLD" $LIME 104 0.2 2.9),"
-F="$F$(cap 'Horns. Wings. Glasses.' "$MED" white 104 3.1 5.3),"
-F="$F$(cap 'Your Oddler keeps what you earn' "$MED" white 94 5.5 8.1),"
-F="$F$(cap 'oddler.app' "$BOLD" $LIME 180 8.3 11.0)"
+SCROLL_END=$(python3 -c "import glob;print(round(4.6+0.0667*len(glob.glob('frames-locker/scroll-0[0-3]*.png')),2))")
+F="$(cap 'Land a rare answer, grow a part' "$BOLD" $LIME 104 0.2 2.7),"
+F="$F$(cap 'Horns. Wings. Glasses.' "$MED" white 104 2.9 4.5),"
+F="$F$(cap 'Fifty-four parts to hunt down' "$BOLD" $LIME 100 4.7 $SCROLL_END),"
+F="$F$(cap 'Your Oddler keeps what you earn' "$MED" white 94 $(python3 -c "print($SCROLL_END+0.2)") $(python3 -c "print($SCROLL_END+2.3)")),"
+F="$F$(cap 'oddler.app' "$BOLD" $LIME 180 $(python3 -c "print($SCROLL_END+2.5)") $(python3 -c "print($SCROLL_END+5.2)"))"
 render .c5 "$F" 05-collect-4k-9x16.mp4
 
 # ── 02b · the hook, fronted by the animated sting ──────────────────────────

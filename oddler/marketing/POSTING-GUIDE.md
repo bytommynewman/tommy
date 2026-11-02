@@ -15,8 +15,8 @@ row and the roomier round screen.
 | 2 | `02-what-is-oddler` | 14s | The hook: France scores 10, Liechtenstein scores 100 |
 | 2b | `02b-hook-with-opener` | 16s | Same, fronted by the animated sting |
 | 3 | `03-daily` | 11s | One Daily, same seven for everyone, grid to share |
-| 4 | `04-duo` | 12s | Two phones, one room code, one team score |
-| 5 | `05-collect` | 11s | Rare answers grow the creature |
+| 4 | `04-duo` | 18s | A Duo game played out, both phones stacked and full-size: the room code, live typing, turns alternating, the team score climbing |
+| 5 | `05-collect` | 12s | Rare answers grow the creature, then a scroll through the locker showing all 54 parts |
 
 Masters are **2160×3840 (4K vertical)**, typeset in Fredoka — the game's own
 display font — so the captions match the product. Every other cut is derived
@@ -74,9 +74,18 @@ reference point people already have.
 ```
 cd ~/oddler-ads
 node src/capture.mjs          # solo run -> frames/
-node src/capture.mjs duo      # Daily and Duo -> frames-duo/
+node src/capture.mjs duo      # Daily -> frames-duo/
+node src/capture-duo.mjs      # a Duo game played out -> frames-duo2/
+node src/capture-locker.mjs   # the locker scroll -> frames-locker/
 ./src/build.sh                # -> out/ and posters/
 ```
+
+`capture-duo.mjs` clips each shot to the game panel rather than the whole
+phone, and `src/stack-duo.py` (called by the build) stacks the two players top
+and bottom. Side by side, two phones can only ever use the middle third of a
+vertical frame; stacked they use nearly all of it, and neither panel is
+cropped — the avatars and scores at the foot of each one are the part that
+shows both players at once.
 
 Re-run after any UI change and the ads follow the real product. The captions
 are written to hold whatever prompt the capture lands on, so a rebuild needs no
